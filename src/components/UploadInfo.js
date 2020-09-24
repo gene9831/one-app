@@ -207,7 +207,7 @@ const useStyles = makeStyles((theme) => ({
   },
   green: {
     color: '#4caf50',
-    borderColor: '#4caf50',
+    borderColor: '#81c784',
   },
 }));
 
@@ -324,7 +324,7 @@ export default function UploadInfo(props) {
         <Button
           variant="outlined"
           color="default"
-          className={classes.button}
+          className={clsx(classes.button, classes.green)}
           startIcon={<PauseCircleOutlineIcon />}
           onClick={() => handleOperate('stopUpload')}
         >
