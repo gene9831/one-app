@@ -205,6 +205,16 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
+const compare = (property) => {
+  return function (obj1, obj2) {
+    var value1 = obj1[property];
+    var value2 = obj2[property];
+    if (value1 < value2) return -1;
+    else if (value1 === value2) return 0;
+    else return 1;
+  };
+};
+
 export default function UploadInfo(props) {
   const classes = useStyles();
   const { drive } = props;
@@ -245,7 +255,7 @@ export default function UploadInfo(props) {
           },
           { headers: { 'X-Password': 'secret' } }
         );
-        setRows(res.data.result);
+        setRows(res.data.result.sort(compare('filename')));
       };
       fetchData();
       const timer = setInterval(() => {
