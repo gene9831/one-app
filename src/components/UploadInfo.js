@@ -217,7 +217,7 @@ const compare = (property) => {
 
 export default function UploadInfo(props) {
   const classes = useStyles();
-  const { drive } = props;
+  const { drive, pageName } = props;
   const [openId, setOpenId] = useState('');
   const [rows, setRows] = useState([]);
   const [openUpload, setOpenUpload] = useState(false);
@@ -250,7 +250,7 @@ export default function UploadInfo(props) {
           {
             jsonrpc: '2.0',
             method: 'Onedrive.uploadStatus',
-            params: [drive.id],
+            params: [drive.id, pageName],
             id: '1',
           },
           { headers: { 'X-Password': 'secret' } }
@@ -263,7 +263,7 @@ export default function UploadInfo(props) {
       }, 1000);
       return () => clearInterval(timer);
     }
-  }, [drive]);
+  }, [drive, pageName]);
 
   return (
     <div>
@@ -372,4 +372,5 @@ export default function UploadInfo(props) {
 
 UploadInfo.propTypes = {
   drive: PropTypes.object,
+  pageName: PropTypes.string.isRequired,
 };

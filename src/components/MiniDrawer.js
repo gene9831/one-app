@@ -90,14 +90,25 @@ const useStyles = makeStyles((theme) => ({
     flexGrow: 1,
     padding: theme.spacing(3),
   },
+  pageTitle: {
+    fontSize: '1rem',
+  },
 }));
+
 const cookies = new Cookies();
+const pages = {
+  running: { value: 'running', text: '上传中' },
+  stopped: { value: 'stopped', text: '已暂停' },
+  finished: { value: 'finished', text: '已完成' },
+};
+
 export default function MiniDrawer() {
   const classes = useStyles();
   const theme = useTheme();
   const [open, setOpen] = React.useState(true);
   const [drives, setDrives] = React.useState([]);
   const [selectedDrive, setSelectedDrive] = React.useState(null);
+  const [page, setPage] = React.useState(pages.running);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -135,6 +146,10 @@ export default function MiniDrawer() {
     setOpen(false);
   };
 
+  const handleClickPage = (page) => {
+    setPage(page);
+  };
+
   return (
     <div className={classes.root}>
       <CssBaseline />
@@ -163,7 +178,7 @@ export default function MiniDrawer() {
             noWrap
             className={classes.title}
           >
-            上传管理
+            上传管理 | <span className={classes.pageTitle}>{page.text}</span>
           </Typography>
           <MultiUersAvatar
             drives={drives}
@@ -196,29 +211,41 @@ export default function MiniDrawer() {
         </div>
         <Divider />
         <List>
-          <ListItem button>
+          <ListItem
+            button
+            selected={page === pages.running}
+            onClick={() => handleClickPage(pages.running)}
+          >
             <ListItemIcon>
               <BackupIcon></BackupIcon>
             </ListItemIcon>
-            <ListItemText primary="上传中" />
+            <ListItemText primary={pages.running.text} />
           </ListItem>
-          <ListItem button>
+          <ListItem
+            button
+            selected={page === pages.stopped}
+            onClick={() => handleClickPage(pages.stopped)}
+          >
             <ListItemIcon>
               <CloudOffIcon></CloudOffIcon>
             </ListItemIcon>
-            <ListItemText primary="已暂停" />
+            <ListItemText primary={pages.stopped.text} />
           </ListItem>
-          <ListItem button>
+          <ListItem
+            button
+            selected={page === pages.finished}
+            onClick={() => handleClickPage(pages.finished)}
+          >
             <ListItemIcon>
               <CloudDoneIcon></CloudDoneIcon>
             </ListItemIcon>
-            <ListItemText primary="已完成" />
+            <ListItemText primary={pages.finished.text} />
           </ListItem>
         </List>
       </Drawer>
       <Container className={classes.content}>
         <div className={classes.toolbar} />
-        <UploadInfo drive={selectedDrive}></UploadInfo>
+        <UploadInfo drive={selectedDrive} pageName={page.value}></UploadInfo>
       </Container>
     </div>
   );
