@@ -21,6 +21,8 @@ import AddCircleOutlineIcon from '@material-ui/icons/AddCircleOutline';
 import Checkbox from '@material-ui/core/Checkbox';
 import TaskDialog from './TaskDialog';
 import PauseCircleOutlineIcon from '@material-ui/icons/PauseCircleOutline';
+import { OD_ADMIN_API } from '../App';
+
 const useRowStyles = makeStyles({
   root: {
     '& > *': {
@@ -209,17 +211,14 @@ export default function UploadInfo(props) {
   const [openId, setOpenId] = useState('');
   const [rows, setRows] = useState([]);
   const [openUpload, setOpenUpload] = useState(false);
+  const [openUploadFolder, setOpenUploadFolder] = useState(false);
   const [selected, setSelected] = useState([]);
-
-  const handleClickUpload = () => {
-    setOpenUpload(true);
-  };
 
   const handleDelete = () => {
     if (selected.length === 0) return;
     const fetchData = async () => {
       await Axios.post(
-        'http://localhost:5000/api/admin/od',
+        OD_ADMIN_API,
         {
           jsonrpc: '2.0',
           method: 'Onedrive.deleteUpload',
@@ -237,7 +236,7 @@ export default function UploadInfo(props) {
     if (drive !== null) {
       const fetchData = async () => {
         let res = await Axios.post(
-          'http://localhost:5000/api/admin/od',
+          OD_ADMIN_API,
           {
             jsonrpc: '2.0',
             method: 'Onedrive.uploadStatus',
@@ -263,7 +262,7 @@ export default function UploadInfo(props) {
         color="primary"
         className={classes.button}
         startIcon={<AddCircleOutlineIcon />}
-        onClick={handleClickUpload}
+        onClick={() => setOpenUpload(true)}
       >
         上传
       </Button>
@@ -271,6 +270,26 @@ export default function UploadInfo(props) {
         open={openUpload}
         setOpen={setOpenUpload}
         drive={drive}
+        type={'file'}
+        title={'上传'}
+        message={'上传文件到OneDrive，文件指的是服务端文件'}
+      ></TaskDialog>
+      <Button
+        variant="outlined"
+        color="primary"
+        className={classes.button}
+        startIcon={<AddCircleOutlineIcon />}
+        onClick={() => setOpenUploadFolder(true)}
+      >
+        批量上传
+      </Button>
+      <TaskDialog
+        open={openUploadFolder}
+        setOpen={setOpenUploadFolder}
+        drive={drive}
+        type={'folder'}
+        title={'批量上传'}
+        message={'批量上传文件到OneDrive，上传目录下的所有文件，不包括子目录'}
       ></TaskDialog>
       <Button
         variant="outlined"

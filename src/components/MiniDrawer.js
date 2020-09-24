@@ -22,6 +22,7 @@ import CloudOffIcon from '@material-ui/icons/CloudOff';
 import UploadInfo from './UploadInfo';
 import MultiUersAvatar from './MultiUersAvatar';
 import Axios from 'axios';
+import { OD_ADMIN_API } from '../App';
 
 const drawerWidth = 240;
 
@@ -100,7 +101,7 @@ export default function MiniDrawer() {
   useEffect(() => {
     const fetchData = async () => {
       let res = await Axios.post(
-        'http://localhost:5000/api/admin/od',
+        OD_ADMIN_API,
         {
           jsonrpc: '2.0',
           method: 'Onedrive.getDrives',

@@ -14,6 +14,7 @@ import InsertDriveFileOutlinedIcon from '@material-ui/icons/InsertDriveFileOutli
 import AccountCircleOutlinedIcon from '@material-ui/icons/AccountCircleOutlined';
 import Snackbar from '@material-ui/core/Snackbar';
 import Axios from 'axios';
+import { OD_ADMIN_API } from '../App';
 
 const useStyles = makeStyles(() => ({
   paperScrollPaper: {
@@ -24,26 +25,33 @@ const useStyles = makeStyles(() => ({
 const initState = {
   upload_path: '',
   file_path: '',
+  folder_path: '',
 };
 export default function TaskDialog(props) {
   const classes = useStyles();
-  const { open, setOpen, drive } = props;
+  const { open, setOpen, drive, type, title, message } = props;
   const [state, setState] = useState(initState);
   const [snack, setSnack] = useState(false);
 
   const handleSubmit = () => {
     if (drive !== null) {
+      let method;
+      let params = { drive_id: drive.id, upload_path: state.upload_path };
+      if (type === 'file') {
+        method = 'Onedrive.uploadFile';
+        params.file_path = state.file_path;
+      } else {
+        method = 'Onedrive.uploadFolder';
+        params.folder_path = state.folder_path;
+      }
+
       const fetchData = async () => {
         await Axios.post(
-          'http://localhost:5000/api/admin/od',
+          OD_ADMIN_API,
           {
             jsonrpc: '2.0',
-            method: 'Onedrive.uploadFile',
-            params: {
-              drive_id: drive.id,
-              upload_path: state.upload_path,
-              file_path: state.file_path,
-            },
+            method: method,
+            params: params,
             id: '1',
           },
           { headers: { 'X-Password': 'secret' } }
@@ -79,11 +87,9 @@ export default function TaskDialog(props) {
           paperScrollPaper: classes.paperScrollPaper,
         }}
       >
-        <DialogTitle>上传</DialogTitle>
+        <DialogTitle>{title}</DialogTitle>
         <DialogContent>
-          <DialogContentText>
-            上传文件到OneDrive，只能上传服务端的文件
-          </DialogContentText>
+          <DialogContentText>{message}</DialogContentText>
           <TextField
             margin="dense"
             id="email"
@@ -115,21 +121,39 @@ export default function TaskDialog(props) {
               ),
             }}
           />
-          <TextField
-            margin="dense"
-            id="file_path"
-            label="文件路径"
-            value={state.file_path}
-            fullWidth
-            onChange={handleChange}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <InsertDriveFileOutlinedIcon />
-                </InputAdornment>
-              ),
-            }}
-          />
+          {type === 'file' ? (
+            <TextField
+              margin="dense"
+              id="file_path"
+              label="文件路径"
+              value={state.file_path}
+              fullWidth
+              onChange={handleChange}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <InsertDriveFileOutlinedIcon />
+                  </InputAdornment>
+                ),
+              }}
+            />
+          ) : (
+            <TextField
+              margin="dense"
+              id="folder_path"
+              label="文件夹路径"
+              value={state.folder_path}
+              fullWidth
+              onChange={handleChange}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <FolderOpenOutlinedIcon />
+                  </InputAdornment>
+                ),
+              }}
+            />
+          )}
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setState(initState)} color="primary">
@@ -150,7 +174,7 @@ export default function TaskDialog(props) {
         }}
         open={snack}
         onClose={() => setSnack(false)}
-        message="本地文件未找到"
+        message="文件或文件夹未找到"
       ></Snackbar>
     </React.Fragment>
   );
@@ -160,4 +184,7 @@ TaskDialog.propTypes = {
   open: PropTypes.bool.isRequired,
   setOpen: PropTypes.func.isRequired,
   drive: PropTypes.object,
+  type: PropTypes.string.isRequired,
+  title: PropTypes.string.isRequired,
+  message: PropTypes.string.isRequired,
 };
