@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
+import clsx from 'clsx';
 import { makeStyles } from '@material-ui/core/styles';
 import Box from '@material-ui/core/Box';
 import Collapse from '@material-ui/core/Collapse';
@@ -20,6 +21,7 @@ import DeleteOutlineIcon from '@material-ui/icons/DeleteOutline';
 import AddCircleOutlineIcon from '@material-ui/icons/AddCircleOutline';
 import Checkbox from '@material-ui/core/Checkbox';
 import TaskDialog from './TaskDialog';
+import PlayCircleOutlineIcon from '@material-ui/icons/PlayCircleOutline';
 import PauseCircleOutlineIcon from '@material-ui/icons/PauseCircleOutline';
 import { OD_ADMIN_API } from '../App';
 
@@ -203,6 +205,10 @@ const useStyles = makeStyles((theme) => ({
   button: {
     margin: theme.spacing(1),
   },
+  green: {
+    color: '#4caf50',
+    borderColor: '#4caf50',
+  },
 }));
 
 const compare = (property) => {
@@ -224,14 +230,14 @@ export default function UploadInfo(props) {
   const [openUploadFolder, setOpenUploadFolder] = useState(false);
   const [selected, setSelected] = useState([]);
 
-  const handleDelete = () => {
+  const handleOperate = (type) => {
     if (selected.length === 0) return;
     const fetchData = async () => {
       await Axios.post(
         OD_ADMIN_API,
         {
           jsonrpc: '2.0',
-          method: 'Onedrive.deleteUpload',
+          method: 'Onedrive.' + type,
           params: { uids: selected },
           id: '1',
         },
@@ -301,20 +307,38 @@ export default function UploadInfo(props) {
         title={'批量上传'}
         message={'批量上传文件到OneDrive，上传目录下的所有文件，不包括子目录'}
       ></TaskDialog>
-      <Button
-        variant="outlined"
-        color="default"
-        className={classes.button}
-        startIcon={<PauseCircleOutlineIcon />}
-      >
-        暂停
-      </Button>
+      {pageName === 'stopped' ? (
+        <Button
+          variant="outlined"
+          color="default"
+          className={clsx(classes.button, classes.green)}
+          startIcon={<PlayCircleOutlineIcon />}
+          onClick={() => handleOperate('startUpload')}
+        >
+          继续
+        </Button>
+      ) : (
+        ''
+      )}
+      {pageName === 'running' ? (
+        <Button
+          variant="outlined"
+          color="default"
+          className={classes.button}
+          startIcon={<PauseCircleOutlineIcon />}
+          onClick={() => handleOperate('stopUpload')}
+        >
+          暂停
+        </Button>
+      ) : (
+        ''
+      )}
       <Button
         variant="outlined"
         color="secondary"
         className={classes.button}
         startIcon={<DeleteOutlineIcon />}
-        onClick={handleDelete}
+        onClick={() => handleOperate('deleteUpload')}
       >
         删除
       </Button>
