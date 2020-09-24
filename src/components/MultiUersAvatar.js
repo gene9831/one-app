@@ -9,13 +9,14 @@ import ListItemText from '@material-ui/core/ListItemText';
 import { makeStyles } from '@material-ui/core/styles';
 import CloudIcon from '@material-ui/icons/Cloud';
 import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
+import Cookies from 'universal-cookie';
 
 const useStyles = makeStyles(() => ({
   listItemIcon: {
     minWidth: '2.5rem',
   },
 }));
-
+const cookies = new Cookies();
 export default function MultiUersAvatar(props) {
   const { drive, drives, setDrive } = props;
   const [anchorEl, setAnchorEl] = React.useState(null);
@@ -32,6 +33,10 @@ export default function MultiUersAvatar(props) {
 
   const handleClickUser = (drive) => {
     setDrive(drive);
+    cookies.set('drive', JSON.stringify(drive), {
+      path: '/',
+      maxAge: 3600 * 24 * 30,
+    });
     handleCloseAvatar();
   };
 

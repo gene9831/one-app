@@ -23,6 +23,7 @@ import UploadInfo from './UploadInfo';
 import MultiUersAvatar from './MultiUersAvatar';
 import Axios from 'axios';
 import { OD_ADMIN_API } from '../App';
+import Cookies from 'universal-cookie';
 
 const drawerWidth = 240;
 
@@ -90,7 +91,7 @@ const useStyles = makeStyles((theme) => ({
     padding: theme.spacing(3),
   },
 }));
-
+const cookies = new Cookies();
 export default function MiniDrawer() {
   const classes = useStyles();
   const theme = useTheme();
@@ -111,14 +112,20 @@ export default function MiniDrawer() {
         { headers: { 'X-Password': 'secret' } }
       );
       setDrives(res.data.result);
-      setSelectedDrive(res.data.result[0]);
+
+      if (cookies.get('drive') !== undefined) {
+        setSelectedDrive(cookies.get('drive'));
+      } else {
+        let drive = res.data.result[0];
+        setSelectedDrive(drive);
+        cookies.set('drive', JSON.stringify(drive), {
+          path: '/',
+          maxAge: 3600 * 24 * 30,
+        });
+      }
     };
     fetchData();
   }, []);
-
-  useEffect(() => {
-    // console.log(selectedDrive);
-  });
 
   const handleDrawerOpen = () => {
     setOpen(true);
