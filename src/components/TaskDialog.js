@@ -10,11 +10,11 @@ import DialogContentText from '@material-ui/core/DialogContentText';
 import DialogTitle from '@material-ui/core/DialogTitle';
 import InputAdornment from '@material-ui/core/InputAdornment';
 import FolderOpenOutlinedIcon from '@material-ui/icons/FolderOpenOutlined';
-import InsertDriveFileOutlinedIcon from '@material-ui/icons/InsertDriveFileOutlined';
 import AccountCircleOutlinedIcon from '@material-ui/icons/AccountCircleOutlined';
 import Snackbar from '@material-ui/core/Snackbar';
 import Axios from 'axios';
 import { OD_ADMIN_API } from '../App';
+import PathTextField from './PathTextField';
 
 const useStyles = makeStyles(() => ({
   paperScrollPaper: {
@@ -22,10 +22,11 @@ const useStyles = makeStyles(() => ({
   },
 }));
 
+const default_path = '/';
 const initState = {
   upload_path: '',
-  file_path: '',
-  folder_path: '',
+  file_path: default_path,
+  folder_path: default_path,
 };
 export default function TaskDialog(props) {
   const classes = useStyles();
@@ -78,6 +79,13 @@ export default function TaskDialog(props) {
     });
   };
 
+  const setKeyValue = (id, value) => {
+    setState({
+      ...state,
+      [id]: value,
+    });
+  };
+
   return (
     <React.Fragment>
       <Dialog
@@ -122,37 +130,19 @@ export default function TaskDialog(props) {
             }}
           />
           {type === 'file' ? (
-            <TextField
-              margin="dense"
+            <PathTextField
               id="file_path"
-              label="文件路径"
               value={state.file_path}
-              fullWidth
-              onChange={handleChange}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <InsertDriveFileOutlinedIcon />
-                  </InputAdornment>
-                ),
-              }}
-            />
+              setValue={setKeyValue}
+              onlyDir={false}
+            ></PathTextField>
           ) : (
-            <TextField
-              margin="dense"
+            <PathTextField
               id="folder_path"
-              label="文件夹路径"
               value={state.folder_path}
-              fullWidth
-              onChange={handleChange}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <FolderOpenOutlinedIcon />
-                  </InputAdornment>
-                ),
-              }}
-            />
+              setValue={setKeyValue}
+              onlyDir={true}
+            ></PathTextField>
           )}
         </DialogContent>
         <DialogActions>

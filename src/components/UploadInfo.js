@@ -40,15 +40,17 @@ const useRowStyles = makeStyles({
       borderBottom: 'unset',
     },
   },
-  greenCell: {
+  green: {
     color: 'green',
+  },
+  red: {
+    color: 'red',
   },
 });
 
 function Row(props) {
   const { row, openId, setOpenId, selected, setSelected } = props;
   const classes = useRowStyles();
-  const [cellClass, setCellClass] = useState(classes.greenCell);
 
   const bTokmg = (size) => {
     let kb = size / 1024;
@@ -91,47 +93,53 @@ function Row(props) {
     }
   };
 
-  useEffect(() => {
-    if (row.upload_url === null) {
-      setCellClass(null);
-    }
-  }, [row.upload_url]);
-
   return (
     <React.Fragment>
       <TableRow className={classes.root} hover>
         <TableCell>
-          <Checkbox color="primary" onChange={handleOnSelected} />
+          <Checkbox
+            color="primary"
+            onChange={handleOnSelected}
+            checked={selected.indexOf(row.uid) !== -1}
+          />
         </TableCell>
         <TableCell align="left">{row.filename}</TableCell>
         <TableCell align="center">{bTokmg(row.size)}</TableCell>
         <TableCell align="center">
           {/* 速度 */}
-          {row.finished === row.size || row.upload_url === null
-            ? '---'
-            : bTokmg(row.speed) + 's'}
+          {row.status === 'running' ? bTokmg(row.speed) + '/s' : '---'}
         </TableCell>
-        <TableCell align="center" className={cellClass}>
+        <TableCell
+          align="center"
+          className={clsx({
+            [classes.green]: row.status === 'finished',
+            [classes.red]: row.status === 'error',
+          })}
+        >
           {/* 进度 */}
           {(() => {
-            if (row.upload_url === null) {
-              return '准备中';
-            }
-            if (row.finished === row.size) {
+            if (row.status === 'pending') {
+              return '排队中';
+            } else if (row.status === 'finished') {
               return '已完成';
+            } else if (row.status === 'stopped') {
+              return '已暂停';
+            } else if (row.status === 'error') {
+              return '错误';
+            } else {
+              return (
+                <CircularProgressWithLabel
+                  value={(row.finished / row.size) * 100}
+                />
+              );
             }
-            return (
-              <CircularProgressWithLabel
-                value={(row.finished / row.size) * 100}
-              />
-            );
           })()}
         </TableCell>
         <TableCell align="center">
           {/* 剩余时间 */}
-          {row.finished === row.size || row.upload_url === null
-            ? '---'
-            : sTomhd((row.size - row.finished) / row.speed)}
+          {row.status === 'running'
+            ? sTomhd((row.size - row.finished) / row.speed)
+            : '---'}
         </TableCell>
         <TableCell align="center">
           {/* 展开详情 */}
@@ -170,6 +178,13 @@ function Row(props) {
                       平均速度：{bTokmg(row.finished / row.spend_time)}/s
                     </TableCell>
                   </TableRow>
+                  {row.status === 'error' ? (
+                    <TableRow>
+                      <TableCell className={classes.red}>
+                        错误详情：{row.error}
+                      </TableCell>
+                    </TableRow>
+                  ) : null}
                 </TableBody>
               </Table>
             </Box>
@@ -187,13 +202,13 @@ Row.propTypes = {
     finished: PropTypes.number.isRequired,
     size: PropTypes.number.isRequired,
     speed: PropTypes.number.isRequired,
-    running: PropTypes.bool.isRequired,
     spend_time: PropTypes.number.isRequired,
     file_path: PropTypes.string.isRequired,
     upload_path: PropTypes.string.isRequired,
-    upload_url: PropTypes.string,
+    status: PropTypes.string.isRequired,
     created_date_time: PropTypes.string.isRequired,
     finished_date_time: PropTypes.string.isRequired,
+    error: PropTypes.string,
   }).isRequired,
   openId: PropTypes.string.isRequired,
   setOpenId: PropTypes.func.isRequired,
@@ -211,12 +226,13 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-const compare = (property) => {
+const compare = () => {
   return function (obj1, obj2) {
-    var value1 = obj1[property];
-    var value2 = obj2[property];
-    if (value1 < value2) return -1;
-    else if (value1 === value2) return 0;
+    var name1 = obj1.filename.toLowerCase();
+    var name2 = obj2.filename.toLowerCase();
+    if (obj1.status === 'running' && obj2.status === 'pending') return -1;
+    if (name1 < name2) return -1;
+    else if (name1 === name2) return 0;
     else return 1;
   };
 };
@@ -248,6 +264,15 @@ export default function UploadInfo(props) {
     fetchData();
   };
 
+  const handleCheckedAll = (e) => {
+    if (e.target.checked) {
+      // 全选
+      setSelected(rows.map((item) => item.uid));
+    } else {
+      setSelected([]);
+    }
+  };
+
   useEffect(() => {
     if (drive !== null) {
       const fetchData = async () => {
@@ -261,7 +286,7 @@ export default function UploadInfo(props) {
           },
           { headers: { 'X-Password': 'secret' } }
         );
-        setRows(res.data.result.sort(compare('filename')));
+        setRows(res.data.result.sort(compare()));
       };
       fetchData();
       const timer = setInterval(() => {
@@ -347,7 +372,9 @@ export default function UploadInfo(props) {
         <Table>
           <TableHead>
             <TableRow>
-              <TableCell></TableCell>
+              <TableCell>
+                <Checkbox onChange={handleCheckedAll}></Checkbox>
+              </TableCell>
               <TableCell align="center">
                 <Typography variant="subtitle1" gutterBottom>
                   文件名
