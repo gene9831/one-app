@@ -39,6 +39,7 @@ const useStyles = makeStyles((theme) => ({
     paddingRight: theme.spacing(1),
     paddingTop: 0,
     paddingBottom: 0,
+    cursor: 'default',
   },
   itemIcon: {
     minWidth: '2rem',
@@ -66,20 +67,22 @@ export default function PathTextField(props) {
   };
 
   const handleClickPath = (item) => {
-    if (item.value === '..') {
-      if (value !== '/') {
-        let value1 = value;
-        if (value1.endsWith('/')) {
-          value1 = value1.slice(0, -1);
+    if (!onlyDir || item.type !== 'file') {
+      if (item.value === '..') {
+        if (value !== '/') {
+          let value1 = value;
+          if (value1.endsWith('/')) {
+            value1 = value1.slice(0, -1);
+          }
+          let index = value1.lastIndexOf('/');
+          if (index >= 0) setValue(id, value1.slice(0, index + 1));
         }
-        let index = value1.lastIndexOf('/');
-        if (index >= 0) setValue(id, value1.slice(0, index + 1));
+      } else {
+        setValue(
+          id,
+          value.concat(item.value).concat(item.type === 'dir' ? '/' : '')
+        );
       }
-    } else {
-      setValue(
-        id,
-        value.concat(item.value).concat(item.type === 'dir' ? '/' : '')
-      );
     }
     textField.focus();
     let len = textField.value.length;
@@ -97,7 +100,7 @@ export default function PathTextField(props) {
         {
           jsonrpc: '2.0',
           method: 'Onedrive.listSysPath',
-          params: [value, onlyDir],
+          params: [value],
           id: '1',
         },
         { headers: { 'X-Password': 'secret' } }
@@ -159,11 +162,14 @@ export default function PathTextField(props) {
                     {pathList.map((item, index) => (
                       <TableRow
                         key={index}
-                        hover
+                        hover={!onlyDir || item.type !== 'file'}
                         onClick={() => handleClickPath(item)}
                       >
                         <TableCell className={classes.cell}>
-                          <ListItem className={classes.item}>
+                          <ListItem
+                            className={classes.item}
+                            disabled={onlyDir && item.type === 'file'}
+                          >
                             <ListItemIcon className={classes.itemIcon}>
                               {item.type === 'dir' ? (
                                 <FolderOpenOutlinedIcon fontSize="small"></FolderOpenOutlinedIcon>

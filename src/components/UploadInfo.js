@@ -231,6 +231,7 @@ const compare = () => {
     var name1 = obj1.filename.toLowerCase();
     var name2 = obj2.filename.toLowerCase();
     if (obj1.status === 'running' && obj2.status === 'pending') return -1;
+    if (obj1.status === 'pending' && obj2.status === 'running') return 1;
     if (name1 < name2) return -1;
     else if (name1 === name2) return 0;
     else return 1;
@@ -245,6 +246,7 @@ export default function UploadInfo(props) {
   const [openUpload, setOpenUpload] = useState(false);
   const [openUploadFolder, setOpenUploadFolder] = useState(false);
   const [selected, setSelected] = useState([]);
+  const [selectAll, setSelectAll] = useState(false);
 
   const handleOperate = (type) => {
     if (selected.length === 0) return;
@@ -265,6 +267,7 @@ export default function UploadInfo(props) {
   };
 
   const handleCheckedAll = (e) => {
+    setSelectAll(e.target.checked);
     if (e.target.checked) {
       // 全选
       setSelected(rows.map((item) => item.uid));
@@ -272,6 +275,10 @@ export default function UploadInfo(props) {
       setSelected([]);
     }
   };
+
+  useEffect(() => {
+    if (selected.length === 0) setSelectAll(false);
+  }, [selected]);
 
   useEffect(() => {
     if (drive !== null) {
@@ -373,7 +380,10 @@ export default function UploadInfo(props) {
           <TableHead>
             <TableRow>
               <TableCell>
-                <Checkbox onChange={handleCheckedAll}></Checkbox>
+                <Checkbox
+                  checked={selectAll}
+                  onChange={handleCheckedAll}
+                ></Checkbox>
               </TableCell>
               <TableCell align="center">
                 <Typography variant="subtitle1" gutterBottom>
