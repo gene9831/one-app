@@ -50,7 +50,17 @@ const initPathList = [{ value: '..', type: 'dir' }];
 
 export default function PathTextField(props) {
   const classes = useStyles();
-  const { id, value, setValue, onlyDir } = props;
+  const {
+    id,
+    value,
+    setValue,
+    onlyDir,
+    api,
+    drive,
+    label,
+    clicked,
+    setClicked,
+  } = props;
   const [anchorEl, setAnchorEl] = useState(null);
   const [pathList, setPathList] = useState(initPathList);
   const [textField, setTextField] = useState(null);
@@ -58,8 +68,9 @@ export default function PathTextField(props) {
   const open = Boolean(anchorEl);
 
   const handleClickTextField = (event) => {
-    setAnchorEl(event.currentTarget);
-    setTextField(event.currentTarget);
+    if (clicked !== id) setClicked(id);
+    if (anchorEl === null) setAnchorEl(event.currentTarget);
+    if (textField === null) setTextField(event.currentTarget);
   };
 
   const handlClosePopper = () => {
@@ -94,13 +105,17 @@ export default function PathTextField(props) {
   }, [textField]);
 
   useEffect(() => {
+    if (clicked !== id) setAnchorEl(null);
+  }, [clicked, id]);
+
+  useEffect(() => {
     const fetchData = async () => {
       let res = await Axios.post(
         OD_ADMIN_API,
         {
           jsonrpc: '2.0',
-          method: 'Onedrive.listSysPath',
-          params: [value],
+          method: 'Onedrive.' + api,
+          params: drive ? [drive.id, value] : [value],
           id: '1',
         },
         { headers: { 'X-Password': 'secret' } }
@@ -108,17 +123,18 @@ export default function PathTextField(props) {
       setPathList(initPathList.concat(res.data.result));
     };
     fetchData();
-  }, [value, onlyDir]);
+  }, [value, api, drive]);
 
   return (
     <React.Fragment>
       <TextField
         margin="dense"
         fullWidth
-        label={onlyDir ? '文件夹路径' : '文件路径'}
+        label={label}
         value={value}
         onChange={(e) => setValue(id, e.target.value)}
         onFocus={handleClickTextField}
+        onClick={(e) => e.stopPropagation()}
         InputProps={{
           startAdornment: (
             <InputAdornment position="start">
@@ -151,6 +167,7 @@ export default function PathTextField(props) {
         className={classes.popper}
         placement="bottom-start"
         style={{ width: popperSize + 'px' }}
+        onClick={(e) => e.stopPropagation()}
         transition
       >
         {({ TransitionProps }) => (
@@ -196,6 +213,11 @@ export default function PathTextField(props) {
 PathTextField.propTypes = {
   id: PropTypes.string.isRequired,
   value: PropTypes.string.isRequired,
+  api: PropTypes.string.isRequired,
+  label: PropTypes.string.isRequired,
+  drive: PropTypes.object,
+  clicked: PropTypes.string,
+  setClicked: PropTypes.func.isRequired,
   setValue: PropTypes.func.isRequired,
   onlyDir: PropTypes.bool.isRequired,
 };

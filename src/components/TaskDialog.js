@@ -9,7 +9,6 @@ import DialogContent from '@material-ui/core/DialogContent';
 import DialogContentText from '@material-ui/core/DialogContentText';
 import DialogTitle from '@material-ui/core/DialogTitle';
 import InputAdornment from '@material-ui/core/InputAdornment';
-import FolderOpenOutlinedIcon from '@material-ui/icons/FolderOpenOutlined';
 import AccountCircleOutlinedIcon from '@material-ui/icons/AccountCircleOutlined';
 import Snackbar from '@material-ui/core/Snackbar';
 import Axios from 'axios';
@@ -24,7 +23,7 @@ const useStyles = makeStyles(() => ({
 
 const default_path = '/';
 const initState = {
-  upload_path: '',
+  upload_path: '/',
   file_path: default_path,
   folder_path: default_path,
 };
@@ -33,6 +32,7 @@ export default function TaskDialog(props) {
   const { open, setOpen, drive, type, title, message } = props;
   const [state, setState] = useState(initState);
   const [snack, setSnack] = useState(false);
+  const [clicked, setClicked] = useState(null);
 
   const handleSubmit = () => {
     if (drive !== null) {
@@ -72,13 +72,6 @@ export default function TaskDialog(props) {
     setOpen(false);
   };
 
-  const handleChange = (e) => {
-    setState({
-      ...state,
-      [e.target.id]: e.target.value,
-    });
-  };
-
   const setKeyValue = (id, value) => {
     setState({
       ...state,
@@ -94,6 +87,7 @@ export default function TaskDialog(props) {
         classes={{
           paperScrollPaper: classes.paperScrollPaper,
         }}
+        onClick={() => setClicked(null)}
       >
         <DialogTitle>{title}</DialogTitle>
         <DialogContent>
@@ -113,21 +107,16 @@ export default function TaskDialog(props) {
               readOnly: true,
             }}
           />
-          <TextField
-            autoFocus
-            margin="dense"
+          <PathTextField
             id="upload_path"
-            label="上传目录"
             value={state.upload_path}
-            fullWidth
-            onChange={handleChange}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <FolderOpenOutlinedIcon />
-                </InputAdornment>
-              ),
-            }}
+            setValue={setKeyValue}
+            onlyDir={true}
+            api="listDrivePath"
+            label="上传目录"
+            drive={drive}
+            clicked={clicked}
+            setClicked={setClicked}
           />
           {type === 'file' ? (
             <PathTextField
@@ -135,6 +124,10 @@ export default function TaskDialog(props) {
               value={state.file_path}
               setValue={setKeyValue}
               onlyDir={false}
+              api="listSysPath"
+              label="文件路径"
+              clicked={clicked}
+              setClicked={setClicked}
             ></PathTextField>
           ) : (
             <PathTextField
@@ -142,6 +135,10 @@ export default function TaskDialog(props) {
               value={state.folder_path}
               setValue={setKeyValue}
               onlyDir={true}
+              api="listSysPath"
+              label="文件夹路径"
+              clicked={clicked}
+              setClicked={setClicked}
             ></PathTextField>
           )}
         </DialogContent>
