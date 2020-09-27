@@ -35,7 +35,7 @@ export default function TaskDialog(props) {
   const [clicked, setClicked] = useState(null);
 
   const handleSubmit = () => {
-    if (drive !== null) {
+    if (drive) {
       let method;
       let params = { drive_id: drive.id, upload_path: state.upload_path };
       if (type === 'file') {
@@ -96,7 +96,7 @@ export default function TaskDialog(props) {
             margin="dense"
             id="email"
             label="用户邮箱"
-            value={drive === null ? '' : drive.owner.user.email}
+            value={drive ? drive.owner.user.email : ''}
             fullWidth
             InputProps={{
               startAdornment: (

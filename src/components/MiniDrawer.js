@@ -110,32 +110,34 @@ export default function MiniDrawer() {
   const [selectedDrive, setSelectedDrive] = React.useState(null);
   const [page, setPage] = React.useState(pages.running);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      let res = await Axios.post(
-        OD_ADMIN_API,
-        {
-          jsonrpc: '2.0',
-          method: 'Onedrive.getDrives',
-          params: [],
-          id: '1',
-        },
-        { headers: { 'X-Password': 'secret' } }
-      );
-      setDrives(res.data.result);
+  const updateDrives = async () => {
+    let res = await Axios.post(
+      OD_ADMIN_API,
+      {
+        jsonrpc: '2.0',
+        method: 'Onedrive.getDrives',
+        params: [],
+        id: '1',
+      },
+      { headers: { 'X-Password': 'secret' } }
+    );
+    let result = res.data.result;
+    setDrives(result);
 
-      if (cookies.get('drive') !== undefined) {
-        setSelectedDrive(cookies.get('drive'));
-      } else {
-        let drive = res.data.result[0];
-        setSelectedDrive(drive);
-        cookies.set('drive', JSON.stringify(drive), {
-          path: '/',
-          maxAge: 3600 * 24 * 30,
-        });
-      }
-    };
-    fetchData();
+    const cookieDrive = cookies.get('drive');
+    if (cookieDrive && result.find((x) => x.id === cookieDrive.id)) {
+      setSelectedDrive(cookieDrive);
+    } else {
+      setSelectedDrive(result[0]);
+      cookies.set('drive', JSON.stringify(result[0]), {
+        path: '/',
+        maxAge: 3600 * 24 * 30,
+      });
+    }
+  };
+
+  useEffect(() => {
+    updateDrives();
   }, []);
 
   const handleDrawerOpen = () => {
@@ -184,6 +186,7 @@ export default function MiniDrawer() {
             drives={drives}
             drive={selectedDrive}
             setDrive={setSelectedDrive}
+            updateDrives={updateDrives}
           />
         </Toolbar>
       </AppBar>

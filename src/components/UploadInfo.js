@@ -338,7 +338,7 @@ export default function UploadInfo(props) {
   }, [selected]);
 
   useEffect(() => {
-    if (drive !== null) {
+    if (drive) {
       const fetchData = async () => {
         let res = await Axios.post(
           OD_ADMIN_API,
