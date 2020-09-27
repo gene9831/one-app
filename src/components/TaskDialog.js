@@ -58,7 +58,7 @@ export default function TaskDialog(props) {
           { headers: { 'X-Password': 'secret' } }
         );
         handleClose();
-        setState(initState);
+        // setState(initState);
       };
       fetchData().catch(() => {
         setSnack(true);
