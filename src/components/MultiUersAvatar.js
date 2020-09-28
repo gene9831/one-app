@@ -40,6 +40,9 @@ const useStyles = makeStyles((theme) => ({
   paperScrollPaper: {
     bottom: '10%',
   },
+  lowercase: {
+    textTransform: 'none',
+  },
 }));
 
 const Transition = React.forwardRef(function Transition(props, ref) {
@@ -117,7 +120,9 @@ export default function MultiUersAvatar(props) {
   return (
     <React.Fragment>
       <Button color="inherit" onClick={handleClickAvatar}>
-        <span>{drive ? drive.owner.user.email : 'example@email.com'}</span>
+        <span className={classes.lowercase}>
+          {drive ? drive.owner.user.email : 'example@email.com'}
+        </span>
         <ExpandMoreIcon></ExpandMoreIcon>
       </Button>
       <Popover
@@ -193,7 +198,7 @@ export default function MultiUersAvatar(props) {
           <Button onClick={handleCloseSignOut} color="secondary">
             取消
           </Button>
-          <Button onClick={handleSignOut} color="primary" autoFocus>
+          <Button onClick={handleSignOut} color="primary">
             确定
           </Button>
         </DialogActions>

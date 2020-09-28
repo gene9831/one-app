@@ -24,6 +24,54 @@ import MultiUersAvatar from './MultiUersAvatar';
 import Axios from 'axios';
 import { OD_ADMIN_API } from '../App';
 import Cookies from 'universal-cookie';
+import PaletteIcon from '@material-ui/icons/Palette';
+import Brightness4Icon from '@material-ui/icons/Brightness4';
+import Brightness7Icon from '@material-ui/icons/Brightness7';
+import PaletteDialog from './PaletteDialog';
+import { createMuiTheme, ThemeProvider } from '@material-ui/core/styles';
+import {
+  amber,
+  blue,
+  blueGrey,
+  brown,
+  cyan,
+  deepOrange,
+  deepPurple,
+  green,
+  grey,
+  indigo,
+  lightBlue,
+  lightGreen,
+  lime,
+  orange,
+  pink,
+  purple,
+  red,
+  teal,
+  yellow,
+} from '@material-ui/core/colors';
+
+const colors = {
+  amber: amber,
+  blue: blue,
+  blueGrey: blueGrey,
+  brown: brown,
+  cyan: cyan,
+  deepOrange: deepOrange,
+  deepPurple: deepPurple,
+  green: green,
+  grey: grey,
+  indigo: indigo,
+  lightBlue: lightBlue,
+  lightGreen: lightGreen,
+  lime: lime,
+  orange: orange,
+  pink: pink,
+  purple: purple,
+  red: red,
+  teal: teal,
+  yellow: yellow,
+};
 
 const drawerWidth = 240;
 
@@ -93,6 +141,26 @@ const useStyles = makeStyles((theme) => ({
   pageTitle: {
     fontSize: '1rem',
   },
+  colorBlock: {
+    width: '48px',
+    height: '48px',
+    borderRadius: '4px',
+    margin: 'auto',
+  },
+  paperScrollPaper: {
+    bottom: '10%',
+    minWidth: '380px',
+  },
+  colorContainer: {
+    '& >div': {
+      textAlign: 'center',
+      marginTop: theme.spacing(1),
+      marginBottom: theme.spacing(1),
+    },
+  },
+  selector: {
+    maxHeight: '300px',
+  },
 }));
 
 const cookies = new Cookies();
@@ -102,6 +170,18 @@ const pages = {
   finished: { value: 'finished', text: '已完成' },
 };
 
+const defaultTheme = createMuiTheme({});
+
+const createTheme = (palette) =>
+  createMuiTheme({
+    palette: palette,
+  });
+
+const initColor = {
+  primary: 'indigo',
+  secondary: 'pink',
+  dark: false,
+};
 export default function MiniDrawer() {
   const classes = useStyles();
   const theme = useTheme();
@@ -109,6 +189,9 @@ export default function MiniDrawer() {
   const [drives, setDrives] = React.useState([]);
   const [selectedDrive, setSelectedDrive] = React.useState(null);
   const [page, setPage] = React.useState(pages.running);
+  const [customTheme, setCustomTheme] = React.useState(defaultTheme);
+  const [openPalette, setOpenPalette] = React.useState(false);
+  const [customColor, setCustomColor] = React.useState(initColor);
 
   const updateDrives = async () => {
     let res = await Axios.post(
@@ -127,7 +210,7 @@ export default function MiniDrawer() {
     const cookieDrive = cookies.get('drive');
     if (cookieDrive && result.find((x) => x.id === cookieDrive.id)) {
       setSelectedDrive(cookieDrive);
-    } else {
+    } else if (result.length > 0) {
       setSelectedDrive(result[0]);
       cookies.set('drive', JSON.stringify(result[0]), {
         path: '/',
@@ -139,6 +222,26 @@ export default function MiniDrawer() {
   useEffect(() => {
     updateDrives();
   }, []);
+
+  useEffect(() => {
+    const palette = { primary: {}, secondary: {} };
+    if (customColor.dark) palette.type = 'dark';
+    palette.primary = colors[customColor.primary];
+    palette.secondary = colors[customColor.secondary];
+    setCustomTheme(createTheme(palette));
+  }, [customColor]);
+
+  useEffect(() => {
+    if (selectedDrive) {
+      const colorSchemeCookie = cookies.get('colorScheme') || {};
+      const colorScheme = colorSchemeCookie[selectedDrive.id];
+      if (colorScheme) {
+        setCustomColor(colorScheme);
+      } else {
+        setCustomColor(initColor);
+      }
+    }
+  }, [selectedDrive]);
 
   const handleDrawerOpen = () => {
     setOpen(true);
@@ -152,104 +255,167 @@ export default function MiniDrawer() {
     setPage(page);
   };
 
+  const handleClickPalette = () => {
+    setOpenPalette(true);
+  };
+
+  const handleClosePalette = () => {
+    setOpenPalette(false);
+  };
+
+  const handleChangeCustomColor = (e) => {
+    const colorScheme = {
+      ...customColor,
+      [e.target.name]: e.target.value,
+    };
+    setCustomColor(colorScheme);
+    setColorSchemeCookie(colorScheme);
+  };
+
+  const handleResetColor = () => {
+    setCustomColor(initColor);
+    setColorSchemeCookie(initColor);
+  };
+
+  const handleChangeBrightness = () => {
+    const colorScheme = {
+      ...customColor,
+      dark: !customColor.dark,
+    };
+    setCustomColor(colorScheme);
+    setColorSchemeCookie(colorScheme);
+  };
+
+  const setColorSchemeCookie = (colorScheme) => {
+    if (selectedDrive) {
+      const colorSchemeCookie = cookies.get('colorScheme') || {};
+      cookies.set(
+        'colorScheme',
+        JSON.stringify({
+          ...colorSchemeCookie,
+          [selectedDrive.id]: colorScheme,
+        }),
+        {
+          path: '/',
+          maxAge: 3600 * 24 * 30,
+        }
+      );
+    }
+  };
+
   return (
-    <div className={classes.root}>
-      <CssBaseline />
-      <AppBar
-        position="fixed"
-        className={clsx(classes.appBar, {
-          [classes.appBarShift]: open,
-        })}
-      >
-        <Toolbar>
-          <IconButton
-            edge="start"
-            color="inherit"
-            aria-label="open drawer"
-            onClick={handleDrawerOpen}
-            className={clsx(classes.menuButton, {
-              [classes.hide]: open,
-            })}
-          >
-            <MenuIcon />
-          </IconButton>
-          <Typography
-            component="h1"
-            variant="h6"
-            color="inherit"
-            noWrap
-            className={classes.title}
-          >
-            上传管理 | <span className={classes.pageTitle}>{page.text}</span>
-          </Typography>
-          <MultiUersAvatar
-            drives={drives}
-            drive={selectedDrive}
-            setDrive={setSelectedDrive}
-            updateDrives={updateDrives}
-          />
-        </Toolbar>
-      </AppBar>
-      <Drawer
-        variant="permanent"
-        className={clsx(classes.drawer, {
-          [classes.drawerOpen]: open,
-          [classes.drawerClose]: !open,
-        })}
-        classes={{
-          paper: clsx({
+    <ThemeProvider theme={customTheme}>
+      <div className={classes.root}>
+        <CssBaseline />
+        <AppBar
+          position="fixed"
+          className={clsx(classes.appBar, {
+            [classes.appBarShift]: open,
+          })}
+        >
+          <Toolbar>
+            <IconButton
+              edge="start"
+              color="inherit"
+              onClick={handleDrawerOpen}
+              className={clsx(classes.menuButton, {
+                [classes.hide]: open,
+              })}
+            >
+              <MenuIcon />
+            </IconButton>
+            <Typography
+              component="h1"
+              variant="h6"
+              color="inherit"
+              noWrap
+              className={classes.title}
+            >
+              上传管理 | <span className={classes.pageTitle}>{page.text}</span>
+            </Typography>
+            <IconButton color="inherit" onClick={handleClickPalette}>
+              <PaletteIcon />
+            </IconButton>
+            <IconButton color="inherit" onClick={handleChangeBrightness}>
+              {customColor.dark ? <Brightness4Icon /> : <Brightness7Icon />}
+            </IconButton>
+            <PaletteDialog
+              openPalette={openPalette}
+              handleClosePalette={handleClosePalette}
+              customColor={customColor}
+              handleChangeCustomColor={handleChangeCustomColor}
+              handleResetColor={handleResetColor}
+              colors={colors}
+            />
+            <MultiUersAvatar
+              drives={drives}
+              drive={selectedDrive}
+              setDrive={setSelectedDrive}
+              updateDrives={updateDrives}
+            />
+          </Toolbar>
+        </AppBar>
+        <Drawer
+          variant="permanent"
+          className={clsx(classes.drawer, {
             [classes.drawerOpen]: open,
             [classes.drawerClose]: !open,
-          }),
-        }}
-      >
-        <div className={classes.toolbar}>
-          <IconButton onClick={handleDrawerClose}>
-            {theme.direction === 'rtl' ? (
-              <ChevronRightIcon />
-            ) : (
-              <ChevronLeftIcon />
-            )}
-          </IconButton>
-        </div>
-        <Divider />
-        <List>
-          <ListItem
-            button
-            selected={page === pages.running}
-            onClick={() => handleClickPage(pages.running)}
-          >
-            <ListItemIcon>
-              <BackupIcon></BackupIcon>
-            </ListItemIcon>
-            <ListItemText primary={pages.running.text} />
-          </ListItem>
-          <ListItem
-            button
-            selected={page === pages.stopped}
-            onClick={() => handleClickPage(pages.stopped)}
-          >
-            <ListItemIcon>
-              <CloudOffIcon></CloudOffIcon>
-            </ListItemIcon>
-            <ListItemText primary={pages.stopped.text} />
-          </ListItem>
-          <ListItem
-            button
-            selected={page === pages.finished}
-            onClick={() => handleClickPage(pages.finished)}
-          >
-            <ListItemIcon>
-              <CloudDoneIcon></CloudDoneIcon>
-            </ListItemIcon>
-            <ListItemText primary={pages.finished.text} />
-          </ListItem>
-        </List>
-      </Drawer>
-      <Container className={classes.content}>
-        <div className={classes.toolbar} />
-        <UploadInfo drive={selectedDrive} pageName={page.value}></UploadInfo>
-      </Container>
-    </div>
+          })}
+          classes={{
+            paper: clsx({
+              [classes.drawerOpen]: open,
+              [classes.drawerClose]: !open,
+            }),
+          }}
+        >
+          <div className={classes.toolbar}>
+            <IconButton onClick={handleDrawerClose}>
+              {theme.direction === 'rtl' ? (
+                <ChevronRightIcon />
+              ) : (
+                <ChevronLeftIcon />
+              )}
+            </IconButton>
+          </div>
+          <Divider />
+          <List>
+            <ListItem
+              button
+              selected={page === pages.running}
+              onClick={() => handleClickPage(pages.running)}
+            >
+              <ListItemIcon>
+                <BackupIcon></BackupIcon>
+              </ListItemIcon>
+              <ListItemText primary={pages.running.text} />
+            </ListItem>
+            <ListItem
+              button
+              selected={page === pages.stopped}
+              onClick={() => handleClickPage(pages.stopped)}
+            >
+              <ListItemIcon>
+                <CloudOffIcon></CloudOffIcon>
+              </ListItemIcon>
+              <ListItemText primary={pages.stopped.text} />
+            </ListItem>
+            <ListItem
+              button
+              selected={page === pages.finished}
+              onClick={() => handleClickPage(pages.finished)}
+            >
+              <ListItemIcon>
+                <CloudDoneIcon></CloudDoneIcon>
+              </ListItemIcon>
+              <ListItemText primary={pages.finished.text} />
+            </ListItem>
+          </List>
+        </Drawer>
+        <Container className={classes.content}>
+          <div className={classes.toolbar} />
+          <UploadInfo drive={selectedDrive} pageName={page.value}></UploadInfo>
+        </Container>
+      </div>
+    </ThemeProvider>
   );
 }

@@ -261,10 +261,6 @@ const useStyles = makeStyles((theme) => ({
   button: {
     margin: theme.spacing(1),
   },
-  green: {
-    color: '#4caf50',
-    borderColor: '#81c784',
-  },
 }));
 
 const compare = () => {
@@ -399,8 +395,8 @@ export default function UploadInfo(props) {
       {pageName === 'stopped' ? (
         <Button
           variant="outlined"
-          color="default"
-          className={clsx(classes.button, classes.green)}
+          color="primary"
+          className={classes.button}
           startIcon={<PlayCircleOutlineIcon />}
           onClick={() => handleOperate('startUpload')}
         >
@@ -412,8 +408,8 @@ export default function UploadInfo(props) {
       {pageName === 'running' ? (
         <Button
           variant="outlined"
-          color="default"
-          className={clsx(classes.button, classes.green)}
+          color="primary"
+          className={classes.button}
           startIcon={<PauseCircleOutlineIcon />}
           onClick={() => handleOperate('stopUpload')}
         >
