@@ -25,7 +25,7 @@ import PlayCircleOutlineIcon from '@material-ui/icons/PlayCircleOutline';
 import PauseCircleOutlineIcon from '@material-ui/icons/PauseCircleOutline';
 import { OD_ADMIN_API } from '../App';
 
-const useRowStyles = makeStyles({
+const useRowStyles = makeStyles((theme) => ({
   root: {
     '& > *': {
       borderBottom: 'unset',
@@ -43,18 +43,18 @@ const useRowStyles = makeStyles({
     },
   },
   green: {
-    color: 'green',
+    color: theme.palette.success.main,
   },
   red: {
-    color: 'red',
+    color: theme.palette.error.main,
   },
   div: {
     position: 'absolute',
-    backgroundColor: '#bbdefb',
+    backgroundColor: theme.palette.info.light,
     opacity: 0.6,
     transition: 'width 1s',
   },
-});
+}));
 
 function Row(props) {
   const {

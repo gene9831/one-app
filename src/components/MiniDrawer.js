@@ -337,7 +337,7 @@ export default function MiniDrawer() {
               <PaletteIcon />
             </IconButton>
             <IconButton color="inherit" onClick={handleChangeBrightness}>
-              {customColor.dark ? <Brightness4Icon /> : <Brightness7Icon />}
+              {customColor.dark ? <Brightness7Icon /> : <Brightness4Icon />}
             </IconButton>
             <PaletteDialog
               openPalette={openPalette}

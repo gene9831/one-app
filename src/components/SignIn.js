@@ -12,7 +12,6 @@ import TextField from '@material-ui/core/TextField';
 import CircularProgress from '@material-ui/core/CircularProgress';
 import CheckIcon from '@material-ui/icons/Check';
 import Fab from '@material-ui/core/Fab';
-import { green } from '@material-ui/core/colors';
 import clsx from 'clsx';
 import PriorityHighIcon from '@material-ui/icons/PriorityHigh';
 const useStyles = makeStyles((theme) => ({
@@ -30,17 +29,17 @@ const useStyles = makeStyles((theme) => ({
     textAlign: 'center',
   },
   buttonSuccess: {
-    backgroundColor: green[500],
+    backgroundColor: theme.palette.success.main,
     '&:hover': {
-      backgroundColor: green[500],
+      backgroundColor: theme.palette.success.main,
     },
     width: '46px',
     height: '46px',
   },
   buttonFailed: {
-    backgroundColor: '#ff1744',
+    backgroundColor: theme.palette.error.main,
     '&:hover': {
-      backgroundColor: '#ff1744',
+      backgroundColor: theme.palette.error.main,
     },
     width: '46px',
     height: '46px',
