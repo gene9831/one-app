@@ -7,3 +7,7 @@
 ## 上传中
 
 ![上传中](./uploading.png)
+
+## 自定义主题
+
+![自定义主题](./custom-theme.png)
