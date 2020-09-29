@@ -89,7 +89,7 @@ function Row(props) {
     if (mb < 1000) {
       return mb.toFixed(1) + 'MB';
     }
-    return (mb / 1024).toFixed(1) + 'GB';
+    return (mb / 1024).toFixed(2) + 'GB';
   };
 
   const sTomhd = (seconds) => {
