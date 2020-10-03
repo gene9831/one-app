@@ -23,55 +23,10 @@ import UploadInfo from './UploadInfo';
 import MultiUersAvatar from './MultiUersAvatar';
 import Axios from 'axios';
 import { OD_ADMIN_API } from '../App';
-import Cookies from 'universal-cookie';
-import PaletteIcon from '@material-ui/icons/Palette';
-import Brightness4Icon from '@material-ui/icons/Brightness4';
-import Brightness7Icon from '@material-ui/icons/Brightness7';
-import PaletteDialog from './PaletteDialog';
+import cookies from '../cookies';
+import Palette from './Palette';
 import { createMuiTheme, ThemeProvider } from '@material-ui/core/styles';
-import {
-  amber,
-  blue,
-  blueGrey,
-  brown,
-  cyan,
-  deepOrange,
-  deepPurple,
-  green,
-  grey,
-  indigo,
-  lightBlue,
-  lightGreen,
-  lime,
-  orange,
-  pink,
-  purple,
-  red,
-  teal,
-  yellow,
-} from '@material-ui/core/colors';
-
-const colors = {
-  amber: amber,
-  blue: blue,
-  blueGrey: blueGrey,
-  brown: brown,
-  cyan: cyan,
-  deepOrange: deepOrange,
-  deepPurple: deepPurple,
-  green: green,
-  grey: grey,
-  indigo: indigo,
-  lightBlue: lightBlue,
-  lightGreen: lightGreen,
-  lime: lime,
-  orange: orange,
-  pink: pink,
-  purple: purple,
-  red: red,
-  teal: teal,
-  yellow: yellow,
-};
+import { colors as defaultColors } from '@material-ui/core';
 
 const drawerWidth = 240;
 
@@ -141,29 +96,8 @@ const useStyles = makeStyles((theme) => ({
   pageTitle: {
     fontSize: '1rem',
   },
-  colorBlock: {
-    width: '48px',
-    height: '48px',
-    borderRadius: '4px',
-    margin: 'auto',
-  },
-  paperScrollPaper: {
-    bottom: '10%',
-    minWidth: '380px',
-  },
-  colorContainer: {
-    '& >div': {
-      textAlign: 'center',
-      marginTop: theme.spacing(1),
-      marginBottom: theme.spacing(1),
-    },
-  },
-  selector: {
-    maxHeight: '300px',
-  },
 }));
 
-const cookies = new Cookies();
 const pages = {
   running: { value: 'running', text: '上传中' },
   stopped: { value: 'stopped', text: '已暂停' },
@@ -172,16 +106,15 @@ const pages = {
 
 const defaultTheme = createMuiTheme({});
 
-const createTheme = (palette) =>
-  createMuiTheme({
-    palette: palette,
-  });
+const colors = Object.assign({}, defaultColors);
+delete colors.common;
 
-const initColor = {
+const initColorScheme = {
   primary: 'indigo',
   secondary: 'pink',
   dark: false,
 };
+
 export default function MiniDrawer() {
   const classes = useStyles();
   const theme = useTheme();
@@ -189,9 +122,8 @@ export default function MiniDrawer() {
   const [drives, setDrives] = React.useState([]);
   const [selectedDrive, setSelectedDrive] = React.useState(null);
   const [page, setPage] = React.useState(pages.running);
+  const [colorScheme, setColorScheme] = React.useState(initColorScheme);
   const [customTheme, setCustomTheme] = React.useState(defaultTheme);
-  const [openPalette, setOpenPalette] = React.useState(false);
-  const [customColor, setCustomColor] = React.useState(initColor);
 
   const updateDrives = async () => {
     let res = await Axios.post(
@@ -213,35 +145,31 @@ export default function MiniDrawer() {
     } else if (result.length > 0) {
       setSelectedDrive(result[0]);
       cookies.set('drive', JSON.stringify(result[0]), {
-        path: '/',
         maxAge: 3600 * 24 * 30,
       });
     }
   };
 
+  const getColorSchemeFromCookie = () => {
+    const scheme = cookies.get('colorScheme');
+    if (scheme) {
+      setColorScheme(scheme);
+      cookies.set('colorScheme', scheme, { maxAge: 3600 * 24 * 30 });
+    }
+  };
+
   useEffect(() => {
     updateDrives();
+    getColorSchemeFromCookie();
   }, []);
 
   useEffect(() => {
     const palette = { primary: {}, secondary: {} };
-    if (customColor.dark) palette.type = 'dark';
-    palette.primary = colors[customColor.primary];
-    palette.secondary = colors[customColor.secondary];
-    setCustomTheme(createTheme(palette));
-  }, [customColor]);
-
-  useEffect(() => {
-    if (selectedDrive) {
-      const colorSchemeCookie = cookies.get('colorScheme') || {};
-      const colorScheme = colorSchemeCookie[selectedDrive.id];
-      if (colorScheme) {
-        setCustomColor(colorScheme);
-      } else {
-        setCustomColor(initColor);
-      }
-    }
-  }, [selectedDrive]);
+    if (colorScheme.dark) palette.type = 'dark';
+    palette.primary = colors[colorScheme.primary];
+    palette.secondary = colors[colorScheme.secondary];
+    setCustomTheme(createMuiTheme({ palette: palette }));
+  }, [colorScheme]);
 
   const handleDrawerOpen = () => {
     setOpen(true);
@@ -253,54 +181,6 @@ export default function MiniDrawer() {
 
   const handleClickPage = (page) => {
     setPage(page);
-  };
-
-  const handleClickPalette = () => {
-    setOpenPalette(true);
-  };
-
-  const handleClosePalette = () => {
-    setOpenPalette(false);
-  };
-
-  const handleChangeCustomColor = (e) => {
-    const colorScheme = {
-      ...customColor,
-      [e.target.name]: e.target.value,
-    };
-    setCustomColor(colorScheme);
-    setColorSchemeCookie(colorScheme);
-  };
-
-  const handleResetColor = () => {
-    setCustomColor(initColor);
-    setColorSchemeCookie(initColor);
-  };
-
-  const handleChangeBrightness = () => {
-    const colorScheme = {
-      ...customColor,
-      dark: !customColor.dark,
-    };
-    setCustomColor(colorScheme);
-    setColorSchemeCookie(colorScheme);
-  };
-
-  const setColorSchemeCookie = (colorScheme) => {
-    if (selectedDrive) {
-      const colorSchemeCookie = cookies.get('colorScheme') || {};
-      cookies.set(
-        'colorScheme',
-        JSON.stringify({
-          ...colorSchemeCookie,
-          [selectedDrive.id]: colorScheme,
-        }),
-        {
-          path: '/',
-          maxAge: 3600 * 24 * 30,
-        }
-      );
-    }
   };
 
   return (
@@ -333,18 +213,10 @@ export default function MiniDrawer() {
             >
               上传管理 | <span className={classes.pageTitle}>{page.text}</span>
             </Typography>
-            <IconButton color="inherit" onClick={handleClickPalette}>
-              <PaletteIcon />
-            </IconButton>
-            <IconButton color="inherit" onClick={handleChangeBrightness}>
-              {customColor.dark ? <Brightness7Icon /> : <Brightness4Icon />}
-            </IconButton>
-            <PaletteDialog
-              openPalette={openPalette}
-              handleClosePalette={handleClosePalette}
-              customColor={customColor}
-              handleChangeCustomColor={handleChangeCustomColor}
-              handleResetColor={handleResetColor}
+            <Palette
+              colorScheme={colorScheme}
+              setColorScheme={setColorScheme}
+              initColorScheme={initColorScheme}
               colors={colors}
             />
             <MultiUersAvatar
