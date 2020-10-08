@@ -11,9 +11,8 @@ import DialogTitle from '@material-ui/core/DialogTitle';
 import InputAdornment from '@material-ui/core/InputAdornment';
 import AccountCircleOutlinedIcon from '@material-ui/icons/AccountCircleOutlined';
 import Snackbar from '@material-ui/core/Snackbar';
-import Axios from 'axios';
-import { OD_ADMIN_API } from '../App';
 import PathTextField from './PathTextField';
+import { jsonrpcAdmin } from '../jsonrpc';
 
 const useStyles = makeStyles(() => ({
   paperScrollPaper: {
@@ -47,16 +46,7 @@ export default function TaskDialog(props) {
       }
 
       const fetchData = async () => {
-        await Axios.post(
-          OD_ADMIN_API,
-          {
-            jsonrpc: '2.0',
-            method: method,
-            params: params,
-            id: '1',
-          },
-          { headers: { 'X-Password': 'secret' } }
-        );
+        await jsonrpcAdmin(method, params);
         handleClose();
         // setState(initState);
       };

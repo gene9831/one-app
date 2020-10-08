@@ -21,12 +21,11 @@ import CloudDoneIcon from '@material-ui/icons/CloudDone';
 import CloudOffIcon from '@material-ui/icons/CloudOff';
 import UploadInfo from './UploadInfo';
 import MultiUersAvatar from './MultiUersAvatar';
-import Axios from 'axios';
-import { OD_ADMIN_API } from '../App';
 import cookies from '../cookies';
 import Palette from './Palette';
 import { createMuiTheme, ThemeProvider } from '@material-ui/core/styles';
 import { colors as defaultColors } from '@material-ui/core';
+import { jsonrpcAdmin } from '../jsonrpc.js';
 
 const drawerWidth = 240;
 
@@ -126,17 +125,9 @@ export default function MiniDrawer() {
   const [customTheme, setCustomTheme] = React.useState(defaultTheme);
 
   const updateDrives = async () => {
-    let res = await Axios.post(
-      OD_ADMIN_API,
-      {
-        jsonrpc: '2.0',
-        method: 'Onedrive.getDrives',
-        params: [],
-        id: '1',
-      },
-      { headers: { 'X-Password': 'secret' } }
-    );
+    let res = await jsonrpcAdmin('Onedrive.getDrives');
     let result = res.data.result;
+    console.log(result);
     setDrives(result);
 
     const cookieDrive = cookies.get('drive');

@@ -18,8 +18,7 @@ import TableBody from '@material-ui/core/TableBody';
 import TableCell from '@material-ui/core/TableCell';
 import TableContainer from '@material-ui/core/TableContainer';
 import TableRow from '@material-ui/core/TableRow';
-import Axios from 'axios';
-import { OD_ADMIN_API } from '../App';
+import { jsonrpcAdmin } from '../jsonrpc';
 
 const useStyles = makeStyles((theme) => ({
   popper: {
@@ -110,15 +109,9 @@ export default function PathTextField(props) {
 
   useEffect(() => {
     const fetchData = async () => {
-      let res = await Axios.post(
-        OD_ADMIN_API,
-        {
-          jsonrpc: '2.0',
-          method: 'Onedrive.' + api,
-          params: drive ? [drive.id, value] : [value],
-          id: '1',
-        },
-        { headers: { 'X-Password': 'secret' } }
+      let res = await jsonrpcAdmin(
+        'Onedrive.' + api,
+        drive ? [drive.id, value] : [value]
       );
       setPathList(initPathList.concat(res.data.result));
     };

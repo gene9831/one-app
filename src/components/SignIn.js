@@ -3,8 +3,6 @@ import PropTypes from 'prop-types';
 import Button from '@material-ui/core/Button';
 import { makeStyles } from '@material-ui/core/styles';
 import Typography from '@material-ui/core/Typography';
-import Axios from 'axios';
-import { OD_ADMIN_API } from '../App';
 import Stepper from '@material-ui/core/Stepper';
 import Step from '@material-ui/core/Step';
 import StepLabel from '@material-ui/core/StepLabel';
@@ -14,6 +12,8 @@ import CheckIcon from '@material-ui/icons/Check';
 import Fab from '@material-ui/core/Fab';
 import clsx from 'clsx';
 import PriorityHighIcon from '@material-ui/icons/PriorityHigh';
+import { jsonrpcAdmin } from '../jsonrpc';
+
 const useStyles = makeStyles((theme) => ({
   root: {
     width: '100%',
@@ -63,15 +63,7 @@ export default function SignIn(props) {
 
   useEffect(() => {
     const fetchData = async () => {
-      let res = await Axios.post(
-        OD_ADMIN_API,
-        {
-          jsonrpc: '2.0',
-          method: 'Onedrive.getSignInUrl',
-          id: '1',
-        },
-        { headers: { 'X-Password': 'secret' } }
-      );
+      let res = await jsonrpcAdmin('Onedrive.getSignInUrl');
       setSignInUrl(res.data.result);
     };
     fetchData();
@@ -80,16 +72,7 @@ export default function SignIn(props) {
   const handleNext = () => {
     if (activeStep === 1) {
       const fetchData = async () => {
-        let res = await Axios.post(
-          OD_ADMIN_API,
-          {
-            jsonrpc: '2.0',
-            method: 'Onedrive.putCallbackUrl',
-            params: [callbackUrl],
-            id: '1',
-          },
-          { headers: { 'X-Password': 'secret' } }
-        );
+        let res = await jsonrpcAdmin('Onedrive.putCallbackUrl', [callbackUrl]);
         let res1 = res.data.result;
         setResult(res.data.result);
 

@@ -15,7 +15,6 @@ import Paper from '@material-ui/core/Paper';
 import KeyboardArrowDownIcon from '@material-ui/icons/KeyboardArrowDown';
 import KeyboardArrowUpIcon from '@material-ui/icons/KeyboardArrowUp';
 import CircularProgressWithLabel from './CircularProgressWithLabel';
-import Axios from 'axios';
 import { Button, Typography } from '@material-ui/core';
 import DeleteOutlineIcon from '@material-ui/icons/DeleteOutline';
 import AddCircleOutlineIcon from '@material-ui/icons/AddCircleOutline';
@@ -23,7 +22,7 @@ import Checkbox from '@material-ui/core/Checkbox';
 import TaskDialog from './TaskDialog';
 import PlayCircleOutlineIcon from '@material-ui/icons/PlayCircleOutline';
 import PauseCircleOutlineIcon from '@material-ui/icons/PauseCircleOutline';
-import { OD_ADMIN_API } from '../App';
+import { jsonrpcAdmin } from '../jsonrpc';
 
 const useRowStyles = makeStyles((theme) => ({
   root: {
@@ -304,16 +303,7 @@ export default function UploadInfo(props) {
   const handleOperate = (type) => {
     if (selected.length === 0) return;
     const fetchData = async () => {
-      await Axios.post(
-        OD_ADMIN_API,
-        {
-          jsonrpc: '2.0',
-          method: 'Onedrive.' + type,
-          params: { uids: selected },
-          id: '1',
-        },
-        { headers: { 'X-Password': 'secret' } }
-      );
+      await jsonrpcAdmin('Onedrive.' + type, { uids: selected });
       setSelected([]);
     };
     fetchData();
@@ -336,16 +326,10 @@ export default function UploadInfo(props) {
   useEffect(() => {
     if (drive) {
       const fetchData = async () => {
-        let res = await Axios.post(
-          OD_ADMIN_API,
-          {
-            jsonrpc: '2.0',
-            method: 'Onedrive.uploadStatus',
-            params: [drive.id, pageName],
-            id: '1',
-          },
-          { headers: { 'X-Password': 'secret' } }
-        );
+        let res = await jsonrpcAdmin('Onedrive.uploadStatus', [
+          drive.id,
+          pageName,
+        ]);
         setRows(res.data.result.sort(compare()));
       };
       fetchData();

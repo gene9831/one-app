@@ -24,8 +24,7 @@ import DialogContentText from '@material-ui/core/DialogContentText';
 import DialogTitle from '@material-ui/core/DialogTitle';
 import PersonAddIcon from '@material-ui/icons/PersonAdd';
 import ExitToAppIcon from '@material-ui/icons/ExitToApp';
-import Axios from 'axios';
-import { OD_ADMIN_API } from '../App';
+import { jsonrpcAdmin } from '../jsonrpc';
 const useStyles = makeStyles((theme) => ({
   listItemIcon: {
     minWidth: '2.5rem',
@@ -81,16 +80,7 @@ export default function MultiUersAvatar(props) {
   const handleSignOut = () => {
     if (drive) {
       const fetchData = async () => {
-        await Axios.post(
-          OD_ADMIN_API,
-          {
-            jsonrpc: '2.0',
-            method: 'Onedrive.signOut',
-            params: [drive.id],
-            id: '1',
-          },
-          { headers: { 'X-Password': 'secret' } }
-        );
+        await jsonrpcAdmin('Onedrive.signOut', [drive.id]);
         updateDrives();
       };
       fetchData();
