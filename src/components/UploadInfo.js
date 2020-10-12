@@ -22,7 +22,7 @@ import Checkbox from '@material-ui/core/Checkbox';
 import TaskDialog from './TaskDialog';
 import PlayCircleOutlineIcon from '@material-ui/icons/PlayCircleOutline';
 import PauseCircleOutlineIcon from '@material-ui/icons/PauseCircleOutline';
-import { jsonrpcAdmin } from '../jsonrpc';
+import rpcRequest from '../jsonrpc';
 
 const useRowStyles = makeStyles((theme) => ({
   root: {
@@ -303,7 +303,10 @@ export default function UploadInfo(props) {
   const handleOperate = (type) => {
     if (selected.length === 0) return;
     const fetchData = async () => {
-      await jsonrpcAdmin('Onedrive.' + type, { uids: selected });
+      await rpcRequest('Onedrive.' + type, {
+        params: { uids: selected },
+        require_auth: true,
+      });
       setSelected([]);
     };
     fetchData();
@@ -326,10 +329,10 @@ export default function UploadInfo(props) {
   useEffect(() => {
     if (drive) {
       const fetchData = async () => {
-        let res = await jsonrpcAdmin('Onedrive.uploadStatus', [
-          drive.id,
-          pageName,
-        ]);
+        let res = await rpcRequest('Onedrive.uploadStatus', {
+          params: [drive.id, pageName],
+          require_auth: true,
+        });
         setRows(res.data.result.sort(compare()));
       };
       fetchData();
@@ -386,9 +389,7 @@ export default function UploadInfo(props) {
         >
           继续
         </Button>
-      ) : (
-        ''
-      )}
+      ) : null}
       {pageName === 'running' ? (
         <Button
           variant="outlined"
@@ -399,9 +400,7 @@ export default function UploadInfo(props) {
         >
           暂停
         </Button>
-      ) : (
-        ''
-      )}
+      ) : null}
       <Button
         variant="outlined"
         color="secondary"

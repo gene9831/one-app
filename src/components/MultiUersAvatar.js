@@ -9,7 +9,6 @@ import ListItemText from '@material-ui/core/ListItemText';
 import { makeStyles } from '@material-ui/core/styles';
 import CloudIcon from '@material-ui/icons/Cloud';
 import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
-import cookies from '../cookies';
 import Typography from '@material-ui/core/Typography';
 import IconButton from '@material-ui/core/IconButton';
 import Toolbar from '@material-ui/core/Toolbar';
@@ -24,7 +23,7 @@ import DialogContentText from '@material-ui/core/DialogContentText';
 import DialogTitle from '@material-ui/core/DialogTitle';
 import PersonAddIcon from '@material-ui/icons/PersonAdd';
 import ExitToAppIcon from '@material-ui/icons/ExitToApp';
-import { jsonrpcAdmin } from '../jsonrpc';
+import rpcRequest from '../jsonrpc';
 const useStyles = makeStyles((theme) => ({
   listItemIcon: {
     minWidth: '2.5rem',
@@ -80,7 +79,10 @@ export default function MultiUersAvatar(props) {
   const handleSignOut = () => {
     if (drive) {
       const fetchData = async () => {
-        await jsonrpcAdmin('Onedrive.signOut', [drive.id]);
+        await rpcRequest('Onedrive.signOut', {
+          params: [drive.id],
+          require_auth: true,
+        });
         updateDrives();
       };
       fetchData();
@@ -99,10 +101,6 @@ export default function MultiUersAvatar(props) {
 
   const handleClickUser = (drive) => {
     setDrive(drive);
-    cookies.set('drive', JSON.stringify(drive), {
-      path: '/',
-      maxAge: 3600 * 24 * 30,
-    });
     handleCloseAvatar();
   };
 

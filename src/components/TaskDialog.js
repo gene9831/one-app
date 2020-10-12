@@ -12,7 +12,7 @@ import InputAdornment from '@material-ui/core/InputAdornment';
 import AccountCircleOutlinedIcon from '@material-ui/icons/AccountCircleOutlined';
 import Snackbar from '@material-ui/core/Snackbar';
 import PathTextField from './PathTextField';
-import { jsonrpcAdmin } from '../jsonrpc';
+import rpcRequest from '../jsonrpc';
 
 const useStyles = makeStyles(() => ({
   paperScrollPaper: {
@@ -46,7 +46,7 @@ export default function TaskDialog(props) {
       }
 
       const fetchData = async () => {
-        await jsonrpcAdmin(method, params);
+        await rpcRequest(method, { params: params, require_auth: true });
         handleClose();
         // setState(initState);
       };

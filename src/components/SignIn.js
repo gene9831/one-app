@@ -12,7 +12,7 @@ import CheckIcon from '@material-ui/icons/Check';
 import Fab from '@material-ui/core/Fab';
 import clsx from 'clsx';
 import PriorityHighIcon from '@material-ui/icons/PriorityHigh';
-import { jsonrpcAdmin } from '../jsonrpc';
+import rpcRequest from '../jsonrpc';
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -63,7 +63,9 @@ export default function SignIn(props) {
 
   useEffect(() => {
     const fetchData = async () => {
-      let res = await jsonrpcAdmin('Onedrive.getSignInUrl');
+      let res = await rpcRequest('Onedrive.getSignInUrl', {
+        require_auth: true,
+      });
       setSignInUrl(res.data.result);
     };
     fetchData();
@@ -72,7 +74,10 @@ export default function SignIn(props) {
   const handleNext = () => {
     if (activeStep === 1) {
       const fetchData = async () => {
-        let res = await jsonrpcAdmin('Onedrive.putCallbackUrl', [callbackUrl]);
+        let res = await rpcRequest('Onedrive.putCallbackUrl', {
+          params: [callbackUrl],
+          require_auth: true,
+        });
         let res1 = res.data.result;
         setResult(res.data.result);
 

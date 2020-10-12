@@ -18,7 +18,7 @@ import TableBody from '@material-ui/core/TableBody';
 import TableCell from '@material-ui/core/TableCell';
 import TableContainer from '@material-ui/core/TableContainer';
 import TableRow from '@material-ui/core/TableRow';
-import { jsonrpcAdmin } from '../jsonrpc';
+import rpcRequest from '../jsonrpc';
 
 const useStyles = makeStyles((theme) => ({
   popper: {
@@ -109,10 +109,10 @@ export default function PathTextField(props) {
 
   useEffect(() => {
     const fetchData = async () => {
-      let res = await jsonrpcAdmin(
-        'Onedrive.' + api,
-        drive ? [drive.id, value] : [value]
-      );
+      let res = await rpcRequest('Onedrive.' + api, {
+        params: drive ? [drive.id, value] : [value],
+        require_auth: true,
+      });
       setPathList(initPathList.concat(res.data.result));
     };
     fetchData();
