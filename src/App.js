@@ -24,9 +24,15 @@ function App() {
   };
 
   React.useEffect(() => {
+    const tokenCookie = cookies.get('token');
+    if (!tokenCookie) {
+      // 没有token
+      setLogged(false);
+      return;
+    }
     const fetchData = async () => {
       let res = await rpcRequest('Auth.validateToken', {
-        params: [cookies.get('token')],
+        params: [tokenCookie],
       });
       handleWriteToken(res.data.result);
     };
