@@ -114,7 +114,9 @@ export default function MainDrawer(props) {
   const { title, subTitle, pageProps, endComponents } = props;
   const { page, setPage, pages } = pageProps;
 
-  const [openDrawer, setOpenDrawer] = useState(pages.length !== 0);
+  const [openDrawer, setOpenDrawer] = useState(
+    window.innerWidth >= theme.breakpoints.values.lg
+  );
   const [customTheme, setCustomTheme] = useState(theme);
   const [customPalette, setCustomPalette] = useState(initPalette);
   // const [progress, setProgress] = React.useState(0);
