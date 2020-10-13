@@ -1,7 +1,7 @@
 import Axios from 'axios';
 import cookies from './cookies';
-const JSONRPC_API = 'http://localhost:5000/api/';
-// const JSONRPC_API = 'http://api.onedrive.local/api/';
+// const JSONRPC_API = 'http://localhost:5000/api/';
+const JSONRPC_API = 'http://onedrive.local/api/';
 
 const rpcRequest = (method, { params, require_auth } = {}) => {
   return Axios.post(

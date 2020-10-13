@@ -31,9 +31,6 @@ export default function UploadManage(props) {
       setDrive(cookieDrive);
     } else if (result.length > 0) {
       setDrive(result[0]);
-      cookies.set('drive', JSON.stringify(result[0]), {
-        maxAge: 3600 * 24 * 30,
-      });
     }
   };
 
@@ -46,10 +43,7 @@ export default function UploadManage(props) {
   useEffect(() => {
     if (drive) {
       // 当drive不为null，更新cookie。刷新页面cookie maxAge也会更新
-      cookies.set('drive', JSON.stringify(drive), {
-        path: '/',
-        maxAge: 3600 * 24 * 30,
-      });
+      cookies.set('drive', JSON.stringify(drive), { maxAge: 3600 * 24 * 30 });
     }
   }, [drive]);
 
