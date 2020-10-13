@@ -32,7 +32,7 @@ const useStyles = makeStyles((theme) => ({
 
 export default function Login(props) {
   const classes = useStyles();
-  const { setToken } = props;
+  const { handleWriteToken } = props;
   const [passwrod, setPassword] = React.useState('');
   const [error, setError] = React.useState('');
 
@@ -45,13 +45,13 @@ export default function Login(props) {
     setError('');
     const fetchData = async () => {
       let res = await rpcRequest('Auth.login', { params: [passwrod] });
-      setToken(res.data.result);
+      handleWriteToken(res.data.result);
     };
     fetchData().catch((e) => {
       setError(
         e.response
           ? e.response.status >= 500
-            ? '服务器错误'
+            ? '服务器发生错误'
             : '密码错误'
           : '网络错误'
       );
@@ -102,5 +102,5 @@ export default function Login(props) {
 }
 
 Login.propTypes = {
-  setToken: PropTypes.func.isRequired,
+  handleWriteToken: PropTypes.func.isRequired,
 };

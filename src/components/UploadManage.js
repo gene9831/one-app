@@ -1,4 +1,5 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect } from 'react';
+import PropTypes from 'prop-types';
 import MainDrawer from './MainDrawer';
 import BackupIcon from '@material-ui/icons/Backup';
 import CloudDoneIcon from '@material-ui/icons/CloudDone';
@@ -14,16 +15,15 @@ const pages = [
   { value: 'finished', text: '已完成', Icon: CloudDoneIcon },
 ];
 
-export default function UploadManage() {
+export default function UploadManage(props) {
+  const { authed } = props;
   const [drives, setDrives] = React.useState([]);
   const [drive, setDrive] = React.useState(null);
   const [page, setPage] = React.useState(pages[0]);
-  const didMount = useRef(true);
 
   const updateDrives = async () => {
     let res = await rpcRequest('Onedrive.getDrives', { require_auth: true });
     let result = res.data.result;
-    console.log(result);
     setDrives(result);
 
     const cookieDrive = cookies.get('drive');
@@ -38,19 +38,18 @@ export default function UploadManage() {
   };
 
   useEffect(() => {
-    updateDrives();
-  }, []);
+    if (authed) {
+      updateDrives();
+    }
+  }, [authed]);
 
   useEffect(() => {
-    if (didMount.current) {
-      didMount.current = false;
-      console.log('didMount');
-    } else {
+    if (drive) {
+      // 当drive不为null，更新cookie。刷新页面cookie maxAge也会更新
       cookies.set('drive', JSON.stringify(drive), {
         path: '/',
         maxAge: 3600 * 24 * 30,
       });
-      console.log('didUpate');
     }
   }, [drive]);
 
@@ -63,17 +62,21 @@ export default function UploadManage() {
         setPage: setPage,
         pages: pages,
       }}
-      endComponents={[
+      endComponents={
         <MultiUersAvatar
           key="MultiUersAvatar"
           drives={drives}
           drive={drive}
           setDrive={setDrive}
           updateDrives={updateDrives}
-        />,
-      ]}
+        />
+      }
     >
       <UploadInfo drive={drive} pageName={page.value}></UploadInfo>
     </MainDrawer>
   );
 }
+
+UploadManage.propTypes = {
+  authed: PropTypes.bool.isRequired,
+};

@@ -174,7 +174,7 @@ export default function MainDrawer(props) {
               setCustomPalette={setCustomPalette}
               initPalette={initPalette}
             />
-            {[endComponents]}
+            {endComponents}
           </Toolbar>
         </AppBar>
         {pages.length > 0 ? (
@@ -245,7 +245,7 @@ MainDrawer.propTypes = {
       })
     ),
   }),
-  endComponents: PropTypes.array.isRequired,
+  endComponents: PropTypes.any,
   children: PropTypes.any,
 };
 
@@ -255,5 +255,4 @@ MainDrawer.defaultProps = {
     setPage: () => {},
     pages: [],
   },
-  endComponents: [],
 };

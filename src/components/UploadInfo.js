@@ -176,7 +176,9 @@ function Row(props) {
         <TableCell align="center">
           {/* 剩余时间 */}
           {row.status === 'running'
-            ? sTomhd((row.size - row.finished) / row.speed)
+            ? row.speed === 0
+              ? '准备中'
+              : sTomhd((row.size - row.finished) / row.speed)
             : '---'}
         </TableCell>
         <TableCell align="center">
