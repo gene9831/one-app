@@ -11,6 +11,7 @@ import TableCell from '@material-ui/core/TableCell';
 import TableContainer from '@material-ui/core/TableContainer';
 import TableHead from '@material-ui/core/TableHead';
 import TableRow from '@material-ui/core/TableRow';
+import TablePagination from '@material-ui/core/TablePagination';
 import Paper from '@material-ui/core/Paper';
 import KeyboardArrowDownIcon from '@material-ui/icons/KeyboardArrowDown';
 import KeyboardArrowUpIcon from '@material-ui/icons/KeyboardArrowUp';
@@ -262,23 +263,25 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-const compare = () => {
-  return function (obj1, obj2) {
-    var name1 = obj1.filename.toLowerCase();
-    var name2 = obj2.filename.toLowerCase();
-    if (obj1.status === 'running' && obj2.status === 'pending') return -1;
-    if (obj1.status === 'pending' && obj2.status === 'running') return 1;
-    if (name1 < name2) return -1;
-    else if (name1 === name2) return 0;
-    else return 1;
-  };
-};
+// const compare = () => {
+//   return function (obj1, obj2) {
+//     var name1 = obj1.filename.toLowerCase();
+//     var name2 = obj2.filename.toLowerCase();
+//     if (obj1.status === 'running' && obj2.status === 'pending') return -1;
+//     if (obj1.status === 'pending' && obj2.status === 'running') return 1;
+//     if (name1 < name2) return -1;
+//     else if (name1 === name2) return 0;
+//     else return 1;
+//   };
+// };
 
 export default function UploadInfo(props) {
   const classes = useStyles();
   const { drive, pageName } = props;
   const [openId, setOpenId] = useState('');
-  const [rows, setRows] = useState([]);
+  const [rowData, setRowData] = useState({ count: 0, data: [] });
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
   const [openUpload, setOpenUpload] = useState(false);
   const [openUploadFolder, setOpenUploadFolder] = useState(false);
   const [selected, setSelected] = useState([]);
@@ -316,10 +319,20 @@ export default function UploadInfo(props) {
     setSelectAll(e.target.checked);
     if (e.target.checked) {
       // 全选
-      setSelected(rows.map((item) => item.uid));
+      setSelected(rowData.data.map((item) => item.uid));
     } else {
       setSelected([]);
     }
+  };
+
+  const handleChangePage = (event, newPage) => {
+    setPage(newPage);
+  };
+
+  const handleChangeRowsPerPage = (event) => {
+    setRowsPerPage(parseInt(event.target.value, 10));
+    console.log(event.target.value);
+    setPage(0);
   };
 
   useEffect(() => {
@@ -330,10 +343,11 @@ export default function UploadInfo(props) {
     if (drive) {
       const fetchData = async () => {
         let res = await rpcRequest('Onedrive.uploadStatus', {
-          params: [drive.id, pageName],
+          params: [drive.id, pageName, page, rowsPerPage],
           require_auth: true,
         });
-        setRows(res.data.result.sort(compare()));
+        // setRows(res.data.result.data.sort(compare()));
+        setRowData(res.data.result);
       };
       fetchData();
       const timer = setInterval(() => {
@@ -341,7 +355,7 @@ export default function UploadInfo(props) {
       }, 1000);
       return () => clearInterval(timer);
     }
-  }, [drive, pageName]);
+  }, [drive, pageName, page, rowsPerPage]);
 
   return (
     <div>
@@ -412,7 +426,7 @@ export default function UploadInfo(props) {
       </Button>
 
       <TableContainer component={Paper}>
-        <Table>
+        <Table size="small">
           <TableHead>
             <TableRow>
               <TableCell>
@@ -450,7 +464,7 @@ export default function UploadInfo(props) {
             </TableRow>
           </TableHead>
           <TableBody>
-            {rows.map((row) => (
+            {rowData.data.map((row) => (
               <Row
                 key={row.uid}
                 row={row}
@@ -465,6 +479,15 @@ export default function UploadInfo(props) {
           </TableBody>
         </Table>
       </TableContainer>
+      <TablePagination
+        rowsPerPageOptions={[]}
+        component="div"
+        count={rowData.count}
+        rowsPerPage={rowsPerPage}
+        page={page}
+        onChangePage={handleChangePage}
+        onChangeRowsPerPage={handleChangeRowsPerPage}
+      />
     </div>
   );
 }

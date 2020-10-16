@@ -8,6 +8,7 @@ import UploadInfo from './UploadInfo';
 import MultiUersAvatar from './MultiUersAvatar';
 import cookies from '../cookies';
 import rpcRequest from '../jsonrpc';
+import { useTheme } from '@material-ui/core';
 
 const pages = [
   { value: 'running', text: '上传中', Icon: BackupIcon },
@@ -20,6 +21,7 @@ export default function UploadManage(props) {
   const [drives, setDrives] = React.useState([]);
   const [drive, setDrive] = React.useState(null);
   const [page, setPage] = React.useState(pages[0]);
+  const theme = useTheme();
 
   const updateDrives = async () => {
     let res = await rpcRequest('Onedrive.getDrives', { require_auth: true });
@@ -51,6 +53,7 @@ export default function UploadManage(props) {
     <MainDrawer
       title="上传管理"
       subTitle={page.text}
+      initOpenDrawer={window.innerWidth >= theme.breakpoints.values.lg}
       pageProps={{
         page: page,
         setPage: setPage,

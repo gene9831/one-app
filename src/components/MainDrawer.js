@@ -111,12 +111,10 @@ const initPalette = {
 export default function MainDrawer(props) {
   const classes = useStyles();
   const theme = useTheme();
-  const { title, subTitle, pageProps, endComponents } = props;
+  const { title, subTitle, pageProps, endComponents, initOpenDrawer } = props;
   const { page, setPage, pages } = pageProps;
 
-  const [openDrawer, setOpenDrawer] = useState(
-    window.innerWidth >= theme.breakpoints.values.lg
-  );
+  const [openDrawer, setOpenDrawer] = useState(initOpenDrawer);
   const [customTheme, setCustomTheme] = useState(theme);
   const [customPalette, setCustomPalette] = useState(initPalette);
   // const [progress, setProgress] = React.useState(0);
@@ -235,6 +233,7 @@ export default function MainDrawer(props) {
 MainDrawer.propTypes = {
   title: PropTypes.string.isRequired,
   subTitle: PropTypes.string,
+  initOpenDrawer: PropTypes.bool,
   pageProps: PropTypes.shape({
     page: PropTypes.object.isRequired,
     setPage: PropTypes.func.isRequired,
@@ -252,6 +251,7 @@ MainDrawer.propTypes = {
 };
 
 MainDrawer.defaultProps = {
+  initOpenDrawer: false,
   pageProps: {
     page: {},
     setPage: () => {},
