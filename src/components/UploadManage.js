@@ -4,7 +4,9 @@ import MainDrawer from './MainDrawer';
 import BackupIcon from '@material-ui/icons/Backup';
 import CloudDoneIcon from '@material-ui/icons/CloudDone';
 import CloudOffIcon from '@material-ui/icons/CloudOff';
+import SettingsIcon from '@material-ui/icons/Settings';
 import UploadInfo from './UploadInfo';
+import Settings from './Settings';
 import MultiUersAvatar from './MultiUersAvatar';
 import cookies from '../cookies';
 import rpcRequest from '../jsonrpc';
@@ -14,6 +16,7 @@ const pages = [
   { value: 'running', text: '上传中', Icon: BackupIcon },
   { value: 'stopped', text: '已暂停', Icon: CloudOffIcon },
   { value: 'finished', text: '已完成', Icon: CloudDoneIcon },
+  { value: 'settings', text: '设置', Icon: SettingsIcon },
 ];
 
 export default function UploadManage(props) {
@@ -69,7 +72,11 @@ export default function UploadManage(props) {
         />
       }
     >
-      <UploadInfo drive={drive} pageName={page.value}></UploadInfo>
+      {page.value === 'settings' ? (
+        <Settings />
+      ) : (
+        <UploadInfo drive={drive} pageName={page.value} />
+      )}
     </MainDrawer>
   );
 }
