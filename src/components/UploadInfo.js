@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import clsx from 'clsx';
 import { makeStyles } from '@material-ui/core/styles';
@@ -48,37 +48,11 @@ const useRowStyles = makeStyles((theme) => ({
   red: {
     color: theme.palette.error.main,
   },
-  div: {
-    position: 'absolute',
-    backgroundColor: theme.palette.info.light,
-    opacity: 0.6,
-    transition: 'width 1s',
-  },
 }));
 
 function Row(props) {
-  const {
-    row,
-    openId,
-    setOpenId,
-    selected,
-    setSelected,
-    observer,
-    rowSize,
-  } = props;
+  const { row, openId, setOpenId, selected, setSelected } = props;
   const classes = useRowStyles();
-
-  const measuredRef = useRef(null);
-
-  useEffect(() => {
-    let measure = measuredRef.current;
-    if (measure && row.status !== 'finished') {
-      observer.observe(measure);
-      return () => {
-        observer.unobserve(measure);
-      };
-    }
-  }, [observer, row.status]);
 
   const bTokmg = (size) => {
     let kb = size / 1024;
@@ -123,18 +97,7 @@ function Row(props) {
 
   return (
     <React.Fragment>
-      <tr
-        className={classes.div}
-        style={
-          row.status !== 'finished'
-            ? {
-                width: rowSize ? rowSize.width * (row.finished / row.size) : 0,
-                height: rowSize ? rowSize.height : 0,
-              }
-            : {}
-        }
-      ></tr>
-      <TableRow className={classes.root} hover ref={measuredRef} id={row.uid}>
+      <TableRow className={classes.root} hover id={row.uid}>
         <TableCell>
           <Checkbox
             color="primary"
@@ -253,8 +216,6 @@ Row.propTypes = {
   setOpenId: PropTypes.func.isRequired,
   selected: PropTypes.array.isRequired,
   setSelected: PropTypes.func.isRequired,
-  observer: PropTypes.object.isRequired,
-  rowSize: PropTypes.object,
 };
 
 const useStyles = makeStyles((theme) => ({
@@ -286,22 +247,6 @@ export default function UploadInfo(props) {
   const [openUploadFolder, setOpenUploadFolder] = useState(false);
   const [selected, setSelected] = useState([]);
   const [selectAll, setSelectAll] = useState(false);
-  const [sizes, setSizes] = useState({});
-
-  const resizeObserver = React.useRef(
-    new ResizeObserver((entries) => {
-      for (let entry of entries) {
-        const el = entry.contentRect;
-        // 同步更新
-        setSizes((prev) => {
-          return {
-            ...prev,
-            [entry.target.id]: { width: el.width, height: el.height },
-          };
-        });
-      }
-    })
-  );
 
   const handleOperate = (type) => {
     if (selected.length === 0) return;
@@ -331,7 +276,6 @@ export default function UploadInfo(props) {
 
   const handleChangeRowsPerPage = (event) => {
     setRowsPerPage(parseInt(event.target.value, 10));
-    console.log(event.target.value);
     setPage(0);
   };
 
@@ -472,21 +416,20 @@ export default function UploadInfo(props) {
                 setOpenId={setOpenId}
                 selected={selected}
                 setSelected={setSelected}
-                observer={resizeObserver.current}
-                rowSize={sizes[row.uid]}
               ></Row>
             ))}
           </TableBody>
         </Table>
       </TableContainer>
       <TablePagination
-        rowsPerPageOptions={[]}
+        rowsPerPageOptions={[10, 15, 20]}
         component="div"
         count={rowData.count}
         rowsPerPage={rowsPerPage}
         page={page}
         onChangePage={handleChangePage}
         onChangeRowsPerPage={handleChangeRowsPerPage}
+        labelRowsPerPage="每页行数："
       />
     </div>
   );
