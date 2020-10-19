@@ -20,7 +20,7 @@ const pages = [
 ];
 
 export default function UploadManage(props) {
-  const { authed } = props;
+  const { authed, setAuthed, setLogged } = props;
   const [drives, setDrives] = React.useState([]);
   const [drive, setDrive] = React.useState(null);
   const [page, setPage] = React.useState(pages[0]);
@@ -69,6 +69,8 @@ export default function UploadManage(props) {
           drive={drive}
           setDrive={setDrive}
           updateDrives={updateDrives}
+          setAuthed={setAuthed}
+          setLogged={setLogged}
         />
       }
     >
@@ -83,4 +85,6 @@ export default function UploadManage(props) {
 
 UploadManage.propTypes = {
   authed: PropTypes.bool.isRequired,
+  setAuthed: PropTypes.func.isRequired,
+  setLogged: PropTypes.func.isRequired,
 };

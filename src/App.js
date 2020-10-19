@@ -48,7 +48,11 @@ function App() {
   return (
     <React.Fragment>
       {logged ? ( // authed为true，UploadManage组件才会去获取数据
-        <UploadManage authed={authed} />
+        <UploadManage
+          authed={authed}
+          setAuthed={setAuthed}
+          setLogged={setLogged}
+        />
       ) : (
         <Login handleWriteToken={handleWriteToken} />
       )}

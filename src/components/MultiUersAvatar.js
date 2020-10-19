@@ -22,8 +22,10 @@ import DialogContent from '@material-ui/core/DialogContent';
 import DialogContentText from '@material-ui/core/DialogContentText';
 import DialogTitle from '@material-ui/core/DialogTitle';
 import PersonAddIcon from '@material-ui/icons/PersonAdd';
+import PersonAddDisabledIcon from '@material-ui/icons/PersonAddDisabled';
 import ExitToAppIcon from '@material-ui/icons/ExitToApp';
 import rpcRequest from '../jsonrpc';
+import cookies from '../cookies';
 const useStyles = makeStyles((theme) => ({
   listItemIcon: {
     minWidth: '2.5rem',
@@ -37,6 +39,7 @@ const useStyles = makeStyles((theme) => ({
   },
   paperScrollPaper: {
     bottom: '10%',
+    minWidth: 300,
   },
   lowercase: {
     textTransform: 'none',
@@ -48,35 +51,34 @@ const Transition = React.forwardRef(function Transition(props, ref) {
 });
 
 export default function MultiUersAvatar(props) {
-  const { drive, drives, setDrive, updateDrives } = props;
+  const { drive, drives, setDrive, updateDrives, setAuthed, setLogged } = props;
   const [anchorEl, setAnchorEl] = useState(null);
   const classes = useStyles();
-  const [openSignIn, setOpenSignIn] = useState(false);
-  const [openSignOut, setOpenSignOut] = useState(false);
+  const [openAddDrive, setOpenAddDrive] = useState(false);
+  const [openRemoveDrive, setOpenRemoveDrive] = useState(false);
+  const [openLogout, setOpenLogout] = useState(false);
 
-  const handleClickSignIn = () => {
+  // Add Drive
+  const handleClickAddDrive = () => {
     handleCloseAvatar();
-    setOpenSignIn(true);
+    setOpenAddDrive(true);
   };
-
-  const handleClickSignOut = () => {
-    handleCloseAvatar();
-    setOpenSignOut(true);
+  const handleCloseAddDrive = () => {
+    setOpenAddDrive(false);
   };
-
-  const handleCloseSignIn = () => {
-    setOpenSignIn(false);
-  };
-
-  const handleCloseSignOut = () => {
-    setOpenSignOut(false);
-  };
-
-  const handleSignIn = () => {
+  const handleDriveAdded = () => {
     updateDrives();
   };
 
-  const handleSignOut = () => {
+  // Remove Drive
+  const handleClickRemoveDrive = () => {
+    handleCloseAvatar();
+    setOpenRemoveDrive(true);
+  };
+  const handleCloseRemoveDrive = () => {
+    setOpenRemoveDrive(false);
+  };
+  const handleDriveRemoved = () => {
     if (drive) {
       const fetchData = async () => {
         await rpcRequest('Onedrive.signOut', {
@@ -87,7 +89,28 @@ export default function MultiUersAvatar(props) {
       };
       fetchData();
     }
-    handleCloseSignOut();
+    setOpenRemoveDrive(false);
+  };
+
+  // Logout
+  const handleClickLogout = () => {
+    handleCloseAvatar();
+    setOpenLogout(true);
+  };
+  const handleCancelLogout = () => {
+    setOpenLogout(false);
+  };
+  const handleLogout = () => {
+    const fetchData = async () => {
+      await rpcRequest('Auth.logout', {
+        params: [cookies.get('token')],
+        require_auth: true,
+      });
+      setAuthed(false);
+      setLogged(false);
+      cookies.remove('token');
+    };
+    fetchData();
   };
 
   const handleClickAvatar = (event) => {
@@ -130,62 +153,91 @@ export default function MultiUersAvatar(props) {
               <ListItemText primary={drive.owner.user.email} />
             </ListItem>
           ))}
-          <ListItem button onClick={handleClickSignIn}>
+          <ListItem button onClick={handleClickAddDrive}>
             <ListItemIcon className={classes.listItemIcon}>
               <PersonAddIcon />
             </ListItemIcon>
-            <ListItemText primary="添加帐号" />
+            <ListItemText primary="添加 OneDrive" />
           </ListItem>
-          <ListItem button onClick={handleClickSignOut}>
+          <ListItem button onClick={handleClickRemoveDrive}>
+            <ListItemIcon className={classes.listItemIcon}>
+              <PersonAddDisabledIcon />
+            </ListItemIcon>
+            <ListItemText primary="移除 OneDrive" />
+          </ListItem>
+          <ListItem button onClick={handleClickLogout}>
             <ListItemIcon className={classes.listItemIcon}>
               <ExitToAppIcon />
             </ListItemIcon>
-            <ListItemText primary="注销" color="secondary" />
+            <ListItemText primary="退出" />
           </ListItem>
         </List>
       </Popover>
       <Dialog
         fullScreen
         maxWidth="sm"
-        open={openSignIn}
-        onClose={handleCloseSignIn}
+        open={openAddDrive}
+        onClose={handleCloseAddDrive}
         TransitionComponent={Transition}
       >
         <AppBar className={classes.appBar}>
           <Toolbar>
             <Typography variant="h6" className={classes.title}>
-              登录
+              添加 OneDrive
             </Typography>
             <IconButton
               edge="start"
               color="inherit"
-              onClick={handleCloseSignIn}
+              onClick={handleCloseAddDrive}
             >
               <CloseIcon />
             </IconButton>
           </Toolbar>
         </AppBar>
-        <SignIn setOpenSignIn={setOpenSignIn} handleSignIn={handleSignIn} />
+        <SignIn
+          setOpenAddDrive={setOpenAddDrive}
+          handleDriveAdded={handleDriveAdded}
+        />
       </Dialog>
       <Dialog
-        open={openSignOut}
-        onClose={handleCloseSignOut}
+        open={openRemoveDrive}
+        onClose={handleCloseRemoveDrive}
         classes={{
           paperScrollPaper: classes.paperScrollPaper,
         }}
       >
-        <DialogTitle>注销</DialogTitle>
+        <DialogTitle>移除 OneDrive</DialogTitle>
         <DialogContent>
           <DialogContentText>
-            确定注销账号 {<b>{drive ? drive.owner.user.email : ''}</b>} 吗？
+            确定移除账号 {<b>{drive ? drive.owner.user.email : ''}</b>} 吗？
             所有有关数据将被删除
           </DialogContentText>
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleCloseSignOut} color="secondary">
+          <Button onClick={handleCloseRemoveDrive} color="secondary">
             取消
           </Button>
-          <Button onClick={handleSignOut} color="primary">
+          <Button onClick={handleDriveRemoved} color="primary">
+            确定
+          </Button>
+        </DialogActions>
+      </Dialog>
+      <Dialog
+        open={openLogout}
+        onClose={handleCancelLogout}
+        classes={{
+          paperScrollPaper: classes.paperScrollPaper,
+        }}
+      >
+        <DialogTitle>退出</DialogTitle>
+        <DialogContent>
+          <DialogContentText>确定退出吗？</DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCancelLogout} color="secondary">
+            取消
+          </Button>
+          <Button onClick={handleLogout} color="primary">
             确定
           </Button>
         </DialogActions>
@@ -199,4 +251,6 @@ MultiUersAvatar.propTypes = {
   drives: PropTypes.array.isRequired,
   setDrive: PropTypes.func.isRequired,
   updateDrives: PropTypes.func.isRequired,
+  setAuthed: PropTypes.func.isRequired,
+  setLogged: PropTypes.func.isRequired,
 };

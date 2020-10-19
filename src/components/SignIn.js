@@ -46,7 +46,7 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-const steps = ['登录', '复制链接', '完成'];
+const steps = ['登录微软账号', '复制链接', '完成'];
 const initInstructions = [
   '点击打开新窗口按钮，在新窗口中登录微软账户进行授权',
   '登录成功后会重定向，复制重定向后的链接，粘贴到输入框',
@@ -55,7 +55,7 @@ const initInstructions = [
 
 export default function SignIn(props) {
   const classes = useStyles();
-  const { setOpenSignIn, handleSignIn } = props;
+  const { setOpenAddDrive, handleDriveAdded } = props;
   const [signInUrl, setSignInUrl] = useState(null);
   const [activeStep, setActiveStep] = useState(0);
   const [result, setResult] = useState(null);
@@ -81,11 +81,9 @@ export default function SignIn(props) {
         let res1 = res.data.result;
         setResult(res.data.result);
 
-        if (res1) {
-          setActiveStep(steps.length);
-          if (res1.code === 0) {
-            handleSignIn();
-          }
+        setActiveStep(steps.length);
+        if (res1.code === 0) {
+          handleDriveAdded();
         }
       };
       fetchData().catch((e) => {
@@ -190,7 +188,7 @@ export default function SignIn(props) {
               variant="contained"
               color="primary"
               disabled={activeStep !== steps.length}
-              onClick={() => setOpenSignIn(false)}
+              onClick={() => setOpenAddDrive(false)}
             >
               完成
             </Button>
@@ -202,6 +200,6 @@ export default function SignIn(props) {
 }
 
 SignIn.propTypes = {
-  setOpenSignIn: PropTypes.func.isRequired,
-  handleSignIn: PropTypes.func.isRequired,
+  setOpenAddDrive: PropTypes.func.isRequired,
+  handleDriveAdded: PropTypes.func.isRequired,
 };
