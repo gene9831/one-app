@@ -284,20 +284,26 @@ export default function UploadInfo(props) {
   }, [selected]);
 
   useEffect(() => {
+    let unmounted = false;
     if (drive) {
       const fetchData = async () => {
         let res = await rpcRequest('Onedrive.uploadStatus', {
           params: [drive.id, pageName, page, rowsPerPage],
           require_auth: true,
         });
-        // setRows(res.data.result.data.sort(compare()));
-        setRowData(res.data.result);
+        // Can't perform a React state update on an unmounted component.
+        if (!unmounted) {
+          setRowData(res.data.result);
+        }
       };
       fetchData();
       const timer = setInterval(() => {
         fetchData();
       }, 1000);
-      return () => clearInterval(timer);
+      return () => {
+        unmounted = true;
+        clearInterval(timer);
+      };
     }
   }, [drive, pageName, page, rowsPerPage]);
 
@@ -310,14 +316,14 @@ export default function UploadInfo(props) {
         startIcon={<AddCircleOutlineIcon />}
         onClick={() => setOpenUpload(true)}
       >
-        上传
+        上传文件
       </Button>
       <TaskDialog
         open={openUpload}
         setOpen={setOpenUpload}
         drive={drive}
         type={'file'}
-        title={'上传'}
+        title={'上传文件'}
         message={'上传文件到OneDrive，文件指的是服务端文件'}
       ></TaskDialog>
       <Button
@@ -327,15 +333,17 @@ export default function UploadInfo(props) {
         startIcon={<AddCircleOutlineIcon />}
         onClick={() => setOpenUploadFolder(true)}
       >
-        批量上传
+        上传文件夹
       </Button>
       <TaskDialog
         open={openUploadFolder}
         setOpen={setOpenUploadFolder}
         drive={drive}
         type={'folder'}
-        title={'批量上传'}
-        message={'批量上传文件到OneDrive，上传目录下的所有文件，不包括子目录'}
+        title={'上传文件夹'}
+        message={
+          '上传文件夹到OneDrive，上传目录下的所有文件，不包括子目录（暂时也不包括小文件）'
+        }
       ></TaskDialog>
       {pageName === 'stopped' ? (
         <Button
