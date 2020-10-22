@@ -31,7 +31,7 @@ function App() {
       return;
     }
     const fetchData = async () => {
-      let res = await rpcRequest('Auth.validateToken', {
+      let res = await rpcRequest('Admin.validateToken', {
         params: [tokenCookie],
       });
       handleWriteToken(res.data.result);

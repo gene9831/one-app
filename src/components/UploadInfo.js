@@ -324,7 +324,7 @@ export default function UploadInfo(props) {
         drive={drive}
         type={'file'}
         title={'上传文件'}
-        message={'上传文件到OneDrive，文件指的是服务端文件'}
+        message={'上传文件到OneDrive，暂不包括小于5MB的文件'}
       ></TaskDialog>
       <Button
         variant="outlined"
@@ -342,7 +342,7 @@ export default function UploadInfo(props) {
         type={'folder'}
         title={'上传文件夹'}
         message={
-          '上传文件夹到OneDrive，上传目录下的所有文件，不包括子目录（暂时也不包括小文件）'
+          '上传文件夹到OneDrive。上传目录下的所有文件，不包括子目录，暂不包括小于5MB的文件'
         }
       ></TaskDialog>
       {pageName === 'stopped' ? (

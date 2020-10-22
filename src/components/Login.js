@@ -44,7 +44,7 @@ export default function Login(props) {
     }
     setError('');
     const fetchData = async () => {
-      let res = await rpcRequest('Auth.login', { params: [passwrod] });
+      let res = await rpcRequest('Admin.login', { params: [passwrod] });
       handleWriteToken(res.data.result);
     };
     fetchData().catch((e) => {

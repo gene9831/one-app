@@ -74,7 +74,7 @@ function SettingItem(props) {
         value = parseInt(e.target.value);
         break;
       case 'float':
-        value = parseInt(e.target.value);
+        value = parseFloat(e.target.value);
         break;
       default:
         value = e.target.value;

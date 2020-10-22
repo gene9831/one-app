@@ -102,7 +102,7 @@ export default function MultiUersAvatar(props) {
   };
   const handleLogout = () => {
     const fetchData = async () => {
-      await rpcRequest('Auth.logout', {
+      await rpcRequest('Admin.logout', {
         params: [cookies.get('token')],
         require_auth: true,
       });
