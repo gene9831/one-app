@@ -121,6 +121,7 @@ export default function PathTextField(props) {
   return (
     <React.Fragment>
       <TextField
+        id={id}
         margin="dense"
         fullWidth
         label={label}

@@ -39,6 +39,7 @@ function App() {
     fetchData().catch((e) => {
       if (e.response) {
         setLogged(false);
+        cookies.remove('token');
       } else {
         setError('网络错误');
       }

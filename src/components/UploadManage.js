@@ -77,7 +77,7 @@ export default function UploadManage(props) {
       {page.value === 'settings' ? (
         <Settings />
       ) : (
-        <UploadInfo drive={drive} pageName={page.value} />
+        <UploadInfo drive={drive} drives={drives} pageName={page.value} />
       )}
     </MainDrawer>
   );

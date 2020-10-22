@@ -236,17 +236,32 @@ const useStyles = makeStyles((theme) => ({
 //   };
 // };
 
+const taskDialogProps = {
+  file: {
+    type: 'file',
+    title: '上传文件',
+    message: '上传文件到OneDrive，暂不包括小于5MB的文件',
+  },
+  folder: {
+    type: 'folder',
+    title: '上传文件夹',
+    message:
+      '上传文件夹到OneDrive。上传目录下的所有文件，不包括子目录，暂不包括小于5MB的文件',
+  },
+};
+
 export default function UploadInfo(props) {
   const classes = useStyles();
-  const { drive, pageName } = props;
+  // TODO 删除props中的drive
+  const { drive, drives, pageName } = props;
   const [openId, setOpenId] = useState('');
   const [rowData, setRowData] = useState({ count: 0, data: [] });
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [openUpload, setOpenUpload] = useState(false);
-  const [openUploadFolder, setOpenUploadFolder] = useState(false);
   const [selected, setSelected] = useState([]);
   const [selectAll, setSelectAll] = useState(false);
+  const [taskDialogProp, setTaskDialogProp] = useState(null);
 
   const handleOperate = (type) => {
     if (selected.length === 0) return;
@@ -307,44 +322,39 @@ export default function UploadInfo(props) {
     }
   }, [drive, pageName, page, rowsPerPage]);
 
+  const handleOpenTaskDialog = (type) => {
+    setTaskDialogProp(taskDialogProps[type]);
+    setOpenUpload(true);
+  };
+
   return (
     <div>
-      <Button
-        variant="outlined"
-        color="primary"
-        className={classes.button}
-        startIcon={<AddCircleOutlineIcon />}
-        onClick={() => setOpenUpload(true)}
-      >
-        上传文件
-      </Button>
-      <TaskDialog
-        open={openUpload}
-        setOpen={setOpenUpload}
-        drive={drive}
-        type={'file'}
-        title={'上传文件'}
-        message={'上传文件到OneDrive，暂不包括小于5MB的文件'}
-      ></TaskDialog>
-      <Button
-        variant="outlined"
-        color="primary"
-        className={classes.button}
-        startIcon={<AddCircleOutlineIcon />}
-        onClick={() => setOpenUploadFolder(true)}
-      >
-        上传文件夹
-      </Button>
-      <TaskDialog
-        open={openUploadFolder}
-        setOpen={setOpenUploadFolder}
-        drive={drive}
-        type={'folder'}
-        title={'上传文件夹'}
-        message={
-          '上传文件夹到OneDrive。上传目录下的所有文件，不包括子目录，暂不包括小于5MB的文件'
-        }
-      ></TaskDialog>
+      {[
+        { type: 'file', text: '上传文件' },
+        { type: 'folder', text: '上传文件夹' },
+      ].map((item) => (
+        <Button
+          key={item.type}
+          variant="outlined"
+          color="primary"
+          className={classes.button}
+          startIcon={<AddCircleOutlineIcon />}
+          onClick={() => handleOpenTaskDialog(item.type)}
+        >
+          {item.text}
+        </Button>
+      ))}
+      {taskDialogProp ? (
+        <TaskDialog
+          open={openUpload}
+          setOpen={setOpenUpload}
+          drive={drive}
+          drives={drives}
+          type={taskDialogProp.type}
+          title={taskDialogProp.title}
+          message={taskDialogProp.message}
+        ></TaskDialog>
+      ) : null}
       {pageName === 'stopped' ? (
         <Button
           variant="outlined"
@@ -387,31 +397,11 @@ export default function UploadInfo(props) {
                   onChange={handleCheckedAll}
                 ></Checkbox>
               </TableCell>
-              <TableCell align="center">
-                <Typography variant="subtitle1" gutterBottom>
-                  文件名
-                </Typography>
-              </TableCell>
-              <TableCell align="center">
-                <Typography variant="subtitle1" gutterBottom>
-                  大小
-                </Typography>
-              </TableCell>
-              <TableCell align="center">
-                <Typography variant="subtitle1" gutterBottom>
-                  速度
-                </Typography>
-              </TableCell>
-              <TableCell align="center">
-                <Typography variant="subtitle1" gutterBottom>
-                  进度
-                </Typography>
-              </TableCell>
-              <TableCell align="center">
-                <Typography variant="subtitle1" gutterBottom>
-                  剩余时间
-                </Typography>
-              </TableCell>
+              {['文件名', '大小', '速度', '进度', '剩余时间'].map((item) => (
+                <TableCell align="center" key={item}>
+                  <Typography variant="subtitle1">{item}</Typography>
+                </TableCell>
+              ))}
               <TableCell />
             </TableRow>
           </TableHead>
@@ -445,5 +435,6 @@ export default function UploadInfo(props) {
 
 UploadInfo.propTypes = {
   drive: PropTypes.object,
+  drives: PropTypes.array.isRequired,
   pageName: PropTypes.string.isRequired,
 };

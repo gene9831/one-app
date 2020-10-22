@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 import { makeStyles } from '@material-ui/core/styles';
 import Button from '@material-ui/core/Button';
 import TextField from '@material-ui/core/TextField';
+import MenuItem from '@material-ui/core/MenuItem';
 import Dialog from '@material-ui/core/Dialog';
 import DialogActions from '@material-ui/core/DialogActions';
 import DialogContent from '@material-ui/core/DialogContent';
@@ -28,15 +29,20 @@ const initState = {
 };
 export default function TaskDialog(props) {
   const classes = useStyles();
-  const { open, setOpen, drive, type, title, message } = props;
+  // TODO 删除props中的drive
+  const { open, setOpen, drive, drives, type, title, message } = props;
   const [state, setState] = useState(initState);
   const [snack, setSnack] = useState(false);
   const [clicked, setClicked] = useState(null);
+  const [selectedDrive, setSelectedDrive] = useState(null);
 
   const handleSubmit = () => {
-    if (drive) {
+    if (selectedDrive) {
       let method;
-      let params = { drive_id: drive.id, upload_path: state.upload_path };
+      let params = {
+        drive_id: selectedDrive.id,
+        upload_path: state.upload_path,
+      };
       if (type === 'file') {
         method = 'Onedrive.uploadFile';
         params.file_path = state.file_path;
@@ -69,6 +75,21 @@ export default function TaskDialog(props) {
     });
   };
 
+  const handleChangeDrive = (e) => {
+    setSelectedDrive(
+      drives.find((item) => item.owner.user.email === e.target.value)
+    );
+  };
+
+  const handleReset = () => {
+    setSelectedDrive(drive);
+    setState(initState);
+  };
+
+  React.useEffect(() => {
+    setSelectedDrive(drive);
+  }, [drive]);
+
   return (
     <React.Fragment>
       <Dialog
@@ -84,9 +105,9 @@ export default function TaskDialog(props) {
           <DialogContentText>{message}</DialogContentText>
           <TextField
             margin="dense"
-            id="email"
-            label="用户邮箱"
-            value={drive ? drive.owner.user.email : ''}
+            id="onedrive-email"
+            label="OneDrive 邮箱"
+            value={selectedDrive ? selectedDrive.owner.user.email : ''}
             fullWidth
             InputProps={{
               startAdornment: (
@@ -94,17 +115,37 @@ export default function TaskDialog(props) {
                   <AccountCircleOutlinedIcon />
                 </InputAdornment>
               ),
-              readOnly: true,
             }}
-          />
+            onChange={handleChangeDrive}
+            select
+            SelectProps={{
+              MenuProps: {
+                anchorOrigin: {
+                  vertical: 'bottom',
+                  horizontal: 'left',
+                },
+                getContentAnchorEl: null,
+              },
+            }}
+            onFocus={() => setClicked(null)}
+          >
+            {drives.map((option) => (
+              <MenuItem
+                key={option.owner.user.email}
+                value={option.owner.user.email}
+              >
+                {option.owner.user.email}
+              </MenuItem>
+            ))}
+          </TextField>
           <PathTextField
             id="upload_path"
             value={state.upload_path}
             setValue={setKeyValue}
             onlyDir={true}
             api="listDrivePath"
-            label="上传目录"
-            drive={drive}
+            label="OneDrive 目录"
+            drive={selectedDrive}
             clicked={clicked}
             setClicked={setClicked}
           />
@@ -133,8 +174,8 @@ export default function TaskDialog(props) {
           )}
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setState(initState)} color="primary">
-            清空
+          <Button onClick={handleReset} color="primary">
+            重置
           </Button>
           <Button onClick={handleClose} color="primary">
             取消
@@ -161,6 +202,7 @@ TaskDialog.propTypes = {
   open: PropTypes.bool.isRequired,
   setOpen: PropTypes.func.isRequired,
   drive: PropTypes.object,
+  drives: PropTypes.array.isRequired,
   type: PropTypes.string.isRequired,
   title: PropTypes.string.isRequired,
   message: PropTypes.string.isRequired,
