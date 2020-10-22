@@ -219,8 +219,10 @@ Row.propTypes = {
 };
 
 const useStyles = makeStyles((theme) => ({
-  button: {
-    margin: theme.spacing(1),
+  buttons: {
+    '& > button': {
+      margin: theme.spacing(0, 0, 1, 1),
+    },
   },
 }));
 
@@ -250,6 +252,11 @@ const taskDialogProps = {
   },
 };
 
+const pageButtons = {
+  stopped: { text: '继续', method: 'startUpload', Icon: PlayCircleOutlineIcon },
+  running: { text: '暂停', method: 'stopUpload', Icon: PauseCircleOutlineIcon },
+};
+
 export default function UploadInfo(props) {
   const classes = useStyles();
   // TODO 删除props中的drive
@@ -263,10 +270,10 @@ export default function UploadInfo(props) {
   const [selectAll, setSelectAll] = useState(false);
   const [taskDialogProp, setTaskDialogProp] = useState(null);
 
-  const handleOperate = (type) => {
+  const handleOperate = (method) => {
     if (selected.length === 0) return;
     const fetchData = async () => {
-      await rpcRequest('Onedrive.' + type, {
+      await rpcRequest('Onedrive.' + method, {
         params: { uids: selected },
         require_auth: true,
       });
@@ -329,21 +336,46 @@ export default function UploadInfo(props) {
 
   return (
     <div>
-      {[
-        { type: 'file', text: '上传文件' },
-        { type: 'folder', text: '上传文件夹' },
-      ].map((item) => (
+      <div className={classes.buttons}>
+        {[
+          { type: 'file', text: '上传文件' },
+          { type: 'folder', text: '上传文件夹' },
+        ].map((item) => (
+          <Button
+            key={item.type}
+            variant="outlined"
+            color="primary"
+            startIcon={<AddCircleOutlineIcon />}
+            onClick={() => handleOpenTaskDialog(item.type)}
+          >
+            {item.text}
+          </Button>
+        ))}
+        {(() => {
+          if (pageName === 'stopped' || pageName === 'running') {
+            const pageButton = pageButtons[pageName];
+            const Icon = pageButton.Icon;
+            return (
+              <Button
+                variant="outlined"
+                color="primary"
+                startIcon={<Icon />}
+                onClick={() => handleOperate(pageButton.method)}
+              >
+                {pageButton.text}
+              </Button>
+            );
+          }
+        })()}
         <Button
-          key={item.type}
           variant="outlined"
-          color="primary"
-          className={classes.button}
-          startIcon={<AddCircleOutlineIcon />}
-          onClick={() => handleOpenTaskDialog(item.type)}
+          color="secondary"
+          startIcon={<DeleteOutlineIcon />}
+          onClick={() => handleOperate('deleteUpload')}
         >
-          {item.text}
+          删除
         </Button>
-      ))}
+      </div>
       {taskDialogProp ? (
         <TaskDialog
           open={openUpload}
@@ -355,38 +387,6 @@ export default function UploadInfo(props) {
           message={taskDialogProp.message}
         ></TaskDialog>
       ) : null}
-      {pageName === 'stopped' ? (
-        <Button
-          variant="outlined"
-          color="primary"
-          className={classes.button}
-          startIcon={<PlayCircleOutlineIcon />}
-          onClick={() => handleOperate('startUpload')}
-        >
-          继续
-        </Button>
-      ) : null}
-      {pageName === 'running' ? (
-        <Button
-          variant="outlined"
-          color="primary"
-          className={classes.button}
-          startIcon={<PauseCircleOutlineIcon />}
-          onClick={() => handleOperate('stopUpload')}
-        >
-          暂停
-        </Button>
-      ) : null}
-      <Button
-        variant="outlined"
-        color="secondary"
-        className={classes.button}
-        startIcon={<DeleteOutlineIcon />}
-        onClick={() => handleOperate('deleteUpload')}
-      >
-        删除
-      </Button>
-
       <TableContainer component={Paper}>
         <Table size="small">
           <TableHead>
