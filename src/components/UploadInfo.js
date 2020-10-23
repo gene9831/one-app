@@ -163,6 +163,11 @@ function Row(props) {
               <Table size="small">
                 <TableBody className={classes.detail}>
                   <TableRow>
+                    <TableCell>
+                      OneDrive帐号：{row.user.displayName}({row.user.email})
+                    </TableCell>
+                  </TableRow>
+                  <TableRow>
                     <TableCell>文件路径：{row.file_path}</TableCell>
                     <TableCell>上传路径：{row.upload_path}</TableCell>
                   </TableRow>
@@ -211,6 +216,10 @@ Row.propTypes = {
     created_date_time: PropTypes.string.isRequired,
     finished_date_time: PropTypes.string.isRequired,
     error: PropTypes.string,
+    user: PropTypes.shape({
+      displayName: PropTypes.string.isRequired,
+      email: PropTypes.string.isRequired,
+    }).isRequired,
   }).isRequired,
   openId: PropTypes.string.isRequired,
   setOpenId: PropTypes.func.isRequired,
