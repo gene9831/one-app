@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import clsx from 'clsx';
 import CssBaseline from '@material-ui/core/CssBaseline';
 import Typography from '@material-ui/core/Typography';
-import { makeStyles, useTheme } from '@material-ui/core/styles';
+import { makeStyles } from '@material-ui/core/styles';
 import AppBar from '@material-ui/core/AppBar';
 import Toolbar from '@material-ui/core/Toolbar';
 import PropTypes from 'prop-types';
@@ -12,13 +12,14 @@ import Container from '@material-ui/core/Container';
 import Palette from './Palette';
 import Drawer from '@material-ui/core/Drawer';
 import ChevronLeftIcon from '@material-ui/icons/ChevronLeft';
-import ChevronRightIcon from '@material-ui/icons/ChevronRight';
 import Divider from '@material-ui/core/Divider';
 import List from '@material-ui/core/List';
 import ListItem from '@material-ui/core/ListItem';
 import ListItemIcon from '@material-ui/core/ListItemIcon';
 import ListItemText from '@material-ui/core/ListItemText';
 import { createMuiTheme, ThemeProvider } from '@material-ui/core/styles';
+import { ListSubheader } from '@material-ui/core';
+import ComponentShell from './ComponentShell';
 
 const drawerWidth = 240;
 
@@ -110,14 +111,13 @@ const initPalette = {
 
 export default function MainDrawer(props) {
   const classes = useStyles();
-  const theme = useTheme();
-  const { title, subTitle, pageProps, endComponents, initOpenDrawer } = props;
-  const { page, setPage, pages } = pageProps;
+  const { pageProps, endComponents, initOpenDrawer } = props;
+  const { pageIndex, setPageIndex, pageSections } = pageProps;
 
   const [openDrawer, setOpenDrawer] = useState(initOpenDrawer);
-  const [customTheme, setCustomTheme] = useState(theme);
+  const [customTheme, setCustomTheme] = useState(initTheme);
   const [customPalette, setCustomPalette] = useState(initPalette);
-  // const [progress, setProgress] = React.useState(0);
+  const [page, setPage] = useState({});
 
   useEffect(() => {
     setCustomTheme(
@@ -131,16 +131,19 @@ export default function MainDrawer(props) {
     );
   }, [customPalette]);
 
+  useEffect(() => {
+    const section = pageSections[pageIndex.section];
+    setPage({
+      subHeader: section.subHeader,
+      sectionName: section.name,
+      ...section.items[pageIndex.item],
+    });
+  }, [pageIndex, pageSections]);
+
   return (
     <ThemeProvider theme={customTheme}>
       <div className={classes.root}>
         <CssBaseline />
-        {/* <LinearProgress
-          variant="determinate"
-          color="primary"
-          value={progress}
-          className={classes.progress}
-        /> */}
         <AppBar
           position="fixed"
           className={clsx(classes.appBar, {
@@ -151,7 +154,9 @@ export default function MainDrawer(props) {
             <IconButton
               edge="start"
               color="inherit"
-              onClick={() => (pages.length > 0 ? setOpenDrawer(true) : null)}
+              onClick={() =>
+                pageSections.length > 0 ? setOpenDrawer(true) : null
+              }
               className={clsx(classes.menuButton, {
                 [classes.hide]: openDrawer,
               })}
@@ -165,9 +170,9 @@ export default function MainDrawer(props) {
               noWrap
               className={classes.title}
             >
-              {title}
-              {subTitle ? ' | ' : ''}
-              <span className={classes.subTitle}>{subTitle}</span>
+              {page.subHeader}
+              {page.text ? ' | ' : ''}
+              <span className={classes.subTitle}>{page.text}</span>
             </Typography>
             <Palette
               customPalette={customPalette}
@@ -177,7 +182,7 @@ export default function MainDrawer(props) {
             {endComponents}
           </Toolbar>
         </AppBar>
-        {pages.length > 0 ? (
+        {pageSections.length > 0 ? (
           <Drawer
             variant="permanent"
             className={clsx(classes.drawer, {
@@ -193,30 +198,33 @@ export default function MainDrawer(props) {
           >
             <div className={classes.toolbar}>
               <IconButton onClick={() => setOpenDrawer(false)}>
-                {theme.direction === 'rtl' ? (
-                  <ChevronRightIcon />
-                ) : (
-                  <ChevronLeftIcon />
-                )}
+                <ChevronLeftIcon />
               </IconButton>
             </div>
-            <Divider />
             <List>
-              {pages.map((item) => (
-                <ListItem
-                  button
-                  key={item.value}
-                  selected={item === page}
-                  onClick={() => setPage(item)}
-                >
-                  <ListItemIcon>
-                    {(() => {
-                      const Icon = item.Icon;
-                      return <Icon />;
-                    })()}
-                  </ListItemIcon>
-                  <ListItemText primary={item.text} />
-                </ListItem>
+              {pageSections.map((section, sectionIndex) => (
+                <React.Fragment key={sectionIndex}>
+                  <Divider />
+                  <ListSubheader>{section.subHeader}</ListSubheader>
+                  {section.items.map((item, itemIndex) => (
+                    <ListItem
+                      button
+                      key={itemIndex}
+                      selected={
+                        pageIndex.section === sectionIndex &&
+                        pageIndex.item === itemIndex
+                      }
+                      onClick={() =>
+                        setPageIndex({ section: sectionIndex, item: itemIndex })
+                      }
+                    >
+                      <ListItemIcon>
+                        <ComponentShell Component={item.Icon} />
+                      </ListItemIcon>
+                      <ListItemText primary={item.text} />
+                    </ListItem>
+                  ))}
+                </React.Fragment>
               ))}
             </List>
           </Drawer>
@@ -230,31 +238,32 @@ export default function MainDrawer(props) {
   );
 }
 
+MainDrawer.defaultProps = {
+  initOpenDrawer: false,
+};
+
 MainDrawer.propTypes = {
-  title: PropTypes.string.isRequired,
-  subTitle: PropTypes.string,
   initOpenDrawer: PropTypes.bool,
   pageProps: PropTypes.shape({
-    page: PropTypes.object.isRequired,
-    setPage: PropTypes.func.isRequired,
-    pages: PropTypes.arrayOf(
+    pageIndex: PropTypes.shape({
+      section: PropTypes.number.isRequired,
+      item: PropTypes.number.isRequired,
+    }),
+    setPageIndex: PropTypes.func.isRequired,
+    pageSections: PropTypes.arrayOf(
       PropTypes.shape({
-        value: PropTypes.string.isRequired,
-        text: PropTypes.string.isRequired,
-        // Icon Component
-        Icon: PropTypes.any.isRequired,
+        subHeader: PropTypes.string.isRequired,
+        name: PropTypes.string.isRequired,
+        items: PropTypes.arrayOf(
+          PropTypes.shape({
+            name: PropTypes.string.isRequired,
+            text: PropTypes.string.isRequired,
+            Icon: PropTypes.any.isRequired,
+          })
+        ),
       })
     ),
   }),
   endComponents: PropTypes.any,
   children: PropTypes.any,
-};
-
-MainDrawer.defaultProps = {
-  initOpenDrawer: false,
-  pageProps: {
-    page: {},
-    setPage: () => {},
-    pages: [],
-  },
 };

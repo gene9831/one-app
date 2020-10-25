@@ -108,6 +108,10 @@ function Row(props) {
         <TableCell align="left">{row.filename}</TableCell>
         <TableCell align="center">{bTokmg(row.size)}</TableCell>
         <TableCell align="center">
+          {/* 进度 */}
+          <CircularProgressWithLabel value={(row.finished / row.size) * 100} />
+        </TableCell>
+        <TableCell align="center">
           {/* 速度 */}
           {row.status === 'running' ? bTokmg(row.speed) + '/s' : '---'}
         </TableCell>
@@ -118,30 +122,25 @@ function Row(props) {
             [classes.red]: row.status === 'error',
           })}
         >
-          {/* 进度 */}
+          {/* 剩余时间 */}
           {(() => {
-            if (row.status === 'pending') {
-              return '排队中';
-            } else if (row.status === 'finished') {
-              return '已完成';
-            } else if (row.status === 'stopped') {
-              return '已暂停';
-            } else if (row.status === 'error') {
-              return '错误';
-            } else {
-              return (
-                <CircularProgressWithLabel
-                  value={(row.finished / row.size) * 100}
-                />
-              );
+            switch (row.status) {
+              case 'running':
+                return sTomhd((row.size - row.finished) / row.speed);
+              case 'pending':
+                return '正在等待';
+              case 'stopping':
+                return '正在停止';
+              case 'stopped':
+                return '已暂停';
+              case 'finished':
+                return '已完成';
+              case 'error':
+                return '错误';
+              default:
+                return '---';
             }
           })()}
-        </TableCell>
-        <TableCell align="center">
-          {/* 剩余时间 */}
-          {row.status === 'running' && row.speed > 0
-            ? sTomhd((row.size - row.finished) / row.speed)
-            : '---'}
         </TableCell>
         <TableCell align="center">
           {/* 展开详情 */}
@@ -235,18 +234,6 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-// const compare = () => {
-//   return function (obj1, obj2) {
-//     var name1 = obj1.filename.toLowerCase();
-//     var name2 = obj2.filename.toLowerCase();
-//     if (obj1.status === 'running' && obj2.status === 'pending') return -1;
-//     if (obj1.status === 'pending' && obj2.status === 'running') return 1;
-//     if (name1 < name2) return -1;
-//     else if (name1 === name2) return 0;
-//     else return 1;
-//   };
-// };
-
 const taskDialogProps = {
   file: {
     type: 'file',
@@ -268,15 +255,13 @@ const pageButtons = {
 
 export default function UploadInfo(props) {
   const classes = useStyles();
-  // TODO 删除props中的drive
-  const { drive, drives, pageName } = props;
+  const { drives, pageName } = props;
   const [openId, setOpenId] = useState('');
   const [rowData, setRowData] = useState({ count: 0, data: [] });
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [openUpload, setOpenUpload] = useState(false);
   const [selected, setSelected] = useState([]);
-  const [selectAll, setSelectAll] = useState(false);
   const [taskDialogProp, setTaskDialogProp] = useState(null);
 
   const handleOperate = (method) => {
@@ -291,17 +276,16 @@ export default function UploadInfo(props) {
     fetchData();
   };
 
-  const handleCheckedAll = (e) => {
-    setSelectAll(e.target.checked);
+  const handleClikCheckedAll = (e) => {
     if (e.target.checked) {
       // 全选
       setSelected(rowData.data.map((item) => item.uid));
-    } else {
-      setSelected([]);
+      return;
     }
+    setSelected([]);
   };
 
-  const handleChangePage = (event, newPage) => {
+  const handleChangePage = (_e, newPage) => {
     setPage(newPage);
   };
 
@@ -311,32 +295,30 @@ export default function UploadInfo(props) {
   };
 
   useEffect(() => {
-    if (selected.length === 0) setSelectAll(false);
-  }, [selected]);
-
-  useEffect(() => {
     let unmounted = false;
-    if (drive) {
-      const fetchData = async () => {
-        let res = await rpcRequest('Onedrive.uploadStatus', {
-          params: [drive.id, pageName, page, rowsPerPage],
-          require_auth: true,
-        });
-        // Can't perform a React state update on an unmounted component.
-        if (!unmounted) {
-          setRowData(res.data.result);
-        }
-      };
+    const fetchData = async () => {
+      let res = await rpcRequest('Onedrive.uploadStatus', {
+        params: {
+          status: pageName,
+          page: page,
+          limit: rowsPerPage,
+        },
+        require_auth: true,
+      });
+      // Can't perform a React state update on an unmounted component.
+      if (!unmounted) {
+        setRowData(res.data.result);
+      }
+    };
+    fetchData();
+    const timer = setInterval(() => {
       fetchData();
-      const timer = setInterval(() => {
-        fetchData();
-      }, 1000);
-      return () => {
-        unmounted = true;
-        clearInterval(timer);
-      };
-    }
-  }, [drive, pageName, page, rowsPerPage]);
+    }, 2000);
+    return () => {
+      unmounted = true;
+      clearInterval(timer);
+    };
+  }, [pageName, page, rowsPerPage]);
 
   const handleOpenTaskDialog = (type) => {
     setTaskDialogProp(taskDialogProps[type]);
@@ -389,7 +371,6 @@ export default function UploadInfo(props) {
         <TaskDialog
           open={openUpload}
           setOpen={setOpenUpload}
-          drive={drive}
           drives={drives}
           type={taskDialogProp.type}
           title={taskDialogProp.title}
@@ -402,11 +383,17 @@ export default function UploadInfo(props) {
             <TableRow>
               <TableCell>
                 <Checkbox
-                  checked={selectAll}
-                  onChange={handleCheckedAll}
+                  indeterminate={
+                    selected.length > 0 && selected.length < rowData.data.length
+                  }
+                  checked={
+                    rowData.data.length > 0 &&
+                    selected.length === rowData.data.length
+                  }
+                  onChange={handleClikCheckedAll}
                 ></Checkbox>
               </TableCell>
-              {['文件名', '大小', '速度', '进度', '剩余时间'].map((item) => (
+              {['文件名', '大小', '进度', '速度', '剩余时间'].map((item) => (
                 <TableCell align="center" key={item}>
                   <Typography variant="subtitle1">{item}</Typography>
                 </TableCell>
@@ -443,7 +430,6 @@ export default function UploadInfo(props) {
 }
 
 UploadInfo.propTypes = {
-  drive: PropTypes.object,
   drives: PropTypes.array.isRequired,
   pageName: PropTypes.string.isRequired,
 };

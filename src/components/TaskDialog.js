@@ -24,31 +24,31 @@ const useStyles = makeStyles(() => ({
 const default_path = '/';
 const initState = {
   upload_path: '/',
+  // TODO file_path和folder_path远程接受
   file_path: default_path,
   folder_path: default_path,
 };
 export default function TaskDialog(props) {
   const classes = useStyles();
-  // TODO 删除props中的drive
-  const { open, setOpen, drive, drives, type, title, message } = props;
-  const [state, setState] = useState(initState);
+  const { open, setOpen, drives, type, title, message } = props;
+  const [pathes, setPathes] = useState(initState);
   const [snack, setSnack] = useState(false);
   const [clicked, setClicked] = useState(null);
-  const [selectedDrive, setSelectedDrive] = useState(null);
+  const [drive, setDrive] = useState(drives[0]);
 
   const handleSubmit = () => {
-    if (selectedDrive) {
+    if (drive) {
       let method;
       let params = {
-        drive_id: selectedDrive.id,
-        upload_path: state.upload_path,
+        drive_id: drive.id,
+        upload_path: pathes.upload_path,
       };
       if (type === 'file') {
         method = 'Onedrive.uploadFile';
-        params.file_path = state.file_path;
+        params.file_path = pathes.file_path;
       } else {
         method = 'Onedrive.uploadFolder';
-        params.folder_path = state.folder_path;
+        params.folder_path = pathes.folder_path;
       }
 
       const fetchData = async () => {
@@ -69,26 +69,19 @@ export default function TaskDialog(props) {
   };
 
   const setKeyValue = (id, value) => {
-    setState({
-      ...state,
+    setPathes({
+      ...pathes,
       [id]: value,
     });
   };
 
   const handleChangeDrive = (e) => {
-    setSelectedDrive(
-      drives.find((item) => item.owner.user.email === e.target.value)
-    );
+    setDrive(drives.find((item) => item.owner.user.email === e.target.value));
   };
 
   const handleReset = () => {
-    setSelectedDrive(drive);
-    setState(initState);
+    setPathes(initState);
   };
-
-  React.useEffect(() => {
-    setSelectedDrive(drive);
-  }, [drive]);
 
   return (
     <React.Fragment>
@@ -107,7 +100,7 @@ export default function TaskDialog(props) {
             margin="dense"
             id="onedrive-email"
             label="OneDrive 邮箱"
-            value={selectedDrive ? selectedDrive.owner.user.email : ''}
+            value={drive ? drive.owner.user.email : ''}
             fullWidth
             InputProps={{
               startAdornment: (
@@ -140,19 +133,19 @@ export default function TaskDialog(props) {
           </TextField>
           <PathTextField
             id="upload_path"
-            value={state.upload_path}
+            value={pathes.upload_path}
             setValue={setKeyValue}
             onlyDir={true}
             api="listDrivePath"
             label="OneDrive 目录"
-            drive={selectedDrive}
+            drive={drive}
             clicked={clicked}
             setClicked={setClicked}
           />
           {type === 'file' ? (
             <PathTextField
               id="file_path"
-              value={state.file_path}
+              value={pathes.file_path}
               setValue={setKeyValue}
               onlyDir={false}
               api="listSysPath"
@@ -163,7 +156,7 @@ export default function TaskDialog(props) {
           ) : (
             <PathTextField
               id="folder_path"
-              value={state.folder_path}
+              value={pathes.folder_path}
               setValue={setKeyValue}
               onlyDir={true}
               api="listSysPath"
@@ -201,7 +194,6 @@ export default function TaskDialog(props) {
 TaskDialog.propTypes = {
   open: PropTypes.bool.isRequired,
   setOpen: PropTypes.func.isRequired,
-  drive: PropTypes.object,
   drives: PropTypes.array.isRequired,
   type: PropTypes.string.isRequired,
   title: PropTypes.string.isRequired,

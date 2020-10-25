@@ -7,15 +7,17 @@ import Popover from '@material-ui/core/Popover';
 import ListItemIcon from '@material-ui/core/ListItemIcon';
 import ListItemText from '@material-ui/core/ListItemText';
 import { makeStyles } from '@material-ui/core/styles';
-import CloudIcon from '@material-ui/icons/Cloud';
-import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
+import AccountCircleIcon from '@material-ui/icons/AccountCircle';
 import Typography from '@material-ui/core/Typography';
 import IconButton from '@material-ui/core/IconButton';
 import Toolbar from '@material-ui/core/Toolbar';
 import AppBar from '@material-ui/core/AppBar';
 import Dialog from '@material-ui/core/Dialog';
 import CloseIcon from '@material-ui/icons/Close';
+import CloudIcon from '@material-ui/icons/Cloud';
 import Slide from '@material-ui/core/Slide';
+import DeleteIcon from '@material-ui/icons/Delete';
+import ListItemSecondaryAction from '@material-ui/core/ListItemSecondaryAction';
 import SignIn from './SignIn';
 import DialogActions from '@material-ui/core/DialogActions';
 import DialogContent from '@material-ui/core/DialogContent';
@@ -23,12 +25,14 @@ import DialogContentText from '@material-ui/core/DialogContentText';
 import DialogTitle from '@material-ui/core/DialogTitle';
 import PersonAddIcon from '@material-ui/icons/PersonAdd';
 import PersonAddDisabledIcon from '@material-ui/icons/PersonAddDisabled';
+import Avatar from '@material-ui/core/Avatar';
+import ListItemAvatar from '@material-ui/core/ListItemAvatar';
 import ExitToAppIcon from '@material-ui/icons/ExitToApp';
 import rpcRequest from '../jsonrpc';
 import cookies from '../cookies';
 const useStyles = makeStyles((theme) => ({
   listItemIcon: {
-    minWidth: '2.5rem',
+    minWidth: '3em',
   },
   appBar: {
     position: 'relative',
@@ -37,12 +41,8 @@ const useStyles = makeStyles((theme) => ({
     marginLeft: theme.spacing(2),
     flex: 1,
   },
-  paperScrollPaper: {
+  paperBottom: {
     bottom: '10%',
-    minWidth: 300,
-  },
-  lowercase: {
-    textTransform: 'none',
   },
 }));
 
@@ -50,14 +50,15 @@ const Transition = React.forwardRef(function Transition(props, ref) {
   return <Slide direction="up" ref={ref} {...props} />;
 });
 
-export default function MultiUersAvatar(props) {
-  const { drive, drives, setDrive, updateDrives, setAuthed, setLogged } = props;
+export default function UserAvatar(props) {
+  const { drives, updateDrives, setAuthed, setLogged } = props;
   const [anchorEl, setAnchorEl] = useState(null);
   const classes = useStyles();
   const [openAddDrive, setOpenAddDrive] = useState(false);
   const [openRemoveDrive, setOpenRemoveDrive] = useState(false);
   const [openLogout, setOpenLogout] = useState(false);
 
+  // TODO 添加网盘和移除网盘移至Accounts组件
   // Add Drive
   const handleClickAddDrive = () => {
     handleCloseAvatar();
@@ -78,18 +79,8 @@ export default function MultiUersAvatar(props) {
   const handleCloseRemoveDrive = () => {
     setOpenRemoveDrive(false);
   };
-  const handleDriveRemoved = () => {
-    if (drive) {
-      const fetchData = async () => {
-        await rpcRequest('Onedrive.signOut', {
-          params: [drive.id],
-          require_auth: true,
-        });
-        updateDrives();
-      };
-      fetchData();
-    }
-    setOpenRemoveDrive(false);
+  const handleRemoveDrive = (drive_id) => {
+    console.log(drive_id);
   };
 
   // Logout
@@ -120,23 +111,14 @@ export default function MultiUersAvatar(props) {
   const handleCloseAvatar = () => {
     setAnchorEl(null);
   };
-  const openPopover = Boolean(anchorEl);
-
-  const handleClickUser = (drive) => {
-    setDrive(drive);
-    handleCloseAvatar();
-  };
 
   return (
     <React.Fragment>
-      <Button color="inherit" onClick={handleClickAvatar}>
-        <span className={classes.lowercase}>
-          {drive ? drive.owner.user.email : 'example@email.com'}
-        </span>
-        <ExpandMoreIcon></ExpandMoreIcon>
-      </Button>
+      <IconButton color="inherit" onClick={handleClickAvatar}>
+        <AccountCircleIcon />
+      </IconButton>
       <Popover
-        open={openPopover}
+        open={Boolean(anchorEl)}
         anchorEl={anchorEl}
         onClose={handleCloseAvatar}
         anchorOrigin={{
@@ -144,26 +126,18 @@ export default function MultiUersAvatar(props) {
           horizontal: 'left',
         }}
       >
-        <List className={classes.root}>
-          {drives.map((drive, index) => (
-            <ListItem button key={index} onClick={() => handleClickUser(drive)}>
-              <ListItemIcon className={classes.listItemIcon}>
-                <CloudIcon></CloudIcon>
-              </ListItemIcon>
-              <ListItemText primary={drive.owner.user.email} />
-            </ListItem>
-          ))}
+        <List>
           <ListItem button onClick={handleClickAddDrive}>
             <ListItemIcon className={classes.listItemIcon}>
               <PersonAddIcon />
             </ListItemIcon>
-            <ListItemText primary="添加 OneDrive" />
+            <ListItemText primary="添加 OneDrive 帐号" />
           </ListItem>
           <ListItem button onClick={handleClickRemoveDrive}>
             <ListItemIcon className={classes.listItemIcon}>
               <PersonAddDisabledIcon />
             </ListItemIcon>
-            <ListItemText primary="移除 OneDrive" />
+            <ListItemText primary="移除 OneDrive 帐号" />
           </ListItem>
           <ListItem button onClick={handleClickLogout}>
             <ListItemIcon className={classes.listItemIcon}>
@@ -175,7 +149,6 @@ export default function MultiUersAvatar(props) {
       </Popover>
       <Dialog
         fullScreen
-        maxWidth="sm"
         open={openAddDrive}
         onClose={handleCloseAddDrive}
         TransitionComponent={Transition}
@@ -183,7 +156,7 @@ export default function MultiUersAvatar(props) {
         <AppBar className={classes.appBar}>
           <Toolbar>
             <Typography variant="h6" className={classes.title}>
-              添加 OneDrive
+              添加 OneDrive 帐号
             </Typography>
             <IconButton
               edge="start"
@@ -200,33 +173,50 @@ export default function MultiUersAvatar(props) {
         />
       </Dialog>
       <Dialog
+        fullWidth
+        maxWidth="xs"
         open={openRemoveDrive}
         onClose={handleCloseRemoveDrive}
         classes={{
-          paperScrollPaper: classes.paperScrollPaper,
+          paper: classes.paperBottom,
         }}
       >
-        <DialogTitle>移除 OneDrive</DialogTitle>
+        <DialogTitle>移除 OneDrive 帐号</DialogTitle>
         <DialogContent>
-          <DialogContentText>
-            确定移除账号 {<b>{drive ? drive.owner.user.email : ''}</b>} 吗？
-            所有有关数据将被删除
-          </DialogContentText>
+          <List>
+            {drives.map((item, index) => (
+              <ListItem key={index}>
+                <ListItemAvatar>
+                  <Avatar>
+                    <CloudIcon />
+                  </Avatar>
+                </ListItemAvatar>
+                <ListItemText
+                  primary={item.owner.user.displayName}
+                  secondary={item.owner.user.email}
+                />
+                <ListItemSecondaryAction>
+                  <IconButton>
+                    <DeleteIcon onClick={() => handleRemoveDrive(item.id)} />
+                  </IconButton>
+                </ListItemSecondaryAction>
+              </ListItem>
+            ))}
+          </List>
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleCloseRemoveDrive} color="secondary">
-            取消
-          </Button>
-          <Button onClick={handleDriveRemoved} color="primary">
-            确定
+          <Button onClick={handleCloseRemoveDrive} color="primary">
+            完成
           </Button>
         </DialogActions>
       </Dialog>
       <Dialog
+        fullWidth
+        maxWidth="xs"
         open={openLogout}
         onClose={handleCancelLogout}
         classes={{
-          paperScrollPaper: classes.paperScrollPaper,
+          paper: classes.paperBottom,
         }}
       >
         <DialogTitle>退出</DialogTitle>
@@ -246,10 +236,8 @@ export default function MultiUersAvatar(props) {
   );
 }
 
-MultiUersAvatar.propTypes = {
-  drive: PropTypes.object,
+UserAvatar.propTypes = {
   drives: PropTypes.array.isRequired,
-  setDrive: PropTypes.func.isRequired,
   updateDrives: PropTypes.func.isRequired,
   setAuthed: PropTypes.func.isRequired,
   setLogged: PropTypes.func.isRequired,
