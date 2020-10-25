@@ -296,29 +296,31 @@ export default function UploadInfo(props) {
 
   useEffect(() => {
     let unmounted = false;
-    const fetchData = async () => {
-      let res = await rpcRequest('Onedrive.uploadStatus', {
-        params: {
-          status: pageName,
-          page: page,
-          limit: rowsPerPage,
-        },
-        require_auth: true,
-      });
-      // Can't perform a React state update on an unmounted component.
-      if (!unmounted) {
-        setRowData(res.data.result);
-      }
-    };
-    fetchData();
-    const timer = setInterval(() => {
+    if (drives.length > 0) {
+      const fetchData = async () => {
+        let res = await rpcRequest('Onedrive.uploadStatus', {
+          params: {
+            status: pageName,
+            page: page,
+            limit: rowsPerPage,
+          },
+          require_auth: true,
+        });
+        // Can't perform a React state update on an unmounted component.
+        if (!unmounted) {
+          setRowData(res.data.result);
+        }
+      };
       fetchData();
-    }, 2000);
-    return () => {
-      unmounted = true;
-      clearInterval(timer);
-    };
-  }, [pageName, page, rowsPerPage]);
+      const timer = setInterval(() => {
+        fetchData();
+      }, 2000);
+      return () => {
+        unmounted = true;
+        clearInterval(timer);
+      };
+    }
+  }, [drives, pageName, page, rowsPerPage]);
 
   const handleOpenTaskDialog = (type) => {
     setTaskDialogProp(taskDialogProps[type]);
