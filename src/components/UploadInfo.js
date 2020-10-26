@@ -18,11 +18,12 @@ import KeyboardArrowUpIcon from '@material-ui/icons/KeyboardArrowUp';
 import CircularProgressWithLabel from './CircularProgressWithLabel';
 import { Button, Typography } from '@material-ui/core';
 import DeleteOutlineIcon from '@material-ui/icons/DeleteOutline';
-import AddCircleOutlineIcon from '@material-ui/icons/AddCircleOutline';
 import Checkbox from '@material-ui/core/Checkbox';
 import TaskDialog from './TaskDialog';
 import PlayCircleOutlineIcon from '@material-ui/icons/PlayCircleOutline';
 import PauseCircleOutlineIcon from '@material-ui/icons/PauseCircleOutline';
+import { Upload, UploadMultiple } from './Icons';
+import ComponentShell from './ComponentShell';
 import rpcRequest from '../jsonrpc';
 
 const useRowStyles = makeStyles((theme) => ({
@@ -51,6 +52,7 @@ const useRowStyles = makeStyles((theme) => ({
 }));
 
 function Row(props) {
+  // TODO selected, setSelected 状态需要提升
   const { row, openId, setOpenId, selected, setSelected } = props;
   const classes = useRowStyles();
 
@@ -84,26 +86,28 @@ function Row(props) {
     return (hours / 24).toFixed(1) + 'd';
   };
 
-  const handleOnSelected = (e) => {
-    let checked = e.target.checked;
-    if (checked) {
-      if (selected.indexOf(row.uid) === -1) {
-        setSelected(selected.concat(row.uid));
-      }
+  const handleClick = () => {
+    let newSelected = [];
+    if (!isSelected(row.uid)) {
+      newSelected = selected.concat(row.uid);
     } else {
-      setSelected(selected.filter((uid) => uid !== row.uid));
+      newSelected = selected.filter((uid) => uid !== row.uid);
     }
+    setSelected(newSelected);
   };
+
+  const isSelected = (name) => selected.indexOf(name) !== -1;
 
   return (
     <React.Fragment>
-      <TableRow className={classes.root} hover id={row.uid}>
+      <TableRow
+        className={classes.root}
+        hover
+        id={row.uid}
+        selected={isSelected(row.uid)}
+      >
         <TableCell>
-          <Checkbox
-            color="primary"
-            onChange={handleOnSelected}
-            checked={selected.indexOf(row.uid) !== -1}
-          />
+          <Checkbox checked={isSelected(row.uid)} onClick={handleClick} />
         </TableCell>
         <TableCell align="left">{row.filename}</TableCell>
         <TableCell align="center">{bTokmg(row.size)}</TableCell>
@@ -231,8 +235,12 @@ Row.propTypes = {
 const useStyles = makeStyles((theme) => ({
   buttons: {
     '& > button': {
-      margin: theme.spacing(0, 0, 1, 1),
+      margin: theme.spacing(1),
     },
+  },
+  tableContainer: {
+    marginTop: theme.spacing(1),
+    marginBottom: theme.spacing(1),
   },
 }));
 
@@ -332,15 +340,16 @@ export default function UploadInfo(props) {
   return (
     <div>
       <div className={classes.buttons}>
+        {/* TODO 将上传两个按钮合并 */}
         {[
-          { type: 'file', text: '上传文件' },
-          { type: 'folder', text: '上传文件夹' },
+          { type: 'file', text: '上传文件', Icon: Upload },
+          { type: 'folder', text: '上传文件夹', Icon: UploadMultiple },
         ].map((item) => (
           <Button
             key={item.type}
-            variant="outlined"
+            variant="contained"
             color="primary"
-            startIcon={<AddCircleOutlineIcon />}
+            startIcon={<ComponentShell Component={item.Icon} />}
             onClick={() => handleOpenTaskDialog(item.type)}
           >
             {item.text}
@@ -364,7 +373,7 @@ export default function UploadInfo(props) {
         })()}
         <Button
           variant="outlined"
-          color="secondary"
+          color="primary"
           startIcon={<DeleteOutlineIcon />}
           onClick={() => handleOperate('deleteUpload')}
         >
@@ -381,7 +390,7 @@ export default function UploadInfo(props) {
           message={taskDialogProp.message}
         ></TaskDialog>
       ) : null}
-      <TableContainer component={Paper}>
+      <TableContainer component={Paper} className={classes.tableContainer}>
         <Table size="small">
           <TableHead>
             <TableRow>

@@ -9,7 +9,7 @@ import SupervisorAccountIcon from '@material-ui/icons/SupervisorAccount';
 import UploadInfo from './UploadInfo';
 import Settings from './Settings';
 import Accounts from './Accounts';
-import UserAvatar from './UserAvatar';
+import Exit from './Exit';
 import rpcRequest from '../jsonrpc';
 
 const pageSections = [
@@ -66,11 +66,7 @@ export default function UploadManage(props) {
           {
             name: 'accounts',
             Component: Accounts,
-            props: {
-              authed: authed,
-              drives: drives,
-              updateDrives: updateDrives,
-            },
+            props: { drives: drives, updateDrives: updateDrives },
           },
         ],
       },
@@ -83,15 +79,9 @@ export default function UploadManage(props) {
       pageProps={{
         sections: pageSections,
         views: pageViews,
+        // defaultIndex: { section: 0, item: 0 },
       }}
-      endComponents={
-        <UserAvatar
-          drives={drives}
-          updateDrives={updateDrives}
-          setAuthed={setAuthed}
-          setLogged={setLogged}
-        />
-      }
+      endComponents={<Exit setAuthed={setAuthed} setLogged={setLogged} />}
     ></MainDrawer>
   );
 }

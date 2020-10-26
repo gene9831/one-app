@@ -96,18 +96,20 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-// 默认主题
-const initTheme = createMuiTheme({
-  palette: {
+const defaultPalettes = {
+  light: {
+    type: 'light',
     primary: { main: '#1976d2' },
+    secondary: { main: '#DC004E' },
   },
-});
-
-const initPalette = {
-  type: initTheme.palette.type,
-  primary: initTheme.palette.primary.main,
-  secondary: initTheme.palette.secondary.main,
+  dark: {
+    type: 'dark',
+    primary: { main: '#1976d2' },
+    secondary: { main: '#f48fb1' },
+  },
 };
+
+const initPalette = { type: 'light' };
 
 export default function MainDrawer(props) {
   const classes = useStyles();
@@ -116,12 +118,22 @@ export default function MainDrawer(props) {
   const { defaultIndex, sections, views } = pageProps;
 
   const [openDrawer, setOpenDrawer] = useState(false);
-  const [customTheme, setCustomTheme] = useState(initTheme);
+
   const [customPalette, setCustomPalette] = useState(initPalette);
+  const customTheme = useMemo(
+    () =>
+      createMuiTheme({
+        palette: {
+          ...defaultPalettes[customPalette.type],
+          ...customPalette,
+        },
+      }),
+    [customPalette]
+  );
 
   const [pageIndex, setPageIndex] = useState({ section: 0, item: 0 });
-
   useEffect(() => {
+    // pageIndex 默认值: { section: 0, item: 0 }
     if (defaultIndex) setPageIndex(defaultIndex);
   }, [defaultIndex]);
 
@@ -165,18 +177,6 @@ export default function MainDrawer(props) {
     );
   }, [showDrawer, theme]);
 
-  useEffect(() => {
-    setCustomTheme(
-      createMuiTheme({
-        palette: {
-          type: customPalette.type,
-          primary: { main: customPalette.primary },
-          secondary: { main: customPalette.secondary },
-        },
-      })
-    );
-  }, [customPalette]);
-
   return (
     <ThemeProvider theme={customTheme}>
       <div className={classes.root}>
@@ -186,6 +186,7 @@ export default function MainDrawer(props) {
           className={clsx(classes.appBar, {
             [classes.appBarShift]: openDrawer,
           })}
+          color={customPalette.type === 'light' ? 'primary' : 'inherit'}
         >
           <Toolbar>
             <IconButton
@@ -213,11 +214,7 @@ export default function MainDrawer(props) {
                 </React.Fragment>
               ) : null}
             </Typography>
-            <Palette
-              customPalette={customPalette}
-              setCustomPalette={setCustomPalette}
-              initPalette={initPalette}
-            />
+            <Palette palette={customPalette} setPalette={setCustomPalette} />
             {endComponents}
           </Toolbar>
         </AppBar>
@@ -240,10 +237,10 @@ export default function MainDrawer(props) {
                 <ChevronLeftIcon />
               </IconButton>
             </div>
+            <Divider />
             <List>
               {sections.map((section, sectionIndex) => (
                 <React.Fragment key={sectionIndex}>
-                  <Divider />
                   <ListSubheader>{section.subHeader}</ListSubheader>
                   {section.items.map((item, itemIndex) => (
                     <ListItem

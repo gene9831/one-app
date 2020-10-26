@@ -10,6 +10,7 @@ import Tooltip from '@material-ui/core/Tooltip';
 import HelpIcon from '@material-ui/icons/Help';
 import CircularProgress from '@material-ui/core/CircularProgress';
 import rpcRequest from '../jsonrpc';
+import Container from '@material-ui/core/Container';
 
 const useSettingItemStyles = makeStyles((theme) => ({
   root: {
@@ -127,12 +128,6 @@ SettingItem.propTypes = {
   sectionName: PropTypes.string.isRequired,
 };
 
-const useSectionStyles = makeStyles((theme) => ({
-  root: {
-    padding: theme.spacing(3, 0),
-  },
-}));
-
 const inputTypes = {
   int: 'number',
   float: 'number',
@@ -140,11 +135,10 @@ const inputTypes = {
 };
 
 function Section(props) {
-  const classes = useSectionStyles();
   const { name, title, configArray } = props;
 
   return (
-    <Grid container className={classes.root}>
+    <Grid container>
       <Typography variant="h5" component="h1" color="primary">
         {title}
       </Typography>
@@ -176,7 +170,23 @@ const configSections = [
   },
 ];
 
+const useStyles = makeStyles((theme) => ({
+  root: {
+    padding: theme.spacing(1, 0),
+    '& > div': {
+      padding: theme.spacing(2, 0),
+    },
+    '& > div:first-child': {
+      paddingTop: 'unset',
+    },
+    '& > div:last-child': {
+      paddingBottom: 'unset',
+    },
+  },
+}));
+
 export default function Settings(props) {
+  const classes = useStyles();
   const { authed } = props;
   const [cfgSections, setCfgSections] = useState([]);
 
@@ -200,14 +210,18 @@ export default function Settings(props) {
     fetchData();
   }, [authed]);
 
-  return cfgSections.map((section) => (
-    <Section
-      key={section.name}
-      name={section.name}
-      title={section.title}
-      configArray={section.configs}
-    ></Section>
-  ));
+  return (
+    <Container className={classes.root}>
+      {cfgSections.map((section) => (
+        <Section
+          key={section.name}
+          name={section.name}
+          title={section.title}
+          configArray={section.configs}
+        ></Section>
+      ))}
+    </Container>
+  );
 }
 
 Settings.propTypes = {
