@@ -126,13 +126,15 @@ function Row(props) {
           {(() => {
             switch (row.status) {
               case 'running':
-                return sTomhd((row.size - row.finished) / row.speed);
+                return row.speed > 0
+                  ? sTomhd((row.size - row.finished) / row.speed)
+                  : '∞';
               case 'pending':
                 return '正在等待';
               case 'stopping':
                 return '正在停止';
               case 'stopped':
-                return '已暂停';
+                return '已停止';
               case 'finished':
                 return '已完成';
               case 'error':
@@ -255,7 +257,7 @@ const pageButtons = {
 
 export default function UploadInfo(props) {
   const classes = useStyles();
-  const { drives, pageName } = props;
+  const { drives, name } = props;
   const [openId, setOpenId] = useState('');
   const [rowData, setRowData] = useState({ count: 0, data: [] });
   const [page, setPage] = useState(0);
@@ -300,7 +302,7 @@ export default function UploadInfo(props) {
       const fetchData = async () => {
         let res = await rpcRequest('Onedrive.uploadStatus', {
           params: {
-            status: pageName,
+            status: name,
             page: page,
             limit: rowsPerPage,
           },
@@ -320,7 +322,7 @@ export default function UploadInfo(props) {
         clearInterval(timer);
       };
     }
-  }, [drives, pageName, page, rowsPerPage]);
+  }, [drives, name, page, rowsPerPage]);
 
   const handleOpenTaskDialog = (type) => {
     setTaskDialogProp(taskDialogProps[type]);
@@ -345,8 +347,8 @@ export default function UploadInfo(props) {
           </Button>
         ))}
         {(() => {
-          if (pageName === 'stopped' || pageName === 'running') {
-            const pageButton = pageButtons[pageName];
+          if (name === 'stopped' || name === 'running') {
+            const pageButton = pageButtons[name];
             const Icon = pageButton.Icon;
             return (
               <Button
@@ -433,5 +435,5 @@ export default function UploadInfo(props) {
 
 UploadInfo.propTypes = {
   drives: PropTypes.array.isRequired,
-  pageName: PropTypes.string.isRequired,
+  name: PropTypes.string.isRequired,
 };
