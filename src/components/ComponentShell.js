@@ -4,10 +4,10 @@ import PropTypes from 'prop-types';
 export default function ComponentShell(props) {
   const { Component, Props } = props;
 
-  return <Component {...Props} />;
+  return Component ? <Component {...Props} /> : null;
 }
 
 ComponentShell.propTypes = {
-  Component: PropTypes.object.isRequired,
+  Component: PropTypes.oneOfType([PropTypes.object, PropTypes.func]),
   Props: PropTypes.object,
 };
