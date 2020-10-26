@@ -176,10 +176,12 @@ const configSections = [
   },
 ];
 
-export default function Settings() {
+export default function Settings(props) {
+  const { authed } = props;
   const [cfgSections, setCfgSections] = useState([]);
 
   useEffect(() => {
+    if (!authed) return;
     const fetchData = async () => {
       const res = await rpcRequest('AppConfig.getAll', {
         require_auth: true,
@@ -196,7 +198,7 @@ export default function Settings() {
       );
     };
     fetchData();
-  }, []);
+  }, [authed]);
 
   return cfgSections.map((section) => (
     <Section
@@ -207,3 +209,7 @@ export default function Settings() {
     ></Section>
   ));
 }
+
+Settings.propTypes = {
+  authed: PropTypes.bool,
+};
