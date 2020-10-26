@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import clsx from 'clsx';
 import CssBaseline from '@material-ui/core/CssBaseline';
 import Typography from '@material-ui/core/Typography';
@@ -18,7 +18,7 @@ import ListItem from '@material-ui/core/ListItem';
 import ListItemIcon from '@material-ui/core/ListItemIcon';
 import ListItemText from '@material-ui/core/ListItemText';
 import { createMuiTheme, ThemeProvider } from '@material-ui/core/styles';
-import { ListSubheader } from '@material-ui/core';
+import { ListSubheader, useTheme } from '@material-ui/core';
 import ComponentShell from './ComponentShell';
 
 const drawerWidth = 240;
@@ -111,13 +111,59 @@ const initPalette = {
 
 export default function MainDrawer(props) {
   const classes = useStyles();
-  const { pageProps, endComponents, initOpenDrawer } = props;
-  const { pageIndex, setPageIndex, pageSections } = pageProps;
+  const theme = useTheme();
+  const { pageProps, showDrawer, endComponents } = props;
+  const { defaultIndex, sections, views } = pageProps;
 
-  const [openDrawer, setOpenDrawer] = useState(initOpenDrawer);
+  const [openDrawer, setOpenDrawer] = useState(false);
   const [customTheme, setCustomTheme] = useState(initTheme);
   const [customPalette, setCustomPalette] = useState(initPalette);
-  const [page, setPage] = useState({});
+
+  const [pageIndex, setPageIndex] = useState({ section: 0, item: 0 });
+
+  useEffect(() => {
+    if (defaultIndex) setPageIndex(defaultIndex);
+  }, [defaultIndex]);
+
+  const pageSection = useMemo(
+    () => (sections ? sections[pageIndex.section] : null),
+    [pageIndex.section, sections]
+  );
+
+  const pageItem = useMemo(
+    () => (pageSection ? pageSection.items[pageIndex.item] : null),
+    [pageIndex.item, pageSection]
+  );
+
+  const subComponent = useMemo(
+    () =>
+      sections
+        ? views[pageIndex.section].Component ||
+          views[pageIndex.section].items[pageIndex.item].Component
+        : null,
+    [pageIndex, sections, views]
+  );
+
+  const subComponentProps = useMemo(() => {
+    if (!sections) return null;
+    const sectionProps = { ...views[pageIndex.section].props };
+    const itemProps = {
+      ...((views[pageIndex.section].items || {})[pageIndex.item] || {}).props,
+    };
+    return { name: pageItem.name, ...sectionProps, ...itemProps };
+  }, [pageIndex, pageItem.name, sections, views]);
+
+  const handleClickMenuIcon = () => {
+    if (showDrawer) {
+      setOpenDrawer(true);
+    }
+  };
+
+  useEffect(() => {
+    setOpenDrawer(
+      showDrawer && window.innerWidth >= theme.breakpoints.values.lg
+    );
+  }, [showDrawer, theme]);
 
   useEffect(() => {
     setCustomTheme(
@@ -130,15 +176,6 @@ export default function MainDrawer(props) {
       })
     );
   }, [customPalette]);
-
-  useEffect(() => {
-    const section = pageSections[pageIndex.section];
-    setPage({
-      subHeader: section.subHeader,
-      sectionName: section.name,
-      ...section.items[pageIndex.item],
-    });
-  }, [pageIndex, pageSections]);
 
   return (
     <ThemeProvider theme={customTheme}>
@@ -154,9 +191,7 @@ export default function MainDrawer(props) {
             <IconButton
               edge="start"
               color="inherit"
-              onClick={() =>
-                pageSections.length > 0 ? setOpenDrawer(true) : null
-              }
+              onClick={handleClickMenuIcon}
               className={clsx(classes.menuButton, {
                 [classes.hide]: openDrawer,
               })}
@@ -170,9 +205,13 @@ export default function MainDrawer(props) {
               noWrap
               className={classes.title}
             >
-              {page.subHeader}
-              {page.text ? ' | ' : ''}
-              <span className={classes.subTitle}>{page.text}</span>
+              {pageSection.subHeader}
+              {pageItem.text ? (
+                <React.Fragment>
+                  {' | '}
+                  <span className={classes.subTitle}>{pageItem.text}</span>
+                </React.Fragment>
+              ) : null}
             </Typography>
             <Palette
               customPalette={customPalette}
@@ -182,7 +221,7 @@ export default function MainDrawer(props) {
             {endComponents}
           </Toolbar>
         </AppBar>
-        {pageSections.length > 0 ? (
+        {showDrawer ? (
           <Drawer
             variant="permanent"
             className={clsx(classes.drawer, {
@@ -202,7 +241,7 @@ export default function MainDrawer(props) {
               </IconButton>
             </div>
             <List>
-              {pageSections.map((section, sectionIndex) => (
+              {sections.map((section, sectionIndex) => (
                 <React.Fragment key={sectionIndex}>
                   <Divider />
                   <ListSubheader>{section.subHeader}</ListSubheader>
@@ -231,39 +270,52 @@ export default function MainDrawer(props) {
         ) : null}
         <Container className={classes.content}>
           <div className={classes.toolbar} />
-          {props.children}
+          <ComponentShell Component={subComponent} Props={subComponentProps} />
         </Container>
       </div>
     </ThemeProvider>
   );
 }
 
-MainDrawer.defaultProps = {
-  initOpenDrawer: false,
-};
-
 MainDrawer.propTypes = {
-  initOpenDrawer: PropTypes.bool,
   pageProps: PropTypes.shape({
-    pageIndex: PropTypes.shape({
-      section: PropTypes.number.isRequired,
-      item: PropTypes.number.isRequired,
-    }),
-    setPageIndex: PropTypes.func.isRequired,
-    pageSections: PropTypes.arrayOf(
+    sections: PropTypes.arrayOf(
       PropTypes.shape({
         subHeader: PropTypes.string.isRequired,
         name: PropTypes.string.isRequired,
         items: PropTypes.arrayOf(
           PropTypes.shape({
             name: PropTypes.string.isRequired,
-            text: PropTypes.string.isRequired,
-            Icon: PropTypes.any.isRequired,
+            text: PropTypes.string,
+            Icon: PropTypes.oneOfType([PropTypes.object, PropTypes.func]),
           })
         ),
       })
     ),
+    views: PropTypes.arrayOf(
+      PropTypes.shape({
+        name: PropTypes.string.isRequired,
+        Component: PropTypes.oneOfType([PropTypes.object, PropTypes.func]),
+        props: PropTypes.object,
+        items: PropTypes.arrayOf(
+          PropTypes.shape({
+            name: PropTypes.string.isRequired,
+            Component: PropTypes.oneOfType([PropTypes.object, PropTypes.func]),
+            props: PropTypes.object,
+          })
+        ),
+      })
+    ),
+    defaultIndex: PropTypes.shape({
+      section: PropTypes.number.isRequired,
+      item: PropTypes.number.isRequired,
+    }),
   }),
+  showDrawer: PropTypes.bool.isRequired,
   endComponents: PropTypes.any,
-  children: PropTypes.any,
+};
+
+MainDrawer.defaultProps = {
+  pageProps: {},
+  showDrawer: true,
 };
