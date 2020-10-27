@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useLayoutEffect } from 'react';
 import clsx from 'clsx';
 import CssBaseline from '@material-ui/core/CssBaseline';
 import Typography from '@material-ui/core/Typography';
@@ -17,20 +17,17 @@ import List from '@material-ui/core/List';
 import ListItem from '@material-ui/core/ListItem';
 import ListItemIcon from '@material-ui/core/ListItemIcon';
 import ListItemText from '@material-ui/core/ListItemText';
+import ListSubheader from '@material-ui/core/ListSubheader';
 import { createMuiTheme, ThemeProvider } from '@material-ui/core/styles';
-import { ListSubheader, useTheme } from '@material-ui/core';
+import { useTheme } from '@material-ui/core';
 import ComponentShell from './ComponentShell';
+import useWindowSize from '../hooks/useWindowSize';
 
 const drawerWidth = 240;
 
 const useStyles = makeStyles((theme) => ({
   root: {
     display: 'flex',
-  },
-  progress: {
-    zIndex: theme.zIndex.drawer + 2,
-    position: 'fixed',
-    width: '100%',
   },
   appBar: {
     zIndex: theme.zIndex.drawer + 1,
@@ -40,8 +37,10 @@ const useStyles = makeStyles((theme) => ({
     }),
   },
   appBarShift: {
-    marginLeft: drawerWidth,
-    width: `calc(100% - ${drawerWidth}px)`,
+    [theme.breakpoints.up('md')]: {
+      marginLeft: drawerWidth,
+      width: `calc(100% - ${drawerWidth}px)`,
+    },
     transition: theme.transitions.create(['width', 'margin'], {
       easing: theme.transitions.easing.sharp,
       duration: theme.transitions.duration.enteringScreen,
@@ -53,28 +52,33 @@ const useStyles = makeStyles((theme) => ({
     whiteSpace: 'nowrap',
   },
   drawerOpen: {
-    width: drawerWidth,
+    width: drawerWidth - 20,
+    [theme.breakpoints.up('md')]: {
+      width: drawerWidth,
+    },
     transition: theme.transitions.create('width', {
       easing: theme.transitions.easing.sharp,
       duration: theme.transitions.duration.enteringScreen,
     }),
   },
   drawerClose: {
+    width: theme.spacing(9),
     transition: theme.transitions.create('width', {
       easing: theme.transitions.easing.sharp,
       duration: theme.transitions.duration.leavingScreen,
     }),
     overflowX: 'hidden',
-    width: theme.spacing(7) + 1,
-    [theme.breakpoints.up('sm')]: {
-      width: theme.spacing(9) + 1,
-    },
   },
   menuButton: {
-    marginRight: theme.spacing(4),
+    marginRight: theme.spacing(2),
+    [theme.breakpoints.up('md')]: {
+      marginRight: theme.spacing(4),
+    },
   },
   hide: {
-    display: 'none',
+    [theme.breakpoints.up('md')]: {
+      display: 'none',
+    },
   },
   title: {
     flexGrow: 1,
@@ -89,10 +93,16 @@ const useStyles = makeStyles((theme) => ({
   },
   content: {
     flexGrow: 1,
-    padding: theme.spacing(3),
+    padding: theme.spacing(0),
+    [theme.breakpoints.up('sm')]: {
+      padding: theme.spacing(3),
+    },
   },
   subTitle: {
     fontSize: '1rem',
+  },
+  divContainer: {
+    width: '100%',
   },
 }));
 
@@ -100,12 +110,20 @@ const defaultPalettes = {
   light: {
     type: 'light',
     primary: { main: '#1976d2' },
-    secondary: { main: '#DC004E' },
+    secondary: { main: '#dc004e' },
+    error: { main: '#f44336' },
+    warning: { main: '#ff9800' },
+    info: { main: '#2196f3' },
+    success: { main: '#4caf50' },
   },
   dark: {
     type: 'dark',
-    primary: { main: '#1976d2' },
+    primary: { main: '#90caf9' },
     secondary: { main: '#f48fb1' },
+    error: { main: '#f44336' },
+    warning: { main: '#ff9800' },
+    info: { main: '#2196f3' },
+    success: { main: '#4caf50' },
   },
 };
 
@@ -118,6 +136,7 @@ export default function MainDrawer(props) {
   const { defaultIndex, sections, views } = pageProps;
 
   const [openDrawer, setOpenDrawer] = useState(false);
+  const [windowWidth] = useWindowSize();
 
   const [customPalette, setCustomPalette] = useState(initPalette);
   const customTheme = useMemo(
@@ -165,17 +184,36 @@ export default function MainDrawer(props) {
     return { name: pageItem.name, ...sectionProps, ...itemProps };
   }, [pageIndex, pageItem.name, sections, views]);
 
+  const drawerVariant = useMemo(
+    () =>
+      windowWidth >= theme.breakpoints.values.md ? 'permanent' : 'temporary',
+    [theme.breakpoints.values.md, windowWidth]
+  );
+
   const handleClickMenuIcon = () => {
     if (showDrawer) {
       setOpenDrawer(true);
     }
   };
 
-  useEffect(() => {
+  const handleCloseDrawer = () => {
+    setOpenDrawer(false);
+  };
+
+  const handleClickPageItem = (indexObj) => {
+    setPageIndex(indexObj);
+    if (drawerVariant === 'temporary') {
+      setOpenDrawer(false);
+    }
+  };
+
+  useLayoutEffect(() => {
+    // window innerWidth 大于或等于lg断点值时打开Drawer
+    // 基本上只在初始化运行一次
     setOpenDrawer(
       showDrawer && window.innerWidth >= theme.breakpoints.values.lg
     );
-  }, [showDrawer, theme]);
+  }, [showDrawer, theme.breakpoints.values.lg]);
 
   return (
     <ThemeProvider theme={customTheme}>
@@ -191,7 +229,6 @@ export default function MainDrawer(props) {
           <Toolbar>
             <IconButton
               edge="start"
-              color="inherit"
               onClick={handleClickMenuIcon}
               className={clsx(classes.menuButton, {
                 [classes.hide]: openDrawer,
@@ -220,7 +257,7 @@ export default function MainDrawer(props) {
         </AppBar>
         {showDrawer ? (
           <Drawer
-            variant="permanent"
+            variant={drawerVariant}
             className={clsx(classes.drawer, {
               [classes.drawerOpen]: openDrawer,
               [classes.drawerClose]: !openDrawer,
@@ -231,9 +268,11 @@ export default function MainDrawer(props) {
                 [classes.drawerClose]: !openDrawer,
               }),
             }}
+            open={openDrawer}
+            onClose={handleCloseDrawer}
           >
             <div className={classes.toolbar}>
-              <IconButton onClick={() => setOpenDrawer(false)}>
+              <IconButton onClick={handleCloseDrawer}>
                 <ChevronLeftIcon />
               </IconButton>
             </div>
@@ -251,7 +290,10 @@ export default function MainDrawer(props) {
                         pageIndex.item === itemIndex
                       }
                       onClick={() =>
-                        setPageIndex({ section: sectionIndex, item: itemIndex })
+                        handleClickPageItem({
+                          section: sectionIndex,
+                          item: itemIndex,
+                        })
                       }
                     >
                       <ListItemIcon>
@@ -265,10 +307,15 @@ export default function MainDrawer(props) {
             </List>
           </Drawer>
         ) : null}
-        <Container className={classes.content}>
+        <div className={classes.divContainer}>
           <div className={classes.toolbar} />
-          <ComponentShell Component={subComponent} Props={subComponentProps} />
-        </Container>
+          <Container className={classes.content}>
+            <ComponentShell
+              Component={subComponent}
+              Props={subComponentProps}
+            />
+          </Container>
+        </div>
       </div>
     </ThemeProvider>
   );
