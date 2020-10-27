@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
-import { makeStyles } from '@material-ui/core/styles';
+import { makeStyles, useTheme } from '@material-ui/core/styles';
 import Typography from '@material-ui/core/Typography';
 import Slide from '@material-ui/core/Slide';
 import Container from '@material-ui/core/Container';
@@ -63,6 +63,15 @@ const useStyles = makeStyles((theme) => ({
     width: '46px',
     height: '46px',
   },
+  linkInput: {
+    width: '100%',
+    [theme.breakpoints.up('sm')]: {
+      width: '80%',
+    },
+    [theme.breakpoints.up('md')]: {
+      width: '60%',
+    },
+  },
 }));
 
 const Transition = React.forwardRef(function Transition(props, ref) {
@@ -79,6 +88,7 @@ const initInstructions = [
 export default function AddDriveDialog(props) {
   const classes = useStyles();
   const { open, onClose, onDriveAdded } = props;
+  const theme = useTheme();
 
   const [signInUrl, setSignInUrl] = useState(null);
   const [activeStep, setActiveStep] = useState(0);
@@ -106,10 +116,10 @@ export default function AddDriveDialog(props) {
         let res1 = res.data.result;
         setResult(res.data.result);
 
-        setActiveStep(steps.length);
         if (res1.code === 0) {
-          onDriveAdded();
+          await onDriveAdded();
         }
+        setActiveStep(steps.length);
       };
       fetchData().catch((e) => {
         setResult({ code: -100, message: e.message });
@@ -124,7 +134,10 @@ export default function AddDriveDialog(props) {
 
   return (
     <Dialog fullScreen open={open} TransitionComponent={Transition}>
-      <AppBar className={classes.appBar}>
+      <AppBar
+        className={classes.appBar}
+        color={theme.palette.type === 'light' ? 'primary' : 'inherit'}
+      >
         <Toolbar>
           <Typography variant="h6" className={classes.title}>
             添加 OneDrive 帐号
@@ -166,7 +179,7 @@ export default function AddDriveDialog(props) {
               return (
                 <TextField
                   autoFocus
-                  id="standard-basic"
+                  className={classes.linkInput}
                   label="粘贴链接到此处"
                   variant="outlined"
                   size="small"
