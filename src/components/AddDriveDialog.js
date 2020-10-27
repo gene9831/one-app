@@ -63,15 +63,6 @@ const useStyles = makeStyles((theme) => ({
     width: '46px',
     height: '46px',
   },
-  linkInput: {
-    width: '100%',
-    [theme.breakpoints.up('sm')]: {
-      width: '80%',
-    },
-    [theme.breakpoints.up('md')]: {
-      width: '60%',
-    },
-  },
 }));
 
 const Transition = React.forwardRef(function Transition(props, ref) {
@@ -157,7 +148,7 @@ export default function AddDriveDialog(props) {
             </Step>
           ))}
         </Stepper>
-        <Container className={classes.stepsContainer}>
+        <Container maxWidth="sm" className={classes.stepsContainer}>
           {(() => {
             if (activeStep === 0)
               return (
@@ -179,7 +170,7 @@ export default function AddDriveDialog(props) {
               return (
                 <TextField
                   autoFocus
-                  className={classes.linkInput}
+                  fullWidth
                   label="粘贴链接到此处"
                   variant="outlined"
                   size="small"
