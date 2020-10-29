@@ -7,6 +7,7 @@ import CloudOffIcon from '@material-ui/icons/CloudOff';
 import SettingsIcon from '@material-ui/icons/Settings';
 import SupervisorAccountIcon from '@material-ui/icons/SupervisorAccount';
 import UploadInfo from './UploadInfo';
+import Palette from './Palette';
 import Settings from './Settings';
 import Accounts from './Accounts';
 import Exit from './Exit';
@@ -81,7 +82,10 @@ export default function UploadManage(props) {
         views: pageViews,
         // defaultIndex: { section: 0, item: 0 },
       }}
-      endComponents={<Exit setAuthed={setAuthed} setLogged={setLogged} />}
+      endComponents={[
+        <Palette key="palette" />,
+        <Exit key="exit" setAuthed={setAuthed} setLogged={setLogged} />,
+      ]}
     ></MainDrawer>
   );
 }

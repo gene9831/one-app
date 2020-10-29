@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import Button from '@material-ui/core/Button';
-import { makeStyles } from '@material-ui/core/styles';
 import IconButton from '@material-ui/core/IconButton';
 import Dialog from '@material-ui/core/Dialog';
 import DialogActions from '@material-ui/core/DialogActions';
@@ -13,25 +12,8 @@ import rpcRequest from '../jsonrpc';
 import cookies from '../cookies';
 import Tooltip from '@material-ui/core/Tooltip';
 
-const useStyles = makeStyles((theme) => ({
-  listItemIcon: {
-    minWidth: '3em',
-  },
-  appBar: {
-    position: 'relative',
-  },
-  title: {
-    marginLeft: theme.spacing(2),
-    flex: 1,
-  },
-  paperBottom: {
-    bottom: '10%',
-  },
-}));
-
 export default function Exit(props) {
   const { setAuthed, setLogged } = props;
-  const classes = useStyles();
   const [openLogout, setOpenLogout] = useState(false);
 
   // Logout
@@ -66,9 +48,6 @@ export default function Exit(props) {
         maxWidth="xs"
         open={openLogout}
         onClose={handleCancelLogout}
-        classes={{
-          paper: classes.paperBottom,
-        }}
       >
         <DialogTitle>退出</DialogTitle>
         <DialogContent>

@@ -1,51 +1,50 @@
-import React, { useEffect, useRef } from 'react';
+import React from 'react';
 import PropTypes from 'prop-types';
 import IconButton from '@material-ui/core/IconButton';
 import Brightness4Icon from '@material-ui/icons/Brightness4';
 import Brightness7Icon from '@material-ui/icons/Brightness7';
-import { colors as defaultColors } from '@material-ui/core';
-import cookies from '../cookies';
+import Tooltip from '@material-ui/core/Tooltip';
+import { connect } from 'react-redux';
+import { setPaletteType } from '../actions';
 
-const colors = Object.assign({}, defaultColors);
-delete colors.common;
+let Palette = (props) => {
+  const { palette, onPaletteTypeClick } = props;
 
-export default function Palette(props) {
-  const { palette, setPalette } = props;
-  const didMount = useRef(true);
-
-  const handleSwitchLightDark = () => {
-    setPalette({
-      ...palette,
-      type: palette.type === 'light' ? 'dark' : 'light',
-    });
-  };
-
-  useEffect(() => {
-    // 从cookie中获取配色
-    const cookiePalette = cookies.get('palette');
-    if (cookiePalette) {
-      setPalette(cookiePalette);
-    }
-  }, [setPalette]);
-
-  useEffect(() => {
-    if (didMount.current) didMount.current = false;
-    else {
-      // 每当设置了自定义配色，都会更新cookie
-      cookies.set('palette', palette, { maxAge: 3600 * 24 * 30 });
-    }
-  }, [palette]);
+  const isDark = Boolean(palette.type === 'dark');
+  const switchType = String(isDark ? 'light' : 'dark');
+  const title = String(isDark ? '切换亮色主题' : '切换暗色主题');
 
   return (
     <React.Fragment>
-      <IconButton color="inherit" onClick={handleSwitchLightDark}>
-        {palette.type === 'dark' ? <Brightness7Icon /> : <Brightness4Icon />}
-      </IconButton>
+      <Tooltip title={title}>
+        <IconButton
+          color="inherit"
+          onClick={() => onPaletteTypeClick(switchType)}
+        >
+          {isDark ? <Brightness7Icon /> : <Brightness4Icon />}
+        </IconButton>
+      </Tooltip>
     </React.Fragment>
   );
-}
+};
 
 Palette.propTypes = {
-  palette: PropTypes.object.isRequired,
-  setPalette: PropTypes.func.isRequired,
+  palette: PropTypes.shape({
+    type: PropTypes.oneOf(['light', 'dark']).isRequired,
+  }),
+  onPaletteTypeClick: PropTypes.func.isRequired,
 };
+
+const mapStateToProps = (state) => ({
+  palette: state.palette,
+});
+
+const mapDispatchToProps = (dispatch) => {
+  return {
+    onPaletteTypeClick: (paletteType) => dispatch(setPaletteType(paletteType)),
+  };
+};
+
+Palette = connect(mapStateToProps, mapDispatchToProps)(Palette);
+
+export default Palette;

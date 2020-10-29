@@ -5,6 +5,7 @@ import UploadManage from './components/UploadManage';
 import Login from './components/Login';
 import cookies from './cookies';
 import rpcRequest from './jsonrpc';
+import Theme from './components/Theme';
 
 function App() {
   // 默认logged为true是保证默认页面是管理页面而不是登录页面
@@ -47,7 +48,7 @@ function App() {
   }, []);
 
   return (
-    <React.Fragment>
+    <Theme>
       {logged ? ( // authed为true，UploadManage组件才会去获取数据
         <UploadManage
           authed={authed}
@@ -71,7 +72,7 @@ function App() {
           </Button>
         }
       />
-    </React.Fragment>
+    </Theme>
   );
 }
 

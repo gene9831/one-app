@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import PropTypes from 'prop-types';
-import { makeStyles } from '@material-ui/core/styles';
 import Button from '@material-ui/core/Button';
 import TextField from '@material-ui/core/TextField';
 import MenuItem from '@material-ui/core/MenuItem';
@@ -15,12 +14,6 @@ import Snackbar from '@material-ui/core/Snackbar';
 import PathTextField from './PathTextField';
 import rpcRequest from '../jsonrpc';
 
-const useStyles = makeStyles(() => ({
-  paperScrollPaper: {
-    bottom: '10%',
-  },
-}));
-
 const default_path = '/';
 const initState = {
   upload_path: '/',
@@ -29,7 +22,6 @@ const initState = {
   folder_path: default_path,
 };
 export default function TaskDialog(props) {
-  const classes = useStyles();
   const { open, setOpen, drives, type, title, message } = props;
   const [pathes, setPathes] = useState(initState);
   const [snack, setSnack] = useState(false);
@@ -88,9 +80,6 @@ export default function TaskDialog(props) {
       <Dialog
         open={open}
         onClose={handleClose}
-        classes={{
-          paperScrollPaper: classes.paperScrollPaper,
-        }}
         onClick={() => setClicked(null)}
       >
         <DialogTitle>{title}</DialogTitle>

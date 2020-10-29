@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 import PropTypes from 'prop-types';
 import Avatar from '@material-ui/core/Avatar';
 import Button from '@material-ui/core/Button';
@@ -8,9 +8,10 @@ import Typography from '@material-ui/core/Typography';
 import { makeStyles } from '@material-ui/core/styles';
 import Container from '@material-ui/core/Container';
 import rpcRequest from '../jsonrpc';
-import MainDrawer from './MainDrawer';
+import MyAppBar from './MyAppBar';
+import Palette from './Palette';
 
-const useStyles = makeStyles((theme) => ({
+const useLoginPageStyles = makeStyles((theme) => ({
   paper: {
     marginTop: theme.spacing(8),
     display: 'flex',
@@ -31,7 +32,7 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 function LoginPage(props) {
-  const classes = useStyles();
+  const classes = useLoginPageStyles();
   const { handleWriteToken } = props;
   const [passwrod, setPassword] = React.useState('');
   const [error, setError] = React.useState('');
@@ -101,29 +102,33 @@ LoginPage.propTypes = {
   handleWriteToken: PropTypes.func.isRequired,
 };
 
-const pageSections = [
-  {
-    name: 'login',
-    subHeader: '登录',
-    items: [{ name: 'login' }],
+const useStyles = makeStyles((theme) => ({
+  root: {
+    display: 'flex',
   },
-];
+  container: {
+    flexGrow: 1,
+  },
+  toolbar: {
+    // necessary for content to be below app bar
+    ...theme.mixins.toolbar,
+  },
+}));
 
 export default function Login(props) {
-  const pageViews = useMemo(
-    () => [
-      {
-        name: 'login',
-        Component: LoginPage,
-        props: props,
-      },
-    ],
-    [props]
-  );
+  const classes = useStyles();
+  const { handleWriteToken } = props;
   return (
-    <MainDrawer
-      pageProps={{ sections: pageSections, views: pageViews }}
-      showDrawer={false}
-    />
+    <div className={classes.root}>
+      <MyAppBar title="登录" endComponents={<Palette />} />
+      <div className={classes.container}>
+        <div className={classes.toolbar}></div>
+        <LoginPage handleWriteToken={handleWriteToken} />
+      </div>
+    </div>
   );
 }
+
+Login.propTypes = {
+  handleWriteToken: PropTypes.func.isRequired,
+};

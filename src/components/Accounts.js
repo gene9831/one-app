@@ -7,13 +7,11 @@ import ListItem from '@material-ui/core/ListItem';
 import ListItemText from '@material-ui/core/ListItemText';
 import IconButton from '@material-ui/core/IconButton';
 import Button from '@material-ui/core/Button';
-import Checkbox from '@material-ui/core/Checkbox';
 import AddIcon from '@material-ui/icons/Add';
 import CloudIcon from '@material-ui/icons/Cloud';
 import DeleteIcon from '@material-ui/icons/Delete';
 import Avatar from '@material-ui/core/Avatar';
 import ListItemAvatar from '@material-ui/core/ListItemAvatar';
-import ListItemIcon from '@material-ui/core/ListItemIcon';
 import Toolbar from '@material-ui/core/Toolbar';
 import Tooltip from '@material-ui/core/Tooltip';
 import Dialog from '@material-ui/core/Dialog';
@@ -219,15 +217,8 @@ export default function Accounts(props) {
           const isItemSelected = isSelected(drive.id);
           return (
             <Grid item xs={12} sm={12} md={6} key={index}>
-              <ListItem
-                button
-                selected={isItemSelected}
-                onClick={() => handleClick(drive.id)}
-              >
-                <ListItemIcon>
-                  <Checkbox checked={isItemSelected} />
-                </ListItemIcon>
-                <ListItemAvatar>
+              <ListItem button selected={isItemSelected}>
+                <ListItemAvatar onClick={() => handleClick(drive.id)}>
                   <Avatar>
                     <CloudIcon />
                   </Avatar>
@@ -246,7 +237,6 @@ export default function Accounts(props) {
             className={classes.addDriveItem}
             onClick={() => setOpenAddDrive(true)}
           >
-            <ListItemIcon />
             <ListItemAvatar>
               <Avatar>
                 <AddIcon />
