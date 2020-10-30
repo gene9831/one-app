@@ -19,63 +19,44 @@ import MyAppBar from './MyAppBar';
 
 const drawerWidth = 240;
 
-const useStyles = makeStyles((theme) => {
-  const mediaUpSm = theme.breakpoints.up('sm');
-  const mediaUpMd = theme.breakpoints.up('md');
-  return {
-    root: {
-      display: 'flex',
+const useStyles = makeStyles((theme) => ({
+  root: {
+    display: 'flex',
+  },
+  drawer: {
+    width: drawerWidth,
+    flexShrink: 0,
+    whiteSpace: 'nowrap',
+  },
+  drawerOpen: {
+    width: drawerWidth,
+    transition: theme.transitions.create('width', {
+      easing: theme.transitions.easing.sharp,
+      duration: theme.transitions.duration.enteringScreen,
+    }),
+  },
+  drawerClose: {
+    [theme.breakpoints.up('md')]: {
+      width: theme.spacing(9),
     },
-    drawer: {
-      width: drawerWidth,
-      flexShrink: 0,
-      whiteSpace: 'nowrap',
-    },
-    drawerOpen: {
-      width: drawerWidth - 20,
-      [mediaUpMd]: {
-        width: drawerWidth,
-      },
-      transition: theme.transitions.create('width', {
-        easing: theme.transitions.easing.sharp,
-        duration: theme.transitions.duration.enteringScreen,
-      }),
-    },
-    drawerClose: {
-      [mediaUpMd]: {
-        width: theme.spacing(9),
-      },
-      transition: theme.transitions.create('width', {
-        easing: theme.transitions.easing.sharp,
-        duration: theme.transitions.duration.leavingScreen,
-      }),
-      overflowX: 'hidden',
-    },
-    toolbar: {
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'flex-end',
-      padding: theme.spacing(0, 1),
-      // necessary for content to be below app bar
-      ...theme.mixins.toolbar,
-    },
-    content: {
-      padding: theme.spacing(0),
-      [mediaUpSm]: {
-        padding: theme.spacing(3),
-      },
-      transition: theme.transitions.create(['padding'], {
-        easing: theme.transitions.easing.sharp,
-      }),
-    },
-    subTitle: {
-      fontSize: '1rem',
-    },
-    container: {
-      flexGrow: 1,
-    },
-  };
-});
+    transition: theme.transitions.create('width', {
+      easing: theme.transitions.easing.sharp,
+      duration: theme.transitions.duration.leavingScreen,
+    }),
+    overflowX: 'hidden',
+  },
+  toolbar: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    padding: theme.spacing(0, 1),
+    // necessary for content to be below app bar
+    ...theme.mixins.toolbar,
+  },
+  container: {
+    flexGrow: 1,
+  },
+}));
 
 const initPageIndex = { section: 0, item: 0 };
 
@@ -218,7 +199,7 @@ export default function MainDrawer(props) {
       ) : null}
       <div className={classes.container}>
         <div className={classes.toolbar} />
-        <Container className={classes.content}>
+        <Container>
           <ComponentShell Component={subComponent} Props={subComponentProps} />
         </Container>
       </div>
