@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import PropTypes from 'prop-types';
-import { lighten, makeStyles, styled } from '@material-ui/core/styles';
+import { lighten, fade, makeStyles, styled } from '@material-ui/core/styles';
 import Typography from '@material-ui/core/Typography';
 import Grid from '@material-ui/core/Grid';
 import ListItem from '@material-ui/core/ListItem';
@@ -66,7 +66,6 @@ const SelectedTooBar = (props) => {
           </IconButton>
         </Tooltip>
         <Typography
-          color="inherit"
           variant="subtitle1"
           component="div"
           className={classes.title}
@@ -135,19 +134,30 @@ DeleteDialog.propTypes = {
   onClose: PropTypes.func,
 };
 
-const useStyles = makeStyles((theme) => ({
-  root: {
-    margin: theme.spacing(3, 0),
-    [theme.breakpoints.down('xs')]: {
-      margin: theme.spacing(2, 0),
+const useStyles = makeStyles((theme) => {
+  const listItemBgColor =
+    theme.palette.type === 'light'
+      ? fade(theme.palette.secondary.main, 0.08)
+      : fade(theme.palette.secondary.main, 0.24);
+  return {
+    root: {
+      margin: theme.spacing(3, 0),
+      [theme.breakpoints.down('xs')]: {
+        margin: theme.spacing(2, 0),
+      },
+      position: 'relative',
     },
-    position: 'relative',
-  },
-  addDriveItem: {
-    paddingTop: theme.spacing(2),
-    paddingBottom: theme.spacing(2),
-  },
-}));
+    listItem: {
+      '&$listItemSeleted': {
+        backgroundColor: listItemBgColor,
+        '&:hover': {
+          backgroundColor: listItemBgColor,
+        },
+      },
+    },
+    listItemSeleted: {},
+  };
+});
 
 export default function Accounts(props) {
   const classes = useStyles();
@@ -216,7 +226,14 @@ export default function Accounts(props) {
           const isItemSelected = isSelected(drive.id);
           return (
             <Grid item xs={12} sm={12} md={6} key={index}>
-              <ListItem button selected={isItemSelected}>
+              <ListItem
+                button
+                selected={isItemSelected}
+                classes={{
+                  root: classes.listItem,
+                  selected: classes.listItemSeleted,
+                }}
+              >
                 <ListItemAvatar onClick={() => handleClick(drive.id)}>
                   <Avatar>
                     <CloudIcon />
