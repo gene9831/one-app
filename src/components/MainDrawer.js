@@ -3,7 +3,6 @@ import clsx from 'clsx';
 import { makeStyles } from '@material-ui/core/styles';
 import PropTypes from 'prop-types';
 import IconButton from '@material-ui/core/IconButton';
-import Container from '@material-ui/core/Container';
 import Drawer from '@material-ui/core/Drawer';
 import ChevronLeftIcon from '@material-ui/icons/ChevronLeft';
 import Divider from '@material-ui/core/Divider';
@@ -199,9 +198,7 @@ export default function MainDrawer(props) {
       ) : null}
       <div className={classes.container}>
         <div className={classes.toolbar} />
-        <Container>
-          <ComponentShell Component={subComponent} Props={subComponentProps} />
-        </Container>
+        <ComponentShell Component={subComponent} Props={subComponentProps} />
       </div>
     </div>
   );
