@@ -105,8 +105,8 @@ let SettingItem = (props) => {
           {cfg.name}
         </InputLabel>
         {cfg.description.length > 0 ? (
-          <Tooltip title={cfg.description}>
-            <HelpIcon fontSize="small" />
+          <Tooltip title={cfg.description} placement="top">
+            <HelpIcon fontSize="small" color="action" />
           </Tooltip>
         ) : null}
       </Grid>
