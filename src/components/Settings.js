@@ -2,22 +2,22 @@ import React, { useEffect, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
 import { makeStyles } from '@material-ui/core/styles';
 import Typography from '@material-ui/core/Typography';
-import clsx from 'clsx';
 import Grid from '@material-ui/core/Grid';
 import InputLabel from '@material-ui/core/InputLabel';
 import Input from '@material-ui/core/Input';
 import Tooltip from '@material-ui/core/Tooltip';
 import HelpIcon from '@material-ui/icons/Help';
-import CircularProgress from '@material-ui/core/CircularProgress';
+import LinearProgress from '@material-ui/core/LinearProgress';
 import rpcRequest from '../jsonrpc';
 import Container from '@material-ui/core/Container';
+import Paper from '@material-ui/core/Paper';
+import Fade from '@material-ui/core/Fade';
+import { connect } from 'react-redux';
+import { setGlobalSnackbarMessage } from '../actions';
 
 const useSettingItemStyles = makeStyles((theme) => ({
   root: {
     padding: theme.spacing(3),
-  },
-  item: {
-    margin: theme.spacing(1, 0),
   },
   alignItemsEnd: {
     display: 'flex',
@@ -31,10 +31,9 @@ const useSettingItemStyles = makeStyles((theme) => ({
   },
 }));
 
-function SettingItem(props) {
-  const { config, sectionName } = props;
+let SettingItem = (props) => {
+  const { config, sectionName, setFetching, setGlobalSnackbarMessage } = props;
   const [cfg, setCfg] = useState(null);
-  const [fetching, setFetching] = useState(false);
   const [error, setError] = useState('');
   const timer = useRef(null);
 
@@ -48,6 +47,7 @@ function SettingItem(props) {
       require_auth: true,
     });
     setError('');
+    setGlobalSnackbarMessage('');
     setFetching(false);
   };
 
@@ -57,7 +57,13 @@ function SettingItem(props) {
     }
     timer.current = setTimeout(() => {
       fetchData(key, value).catch((e) => {
-        setError(e.response.data.error.message);
+        if (e.response) {
+          setError(e.response.data.error.message);
+          setGlobalSnackbarMessage(e.response.data.error.message);
+        } else {
+          setError('网络错误');
+          setGlobalSnackbarMessage('网络错误');
+        }
         setFetching(false);
       });
     }, 500);
@@ -94,7 +100,7 @@ function SettingItem(props) {
   const classes = useSettingItemStyles();
   return cfg ? (
     <React.Fragment>
-      <Grid item xs={4} className={clsx(classes.item, classes.alignItemsEnd)}>
+      <Grid item xs={6} sm={5} className={classes.alignItemsEnd}>
         <InputLabel htmlFor={cfg.id} className={classes.label}>
           {cfg.name}
         </InputLabel>
@@ -104,7 +110,7 @@ function SettingItem(props) {
           </Tooltip>
         ) : null}
       </Grid>
-      <Grid item xs={7} className={classes.item}>
+      <Grid item xs={6} sm={7}>
         <Input
           id={cfg.id}
           fullWidth
@@ -116,17 +122,42 @@ function SettingItem(props) {
           error={error.length > 0}
         ></Input>
       </Grid>
-      <Grid item xs={1} className={clsx(classes.item, classes.alignItemsEnd)}>
-        {fetching ? <CircularProgress size={'2rem'} /> : null}
-      </Grid>
     </React.Fragment>
   ) : null;
-}
+};
 
 SettingItem.propTypes = {
   config: PropTypes.object.isRequired,
   sectionName: PropTypes.string.isRequired,
+  setFetching: PropTypes.func.isRequired,
+  setGlobalSnackbarMessage: PropTypes.func.isRequired,
 };
+
+const mapDispatchToProps = (dispatch) => {
+  return {
+    setGlobalSnackbarMessage: (message) =>
+      dispatch(setGlobalSnackbarMessage(message)),
+  };
+};
+
+SettingItem = connect(null, mapDispatchToProps)(SettingItem);
+
+const useSectionStyles = makeStyles((theme) => ({
+  root: {
+    margin: theme.spacing(3, 0),
+    padding: theme.spacing(2),
+    [theme.breakpoints.down('xs')]: {
+      margin: theme.spacing(2, 0),
+    },
+  },
+  title: {
+    padding: theme.spacing(1, 0),
+  },
+  container: {
+    marginTop: theme.spacing(0),
+    marginBottom: theme.spacing(0),
+  },
+}));
 
 const inputTypes = {
   int: 'number',
@@ -135,19 +166,30 @@ const inputTypes = {
 };
 
 function Section(props) {
-  const { name, title, configArray } = props;
+  const classes = useSectionStyles();
+  const { name, title, configArray, ...others } = props;
 
   return (
-    <Grid container>
-      <Typography variant="h5" component="h1" color="primary">
+    <Paper className={classes.root}>
+      <Typography
+        variant="h5"
+        component="div"
+        color="primary"
+        className={classes.title}
+      >
         {title}
       </Typography>
-      <Grid container spacing={2}>
+      <Grid container spacing={2} className={classes.container}>
         {configArray.map((item) => (
-          <SettingItem key={item.id} sectionName={name} config={item} />
+          <SettingItem
+            key={item.id}
+            sectionName={name}
+            config={item}
+            {...others}
+          />
         ))}
       </Grid>
-    </Grid>
+    </Paper>
   );
 }
 
@@ -170,18 +212,10 @@ const configSections = [
   },
 ];
 
-const useStyles = makeStyles((theme) => ({
-  root: {
-    padding: theme.spacing(1, 0),
-    '& > div': {
-      padding: theme.spacing(2, 0),
-    },
-    '& > div:first-child': {
-      paddingTop: 'unset',
-    },
-    '& > div:last-child': {
-      paddingBottom: 'unset',
-    },
+const useStyles = makeStyles(() => ({
+  linearProgress: {
+    position: 'fixed',
+    width: '100%',
   },
 }));
 
@@ -189,6 +223,7 @@ export default function Settings(props) {
   const classes = useStyles();
   const { authed } = props;
   const [cfgSections, setCfgSections] = useState([]);
+  const [fetching, setFetching] = useState(false);
 
   useEffect(() => {
     if (!authed) return;
@@ -211,16 +246,22 @@ export default function Settings(props) {
   }, [authed]);
 
   return (
-    <Container className={classes.root}>
-      {cfgSections.map((section) => (
-        <Section
-          key={section.name}
-          name={section.name}
-          title={section.title}
-          configArray={section.configs}
-        ></Section>
-      ))}
-    </Container>
+    <React.Fragment>
+      <Fade in={fetching} timeout={{ exit: 1000 }}>
+        <LinearProgress className={classes.linearProgress} />
+      </Fade>
+      <Container>
+        {cfgSections.map((section) => (
+          <Section
+            key={section.name}
+            name={section.name}
+            title={section.title}
+            configArray={section.configs}
+            setFetching={setFetching}
+          ></Section>
+        ))}
+      </Container>
+    </React.Fragment>
   );
 }
 

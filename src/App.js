@@ -1,21 +1,18 @@
 import React, { useState } from 'react';
-import Snackbar from '@material-ui/core/Snackbar';
-import Button from '@material-ui/core/Button';
 import UploadManage from './components/UploadManage';
+import PropTypes from 'prop-types';
 import Login from './components/Login';
 import cookies from './cookies';
 import rpcRequest from './jsonrpc';
 import Theme from './components/Theme';
+import GlobalSnackbar from './components/GlobalSnackbar';
+import { connect } from 'react-redux';
+import { setGlobalSnackbarMessage } from './actions';
 
-function App() {
+let App = ({ setGlobalSnackbarMessage }) => {
   // 默认logged为true是保证默认页面是管理页面而不是登录页面
   const [logged, setLogged] = useState(true);
   const [authed, setAuthed] = useState(false);
-  const [error, setError] = useState('');
-
-  const handleClose = () => {
-    setError('');
-  };
 
   const handleWriteToken = (tokenObj) => {
     const { token, expires_at } = tokenObj;
@@ -42,10 +39,10 @@ function App() {
         setLogged(false);
         cookies.remove('token');
       } else {
-        setError('网络错误');
+        setGlobalSnackbarMessage('网络错误');
       }
     });
-  }, []);
+  }, [setGlobalSnackbarMessage]);
 
   return (
     <Theme>
@@ -58,22 +55,22 @@ function App() {
       ) : (
         <Login handleWriteToken={handleWriteToken} />
       )}
-      <Snackbar
-        anchorOrigin={{
-          vertical: 'top',
-          horizontal: 'center',
-        }}
-        open={error.length > 0}
-        onClose={handleClose}
-        message={error}
-        action={
-          <Button color="secondary" size="small" onClick={handleClose}>
-            确认
-          </Button>
-        }
-      />
+      <GlobalSnackbar />
     </Theme>
   );
-}
+};
+
+App.propTypes = {
+  setGlobalSnackbarMessage: PropTypes.func.isRequired,
+};
+
+const mapDispatchToProps = (dispatch) => {
+  return {
+    setGlobalSnackbarMessage: (message) =>
+      dispatch(setGlobalSnackbarMessage(message)),
+  };
+};
+
+App = connect(null, mapDispatchToProps)(App);
 
 export default App;
