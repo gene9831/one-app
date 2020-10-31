@@ -25,6 +25,7 @@ import CircularProgress from '@material-ui/core/CircularProgress';
 import AddDriveDialog from './AddDriveDialog';
 import Paper from '@material-ui/core/Paper';
 import rpcRequest from '../jsonrpc';
+import Container from '@material-ui/core/Container';
 
 const MyToolbar = styled(Toolbar)(({ theme }) => ({
   paddingLeft: theme.spacing(2),
@@ -205,62 +206,64 @@ export default function Accounts(props) {
   };
 
   return (
-    <Paper className={classes.root}>
-      <MyToolbar>
-        <Button
-          variant="outlined"
-          color="primary"
-          startIcon={<AddCircleOutlineIcon />}
-          onClick={() => setOpenAddDrive(true)}
-        >
-          添加帐号
-        </Button>
-      </MyToolbar>
-      <SelectedTooBar
-        numSelected={selected.length}
-        onDeleteSelected={() => setOpenDeleteDialog(true)}
-        onCancelSelected={() => setSelected([])}
-      />
-      <Grid container>
-        {drives.map((drive, index) => {
-          const isItemSelected = isSelected(drive.id);
-          return (
-            <Grid item xs={12} sm={12} md={6} key={index}>
-              <ListItem
-                button
-                selected={isItemSelected}
-                classes={{
-                  root: classes.listItem,
-                  selected: classes.listItemSeleted,
-                }}
-              >
-                <ListItemAvatar onClick={() => handleClick(drive.id)}>
-                  <Avatar>
-                    <CloudIcon />
-                  </Avatar>
-                </ListItemAvatar>
-                <ListItemText
-                  primary={drive.owner.user.displayName}
-                  secondary={drive.owner.user.email}
-                />
-              </ListItem>
-            </Grid>
-          );
-        })}
-      </Grid>
-      <AddDriveDialog
-        open={openAddDrive}
-        onClose={() => setOpenAddDrive(false)}
-        onDriveAdded={updateDrives}
-      />
-      <DeleteDialog
-        open={openDeleteDialog}
-        numSelected={selected.length}
-        onClose={handleCloseDeleteDialog}
-        onConfirm={handleRemoveDrives}
-        comfirming={deleteConfirming}
-      />
-    </Paper>
+    <Container>
+      <Paper className={classes.root}>
+        <MyToolbar>
+          <Button
+            variant="outlined"
+            color="primary"
+            startIcon={<AddCircleOutlineIcon />}
+            onClick={() => setOpenAddDrive(true)}
+          >
+            添加帐号
+          </Button>
+        </MyToolbar>
+        <SelectedTooBar
+          numSelected={selected.length}
+          onDeleteSelected={() => setOpenDeleteDialog(true)}
+          onCancelSelected={() => setSelected([])}
+        />
+        <Grid container>
+          {drives.map((drive, index) => {
+            const isItemSelected = isSelected(drive.id);
+            return (
+              <Grid item xs={12} sm={12} md={6} key={index}>
+                <ListItem
+                  button
+                  selected={isItemSelected}
+                  classes={{
+                    root: classes.listItem,
+                    selected: classes.listItemSeleted,
+                  }}
+                >
+                  <ListItemAvatar onClick={() => handleClick(drive.id)}>
+                    <Avatar>
+                      <CloudIcon />
+                    </Avatar>
+                  </ListItemAvatar>
+                  <ListItemText
+                    primary={drive.owner.user.displayName}
+                    secondary={drive.owner.user.email}
+                  />
+                </ListItem>
+              </Grid>
+            );
+          })}
+        </Grid>
+        <AddDriveDialog
+          open={openAddDrive}
+          onClose={() => setOpenAddDrive(false)}
+          onDriveAdded={updateDrives}
+        />
+        <DeleteDialog
+          open={openDeleteDialog}
+          numSelected={selected.length}
+          onClose={handleCloseDeleteDialog}
+          onConfirm={handleRemoveDrives}
+          comfirming={deleteConfirming}
+        />
+      </Paper>
+    </Container>
   );
 }
 
