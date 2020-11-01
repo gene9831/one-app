@@ -4,6 +4,9 @@ import { createMuiTheme, ThemeProvider } from '@material-ui/core/styles';
 import CssBaseline from '@material-ui/core/CssBaseline';
 import cookies from '../cookies';
 import { connect } from 'react-redux';
+import { PALETTET_YPES } from '../actions';
+
+const { LIGHT, DARK } = PALETTET_YPES;
 
 const defaultPalettes = {
   light: {
@@ -35,7 +38,7 @@ let Theme = (props) => {
     () =>
       createMuiTheme({
         palette: {
-          ...defaultPalettes[palette.type ? palette.type : 'light'],
+          ...defaultPalettes[palette.type ? palette.type : LIGHT],
           ...palette,
         },
       }),
@@ -51,7 +54,7 @@ let Theme = (props) => {
 
 Theme.propTypes = {
   palette: PropTypes.shape({
-    type: PropTypes.oneOf(['light', 'dark']),
+    type: PropTypes.oneOf([LIGHT, DARK]),
   }),
   children: PropTypes.node.isRequired,
 };

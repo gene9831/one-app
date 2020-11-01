@@ -5,13 +5,15 @@ import Brightness4Icon from '@material-ui/icons/Brightness4';
 import Brightness7Icon from '@material-ui/icons/Brightness7';
 import Tooltip from '@material-ui/core/Tooltip';
 import { connect } from 'react-redux';
-import { setPaletteType } from '../actions';
+import { setPaletteType, PALETTET_YPES } from '../actions';
+
+const { LIGHT, DARK } = PALETTET_YPES;
 
 let Palette = (props) => {
   const { palette, onPaletteTypeClick } = props;
 
-  const isDark = Boolean(palette.type === 'dark');
-  const switchType = String(isDark ? 'light' : 'dark');
+  const isDark = Boolean(palette.type === DARK);
+  const switchType = String(isDark ? LIGHT : DARK);
   const title = String(isDark ? '切换亮色主题' : '切换暗色主题');
 
   return (
@@ -30,7 +32,7 @@ let Palette = (props) => {
 
 Palette.propTypes = {
   palette: PropTypes.shape({
-    type: PropTypes.oneOf(['light', 'dark']).isRequired,
+    type: PropTypes.oneOf([LIGHT, DARK]).isRequired,
   }),
   onPaletteTypeClick: PropTypes.func.isRequired,
 };
