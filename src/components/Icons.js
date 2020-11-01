@@ -1,5 +1,7 @@
 import React from 'react';
 import SvgIcon from '@material-ui/core/SvgIcon';
+import { makeStyles } from '@material-ui/core/styles';
+import SyncIcon from '@material-ui/icons/Sync';
 
 const FileUploadOutline = (props) => {
   return (
@@ -33,4 +35,32 @@ const UploadMultiple = (props) => {
   );
 };
 
-export { FileUploadOutline, FolderUploadOutline, Upload, UploadMultiple };
+const useAutoRotateSyncIconStyles = makeStyles({
+  '@keyframes rotateEffect': {
+    '25%': {
+      transform: 'rotate(-180deg)',
+    },
+    '50%': {
+      transform: 'rotate(-180deg)',
+    },
+    '75%': {
+      transform: 'rotate(-360deg)',
+    },
+    '100%': {
+      transform: 'rotate(-360deg)',
+    },
+  },
+  root: { animation: '$rotateEffect 2s linear 0s infinite' },
+});
+const AutoRotateSyncIcon = () => {
+  const classes = useAutoRotateSyncIconStyles();
+  return <SyncIcon className={classes.root} />;
+};
+
+export {
+  FileUploadOutline,
+  FolderUploadOutline,
+  Upload,
+  UploadMultiple,
+  AutoRotateSyncIcon,
+};
