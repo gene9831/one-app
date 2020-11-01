@@ -35,10 +35,14 @@ import ListItemIcon from '@material-ui/core/ListItemIcon';
 import Checkbox from '@material-ui/core/Checkbox';
 import { useMediaQuery } from '@material-ui/core';
 import UpdateIcon from '@material-ui/icons/Update';
-import SyncIcon from '@material-ui/icons/Sync';
 import AutorenewIcon from '@material-ui/icons/Autorenew';
 import { connect } from 'react-redux';
-import { setGlobalSnackbarMessage } from '../actions';
+import {
+  setGlobalSnackbarMessage,
+  setOperationStatus,
+  OPERATING_STATUS,
+} from '../actions';
+import ComponentShell from './ComponentShell';
 
 const MyToolbar = styled(Toolbar)(({ theme }) => ({
   paddingLeft: theme.spacing(2),
@@ -70,7 +74,14 @@ const useSelectedToobarStyles = makeStyles((theme) => ({
 
 const SelectedTooBar = (props) => {
   const classes = useSelectedToobarStyles();
-  const { numSelected, onDelete, onUpdate, onFullUpdate, onCancel } = props;
+  const {
+    numSelected,
+    operationStatus,
+    onDelete,
+    onUpdate,
+    onFullUpdate,
+    onCancel,
+  } = props;
   return (
     <Fade in={numSelected > 0}>
       <MyToolbar className={classes.selectedToolbar}>
@@ -86,21 +97,23 @@ const SelectedTooBar = (props) => {
         >
           {numSelected} 已选择
         </Typography>
-        <Tooltip title="更新">
-          <IconButton color="inherit" onClick={onUpdate}>
-            <UpdateIcon />
-          </IconButton>
-        </Tooltip>
-        <Tooltip title="全量更新">
-          <IconButton color="inherit" onClick={onFullUpdate}>
-            <AutorenewIcon />
-          </IconButton>
-        </Tooltip>
-        <Tooltip title="删除">
-          <IconButton color="inherit" onClick={onDelete}>
-            <DeleteIcon />
-          </IconButton>
-        </Tooltip>
+        {[
+          { title: '更新', onClick: onUpdate, Icon: UpdateIcon },
+          { title: '全量更新', onClick: onFullUpdate, Icon: AutorenewIcon },
+          { title: '删除', onClick: onDelete, Icon: DeleteIcon },
+        ].map((item) => (
+          <Tooltip key={item.title} title={item.title}>
+            <span>
+              <IconButton
+                color="inherit"
+                onClick={item.onClick}
+                disabled={operationStatus === OPERATING_STATUS.RUNNING}
+              >
+                <ComponentShell Component={item.Icon} />
+              </IconButton>
+            </span>
+          </Tooltip>
+        ))}
       </MyToolbar>
     </Fade>
   );
@@ -108,6 +121,7 @@ const SelectedTooBar = (props) => {
 
 SelectedTooBar.propTypes = {
   numSelected: PropTypes.number.isRequired,
+  operationStatus: PropTypes.string,
   onDelete: PropTypes.func,
   onUpdate: PropTypes.func,
   onFullUpdate: PropTypes.func,
@@ -130,15 +144,7 @@ const useMessageDialogStyles = makeStyles((theme) => ({
 
 const MessageDialog = (props) => {
   const classes = useMessageDialogStyles();
-  const {
-    open,
-    title,
-    description,
-    numSelected,
-    comfirming,
-    onConfirm,
-    onClose,
-  } = props;
+  const { open, title, description, numSelected, onConfirm, onClose } = props;
   return (
     <Dialog fullWidth maxWidth="xs" open={open} onClose={onClose}>
       <DialogTitle>{title}</DialogTitle>
@@ -155,10 +161,10 @@ const MessageDialog = (props) => {
         </DialogContentText>
       </DialogContent>
       <DialogActions>
-        <Button color="secondary" onClick={onClose} disabled={comfirming}>
+        <Button color="secondary" onClick={onClose}>
           取消
         </Button>
-        <Button color="primary" onClick={onConfirm} disabled={comfirming}>
+        <Button color="primary" onClick={onConfirm}>
           确定
         </Button>
       </DialogActions>
@@ -198,23 +204,6 @@ const useStyles = makeStyles((theme) => {
       },
     },
     listItemSeleted: {},
-    '@keyframes rotateEffect': {
-      '25%': {
-        transform: 'rotate(-180deg)',
-      },
-      '50%': {
-        transform: 'rotate(-180deg)',
-      },
-      '75%': {
-        transform: 'rotate(-360deg)',
-      },
-      '100%': {
-        transform: 'rotate(-360deg)',
-      },
-    },
-    sync: {
-      animation: '$rotateEffect 2s linear 0s infinite',
-    },
   };
 });
 
@@ -227,30 +216,31 @@ const resultToMessage = (result) => {
   }
   let res = '';
   if (result.added > 0) {
-    res += `新增${result.added}个项目，`;
+    res += `新增${result.added}个项，`;
   }
   if (result.updated > 0) {
-    res += `更新${result.updated}个项目，`;
+    res += `更新${result.updated}个项，`;
   }
   if (result.deleted > 0) {
-    res += `删除${result.deleted}个项目，`;
+    res += `删除${result.deleted}个项，`;
   }
   return res.slice(0, -1);
 };
 
 let Accounts = (props) => {
   const classes = useStyles();
-  const { drives, updateDrives, setGlobalSnackbarMessage } = props;
+  const {
+    drives,
+    updateDrives,
+    setGlobalSnackbarMessage,
+    operationStatus,
+    setOperationStatus,
+  } = props;
   const [selected, setSelected] = useState([]);
   const [openAddDrive, setOpenAddDrive] = useState(false);
 
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
-  const [deleteConfirming, setDeleteConfirming] = useState(false);
-
   const [openFullUpdateDialog, setOpenFullUpdateDialog] = useState(false);
-  const [fullUpdateConfirming, setFullUpdateConfirming] = useState(false);
-
-  const [updateConfirming, setUpdateConfirming] = useState(false);
 
   const theme = useTheme();
   const mediaUpSm = useMediaQuery(theme.breakpoints.up('sm'));
@@ -268,8 +258,8 @@ let Accounts = (props) => {
     setSelected(newSelected);
   };
 
-  const handleOperateDrives = (method, setConfirming, setOpenDialog) => {
-    setConfirming(true);
+  const handleOperateDrives = (method, setOpenDialog) => {
+    setOperationStatus(OPERATING_STATUS.RUNNING);
     if (setOpenDialog) setOpenDialog(false);
     setSelected([]);
     setGlobalSnackbarMessage('');
@@ -281,13 +271,12 @@ let Accounts = (props) => {
       });
       // 加 await 保证当前页面 drive 数据最新
       await updateDrives();
-      setConfirming(false);
-      console.log(res);
+      setOperationStatus(OPERATING_STATUS.SUCCESS);
       setGlobalSnackbarMessage(resultToMessage(res.data.result));
     };
 
     fetchData().catch((e) => {
-      setConfirming(false);
+      setOperationStatus(OPERATING_STATUS.FAILED);
       if (e.response) {
         setGlobalSnackbarMessage('操作失败');
       } else {
@@ -297,23 +286,15 @@ let Accounts = (props) => {
   };
 
   const handleRemoveDrives = () => {
-    handleOperateDrives(
-      'Onedrive.signOut',
-      setDeleteConfirming,
-      setOpenDeleteDialog
-    );
+    handleOperateDrives('Onedrive.signOut', setOpenDeleteDialog);
   };
 
   const handleFullUpdateDrives = () => {
-    handleOperateDrives(
-      'Onedrive.fullUpdateItems',
-      setFullUpdateConfirming,
-      setOpenFullUpdateDialog
-    );
+    handleOperateDrives('Onedrive.fullUpdateItems', setOpenFullUpdateDialog);
   };
 
   const handleUpdateDrives = () => {
-    handleOperateDrives('Onedrive.updateItems', setUpdateConfirming);
+    handleOperateDrives('Onedrive.updateItems');
   };
 
   return (
@@ -329,14 +310,10 @@ let Accounts = (props) => {
             添加帐号
           </Button>
           <div style={{ flex: 1 }}></div>
-          {deleteConfirming || updateConfirming || fullUpdateConfirming ? (
-            <Tooltip title="离开此页面更新状态会丢失">
-              <SyncIcon className={classes.sync} />
-            </Tooltip>
-          ) : null}
         </MyToolbar>
         <SelectedTooBar
           numSelected={selected.length}
+          operationStatus={operationStatus}
           onDelete={() => setOpenDeleteDialog(true)}
           onUpdate={handleUpdateDrives}
           onFullUpdate={() => setOpenFullUpdateDialog(true)}
@@ -390,7 +367,6 @@ let Accounts = (props) => {
           numSelected={selected.length}
           onClose={() => setOpenDeleteDialog(false)}
           onConfirm={handleRemoveDrives}
-          comfirming={deleteConfirming}
         />
         <MessageDialog
           open={openFullUpdateDialog}
@@ -399,7 +375,6 @@ let Accounts = (props) => {
           numSelected={selected.length}
           onClose={() => setOpenFullUpdateDialog(false)}
           onConfirm={handleFullUpdateDrives}
-          comfirming={fullUpdateConfirming}
         />
       </Paper>
     </Container>
@@ -410,15 +385,22 @@ Accounts.propTypes = {
   drives: PropTypes.array.isRequired,
   updateDrives: PropTypes.func.isRequired,
   setGlobalSnackbarMessage: PropTypes.func.isRequired,
+  operationStatus: PropTypes.string,
+  setOperationStatus: PropTypes.func.isRequired,
 };
+
+const mapStateToProps = (state) => ({
+  operationStatus: state.operationStatus,
+});
 
 const mapDispatchToProps = (dispatch) => {
   return {
     setGlobalSnackbarMessage: (message) =>
       dispatch(setGlobalSnackbarMessage(message)),
+    setOperationStatus: (status) => dispatch(setOperationStatus(status)),
   };
 };
 
-Accounts = connect(null, mapDispatchToProps)(Accounts);
+Accounts = connect(mapStateToProps, mapDispatchToProps)(Accounts);
 
 export default Accounts;

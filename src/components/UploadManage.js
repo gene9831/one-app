@@ -12,6 +12,12 @@ import Settings from './Settings';
 import Accounts from './Accounts';
 import Exit from './Exit';
 import rpcRequest from '../jsonrpc';
+import { AutoRotateSyncIcon } from './Icons';
+import IconButton from '@material-ui/core/IconButton';
+import Tooltip from '@material-ui/core/Tooltip';
+import Badge from '@material-ui/core/Badge';
+import { connect } from 'react-redux';
+import { OPERATING_STATUS } from '../actions';
 
 const pageSections = [
   {
@@ -33,8 +39,8 @@ const pageSections = [
   },
 ];
 
-export default function UploadManage(props) {
-  const { authed, setAuthed, setLogged } = props;
+let UploadManage = (props) => {
+  const { authed, setAuthed, setLogged, operationStatus } = props;
   const [drives, setDrives] = useState([]);
 
   const updateDrives = async () => {
@@ -83,15 +89,35 @@ export default function UploadManage(props) {
         // defaultIndex: { section: 0, item: 0 },
       }}
       endComponents={[
+        <React.Fragment key="syncIcon">
+          {operationStatus === OPERATING_STATUS.RUNNING ? (
+            <Tooltip title="操作进行中，请勿刷新页面">
+              <IconButton color="inherit">
+                <Badge badgeContent={1} color="secondary">
+                  <AutoRotateSyncIcon />
+                </Badge>
+              </IconButton>
+            </Tooltip>
+          ) : null}
+        </React.Fragment>,
         <Palette key="palette" />,
         <Exit key="exit" setAuthed={setAuthed} setLogged={setLogged} />,
       ]}
     ></MainDrawer>
   );
-}
+};
 
 UploadManage.propTypes = {
   authed: PropTypes.bool.isRequired,
   setAuthed: PropTypes.func.isRequired,
   setLogged: PropTypes.func.isRequired,
+  operationStatus: PropTypes.string,
 };
+
+const mapStateToProps = (state) => ({
+  operationStatus: state.operationStatus,
+});
+
+UploadManage = connect(mapStateToProps)(UploadManage);
+
+export default UploadManage;
