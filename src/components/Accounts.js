@@ -216,13 +216,13 @@ const resultToMessage = (result) => {
   }
   let res = '';
   if (result.added > 0) {
-    res += `新增${result.added}个项，`;
+    res += `新增${result.added}项，`;
   }
   if (result.updated > 0) {
-    res += `更新${result.updated}个项，`;
+    res += `更新${result.updated}项，`;
   }
   if (result.deleted > 0) {
-    res += `删除${result.deleted}个项，`;
+    res += `删除${result.deleted}项，`;
   }
   return res.slice(0, -1);
 };
