@@ -8,7 +8,7 @@ import Input from '@material-ui/core/Input';
 import Tooltip from '@material-ui/core/Tooltip';
 import HelpIcon from '@material-ui/icons/Help';
 import rpcRequest from '../jsonrpc';
-import Container from '@material-ui/core/Container';
+import useMediaQuery from '@material-ui/core/useMediaQuery';
 import Paper from '@material-ui/core/Paper';
 import { connect } from 'react-redux';
 import {
@@ -33,20 +33,27 @@ const useSettingItemStyles = makeStyles((theme) => ({
   },
 }));
 
+const inputTypes = {
+  int: 'number',
+  float: 'number',
+  str: 'text',
+};
+
 let SettingItem = (props) => {
   const {
-    config,
+    config: configProp,
     sectionName,
     setGlobalSnackbarMessage,
     setOperationStatus,
   } = props;
-  const [cfg, setCfg] = useState(null);
+  // TODO 考虑下状态提升怎么弄
+  const [config, setConfig] = useState(null);
   const [error, setError] = useState('');
   const timer = useRef(null);
 
   useEffect(() => {
-    setCfg(config);
-  }, [config]);
+    setConfig(configProp);
+  }, [configProp]);
 
   const fetchData = async (key, value) => {
     await rpcRequest('AppConfig.set', {
@@ -76,13 +83,13 @@ let SettingItem = (props) => {
   };
 
   const handleChange = (e) => {
-    if (cfg.type === 'int' && e.target.value.indexOf('.') >= 0) {
+    if (config.type === 'int' && e.target.value.indexOf('.') >= 0) {
       // 整数不能输入小数点
       return;
     }
 
     let value;
-    switch (cfg.type) {
+    switch (config.type) {
       case 'int':
         value = parseInt(e.target.value);
         break;
@@ -93,11 +100,11 @@ let SettingItem = (props) => {
         value = e.target.value;
     }
 
-    if (value === cfg.value) {
+    if (value === config.value) {
       return;
     }
 
-    setCfg({ ...cfg, value: isNaN(value) ? '' : value });
+    setConfig({ ...config, value: isNaN(value) ? '' : value });
     setOperationStatus(OPERATING_STATUS.RUNNING);
     setGlobalSnackbarMessage('');
 
@@ -105,26 +112,26 @@ let SettingItem = (props) => {
   };
 
   const classes = useSettingItemStyles();
-  return cfg ? (
+  return config ? (
     <React.Fragment>
-      <Grid item xs={6} sm={5} className={classes.alignItemsEnd}>
-        <InputLabel htmlFor={cfg.id} className={classes.label}>
-          {cfg.name}
+      <Grid item xs={6} className={classes.alignItemsEnd}>
+        <InputLabel htmlFor={config.id} className={classes.label}>
+          {config.name}
         </InputLabel>
-        {cfg.description.length > 0 ? (
-          <Tooltip title={cfg.description} placement="top">
+        {config.description.length > 0 ? (
+          <Tooltip title={config.description} placement="top">
             <HelpIcon fontSize="small" color="action" />
           </Tooltip>
         ) : null}
       </Grid>
-      <Grid item xs={6} sm={7}>
+      <Grid item xs={6}>
         <Input
-          id={cfg.id}
+          id={config.id}
           fullWidth
-          value={cfg.value}
-          disabled={!cfg.editable}
+          value={config.value}
+          disabled={!config.editable}
           color="primary"
-          type={inputTypes[cfg.type]}
+          type={inputTypes[config.type]}
           onChange={handleChange}
           error={error.length > 0}
         ></Input>
@@ -144,23 +151,17 @@ const mapStateToProps = (state) => ({
   operationStatus: state.operationStatus,
 });
 
-const mapDispatchToProps = (dispatch) => {
-  return {
-    setGlobalSnackbarMessage: (message) =>
-      dispatch(setGlobalSnackbarMessage(message)),
-    setOperationStatus: (status) => dispatch(setOperationStatus(status)),
-  };
-};
+const mapDispatchToProps = (dispatch) => ({
+  setGlobalSnackbarMessage: (message) =>
+    dispatch(setGlobalSnackbarMessage(message)),
+  setOperationStatus: (status) => dispatch(setOperationStatus(status)),
+});
 
 SettingItem = connect(mapStateToProps, mapDispatchToProps)(SettingItem);
 
 const useSectionStyles = makeStyles((theme) => ({
-  root: {
-    margin: theme.spacing(3, 0),
+  content: {
     padding: theme.spacing(2),
-    [theme.breakpoints.down('xs')]: {
-      margin: theme.spacing(2, 0),
-    },
   },
   title: {
     padding: theme.spacing(1, 0),
@@ -171,37 +172,33 @@ const useSectionStyles = makeStyles((theme) => ({
   },
 }));
 
-const inputTypes = {
-  int: 'number',
-  float: 'number',
-  str: 'text',
-};
-
 function Section(props) {
   const classes = useSectionStyles();
   const { name, title, configArray, ...others } = props;
 
   return (
-    <Paper className={classes.root}>
-      <Typography
-        variant="h5"
-        component="div"
-        color="primary"
-        className={classes.title}
-      >
-        {title}
-      </Typography>
-      <Grid container spacing={2} className={classes.container}>
-        {configArray.map((item) => (
-          <SettingItem
-            key={item.id}
-            sectionName={name}
-            config={item}
-            {...others}
-          />
-        ))}
-      </Grid>
-    </Paper>
+    <Grid item xs={12} md={6}>
+      <Paper className={classes.content}>
+        <Typography
+          variant="h5"
+          component="div"
+          color="primary"
+          className={classes.title}
+        >
+          {title}
+        </Typography>
+        <Grid container spacing={2} className={classes.container}>
+          {configArray.map((item) => (
+            <SettingItem
+              key={item.id}
+              sectionName={name}
+              config={item}
+              {...others}
+            />
+          ))}
+        </Grid>
+      </Paper>
+    </Grid>
   );
 }
 
@@ -211,7 +208,7 @@ Section.propTypes = {
   configArray: PropTypes.array.isRequired,
 };
 
-const configSections = [
+const showSections = [
   {
     name: 'onedrive',
     title: '网盘',
@@ -224,9 +221,10 @@ const configSections = [
   },
 ];
 
-export default function Settings(props) {
-  const { authed } = props;
-  const [cfgSections, setCfgSections] = useState([]);
+let Settings = (props) => {
+  const { authed, setGlobalSnackbarMessage } = props;
+  const [sections, setSections] = useState([]);
+  const downXs = useMediaQuery((theme) => theme.breakpoints.down('xs'));
 
   useEffect(() => {
     if (!authed) return;
@@ -235,8 +233,8 @@ export default function Settings(props) {
         require_auth: true,
       });
       const cfg = res.data.result;
-      setCfgSections(
-        configSections.map((section) => ({
+      setSections(
+        showSections.map((section) => ({
           ...section,
           configs: section.ids.map((id) => ({
             ...cfg[section.name][id],
@@ -245,12 +243,16 @@ export default function Settings(props) {
         }))
       );
     };
-    fetchData();
-  }, [authed]);
+    fetchData().catch((e) => {
+      if (!e.response) {
+        setGlobalSnackbarMessage('网络错误');
+      }
+    });
+  }, [authed, setGlobalSnackbarMessage]);
 
   return (
-    <Container>
-      {cfgSections.map((section) => (
+    <Grid container spacing={downXs ? 2 : 3}>
+      {sections.map((section) => (
         <Section
           key={section.name}
           name={section.name}
@@ -258,10 +260,17 @@ export default function Settings(props) {
           configArray={section.configs}
         ></Section>
       ))}
-    </Container>
+    </Grid>
   );
-}
+};
 
 Settings.propTypes = {
   authed: PropTypes.bool,
+  setGlobalSnackbarMessage: PropTypes.func.isRequired,
 };
+
+Settings = connect(null, (dispatch) => ({
+  setGlobalSnackbarMessage: (message) =>
+    dispatch(setGlobalSnackbarMessage(message)),
+}))(Settings);
+export default Settings;

@@ -11,7 +11,8 @@ import ListItem from '@material-ui/core/ListItem';
 import ListItemIcon from '@material-ui/core/ListItemIcon';
 import ListItemText from '@material-ui/core/ListItemText';
 import ListSubheader from '@material-ui/core/ListSubheader';
-import { useMediaQuery, useTheme } from '@material-ui/core';
+import Container from '@material-ui/core/Container';
+import useMediaQuery from '@material-ui/core/useMediaQuery';
 import ComponentShell from './ComponentShell';
 import cookies from '../cookies';
 import MyAppBar from './MyAppBar';
@@ -54,6 +55,15 @@ const useStyles = makeStyles((theme) => ({
   },
   container: {
     flexGrow: 1,
+    overflow: 'auto',
+  },
+  content: {
+    paddingTop: theme.spacing(3),
+    paddingBottom: theme.spacing(3),
+    [theme.breakpoints.down('xs')]: {
+      paddingTop: theme.spacing(2),
+      paddingBottom: theme.spacing(2),
+    },
   },
 }));
 
@@ -61,15 +71,14 @@ const initPageIndex = { section: 0, item: 0 };
 
 export default function MainDrawer(props) {
   const classes = useStyles();
-  const theme = useTheme();
   const { pageProps, showDrawer, endComponents } = props;
   const { defaultIndex, sections, views } = pageProps;
 
   const [openDrawer, setOpenDrawer] = useState(false);
   const [pageIndex, setPageIndex] = useState(initPageIndex);
 
-  const upMd = useMediaQuery(theme.breakpoints.up('md'));
-  const upLg = useMediaQuery(theme.breakpoints.up('lg'));
+  const upMd = useMediaQuery((theme) => theme.breakpoints.up('md'));
+  const upLg = useMediaQuery((theme) => theme.breakpoints.up('lg'));
 
   useEffect(() => {
     const cookieIndex = cookies.get('index');
@@ -198,7 +207,9 @@ export default function MainDrawer(props) {
       ) : null}
       <div className={classes.container}>
         <div className={classes.toolbar} />
-        <ComponentShell Component={subComponent} Props={subComponentProps} />
+        <Container className={classes.content}>
+          <ComponentShell Component={subComponent} Props={subComponentProps} />
+        </Container>
       </div>
     </div>
   );

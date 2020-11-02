@@ -1,27 +1,16 @@
 import React, { useState } from 'react';
 import PropTypes from 'prop-types';
-import {
-  lighten,
-  fade,
-  makeStyles,
-  styled,
-  useTheme,
-} from '@material-ui/core/styles';
-import Typography from '@material-ui/core/Typography';
+import { fade, makeStyles, styled } from '@material-ui/core/styles';
 import Grid from '@material-ui/core/Grid';
 import ListItem from '@material-ui/core/ListItem';
 import ListItemText from '@material-ui/core/ListItemText';
-import IconButton from '@material-ui/core/IconButton';
 import Button from '@material-ui/core/Button';
-import Fade from '@material-ui/core/Fade';
-import CloseIcon from '@material-ui/icons/Close';
 import AddCircleOutlineIcon from '@material-ui/icons/AddCircleOutline';
 import CloudIcon from '@material-ui/icons/Cloud';
 import DeleteIcon from '@material-ui/icons/Delete';
 import Avatar from '@material-ui/core/Avatar';
 import ListItemAvatar from '@material-ui/core/ListItemAvatar';
 import Toolbar from '@material-ui/core/Toolbar';
-import Tooltip from '@material-ui/core/Tooltip';
 import Dialog from '@material-ui/core/Dialog';
 import DialogActions from '@material-ui/core/DialogActions';
 import DialogContent from '@material-ui/core/DialogContent';
@@ -30,7 +19,6 @@ import DialogTitle from '@material-ui/core/DialogTitle';
 import AddDriveDialog from './AddDriveDialog';
 import Paper from '@material-ui/core/Paper';
 import rpcRequest from '../jsonrpc';
-import Container from '@material-ui/core/Container';
 import ListItemIcon from '@material-ui/core/ListItemIcon';
 import Checkbox from '@material-ui/core/Checkbox';
 import { useMediaQuery } from '@material-ui/core';
@@ -42,91 +30,12 @@ import {
   setOperationStatus,
   OPERATING_STATUS,
 } from '../actions';
-import ComponentShell from './ComponentShell';
+import SelectedToobar from './SelectedToobar';
 
 const MyToolbar = styled(Toolbar)(({ theme }) => ({
   paddingLeft: theme.spacing(2),
   paddingRight: theme.spacing(2),
 }));
-
-const useSelectedToobarStyles = makeStyles((theme) => ({
-  selectedToolbar: {
-    position: 'absolute',
-    top: 0,
-    width: '100%',
-    borderTopLeftRadius: theme.shape.borderRadius,
-    borderTopRightRadius: theme.shape.borderRadius,
-    ...(theme.palette.type === 'light'
-      ? {
-          color: theme.palette.secondary.main,
-          backgroundColor: lighten(theme.palette.secondary.light, 0.75),
-        }
-      : {
-          color: theme.palette.text.primary,
-          backgroundColor: theme.palette.secondary.dark,
-        }),
-  },
-  title: {
-    flex: '1 1 100%',
-    padding: theme.spacing(0, 1),
-  },
-}));
-
-const SelectedTooBar = (props) => {
-  const classes = useSelectedToobarStyles();
-  const {
-    numSelected,
-    operationStatus,
-    onDelete,
-    onUpdate,
-    onFullUpdate,
-    onCancel,
-  } = props;
-  return (
-    <Fade in={numSelected > 0}>
-      <MyToolbar className={classes.selectedToolbar}>
-        <Tooltip title="取消">
-          <IconButton color="inherit" onClick={onCancel}>
-            <CloseIcon />
-          </IconButton>
-        </Tooltip>
-        <Typography
-          variant="subtitle1"
-          component="div"
-          className={classes.title}
-        >
-          {numSelected} 已选择
-        </Typography>
-        {[
-          { title: '更新', onClick: onUpdate, Icon: UpdateIcon },
-          { title: '全量更新', onClick: onFullUpdate, Icon: AutorenewIcon },
-          { title: '删除', onClick: onDelete, Icon: DeleteIcon },
-        ].map((item) => (
-          <Tooltip key={item.title} title={item.title}>
-            <span>
-              <IconButton
-                color="inherit"
-                onClick={item.onClick}
-                disabled={operationStatus === OPERATING_STATUS.RUNNING}
-              >
-                <ComponentShell Component={item.Icon} />
-              </IconButton>
-            </span>
-          </Tooltip>
-        ))}
-      </MyToolbar>
-    </Fade>
-  );
-};
-
-SelectedTooBar.propTypes = {
-  numSelected: PropTypes.number.isRequired,
-  operationStatus: PropTypes.string,
-  onDelete: PropTypes.func,
-  onUpdate: PropTypes.func,
-  onFullUpdate: PropTypes.func,
-  onCancel: PropTypes.func,
-};
 
 const useMessageDialogStyles = makeStyles((theme) => ({
   primaryColor: {
@@ -189,10 +98,6 @@ const useStyles = makeStyles((theme) => {
       : fade(theme.palette.secondary.main, 0.24);
   return {
     root: {
-      margin: theme.spacing(3, 0),
-      [theme.breakpoints.down('xs')]: {
-        margin: theme.spacing(2, 0),
-      },
       position: 'relative',
     },
     listItem: {
@@ -233,7 +138,6 @@ let Accounts = (props) => {
     drives,
     updateDrives,
     setGlobalSnackbarMessage,
-    operationStatus,
     setOperationStatus,
   } = props;
   const [selected, setSelected] = useState([]);
@@ -242,8 +146,7 @@ let Accounts = (props) => {
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
   const [openFullUpdateDialog, setOpenFullUpdateDialog] = useState(false);
 
-  const theme = useTheme();
-  const mediaUpSm = useMediaQuery(theme.breakpoints.up('sm'));
+  const mediaUpSm = useMediaQuery((theme) => theme.breakpoints.up('sm'));
 
   const isSelected = (name) => selected.indexOf(name) !== -1;
 
@@ -297,87 +200,103 @@ let Accounts = (props) => {
     handleOperateDrives('Onedrive.updateItems');
   };
 
+  const iconButtons = [
+    {
+      name: 'update',
+      text: '更新',
+      onClick: handleUpdateDrives,
+      Icon: UpdateIcon,
+    },
+    {
+      name: 'fullupdate',
+      text: '全量更新',
+      onClick: () => setOpenFullUpdateDialog(true),
+      Icon: AutorenewIcon,
+    },
+    {
+      name: 'delete',
+      text: '删除',
+      onClick: () => setOpenDeleteDialog(true),
+      Icon: DeleteIcon,
+    },
+  ];
+
   return (
-    <Container>
-      <Paper className={classes.root}>
-        <MyToolbar>
-          <Button
-            variant="outlined"
-            color="primary"
-            startIcon={<AddCircleOutlineIcon />}
-            onClick={() => setOpenAddDrive(true)}
-          >
-            添加帐号
-          </Button>
-          <div style={{ flex: 1 }}></div>
-        </MyToolbar>
-        <SelectedTooBar
-          numSelected={selected.length}
-          operationStatus={operationStatus}
-          onDelete={() => setOpenDeleteDialog(true)}
-          onUpdate={handleUpdateDrives}
-          onFullUpdate={() => setOpenFullUpdateDialog(true)}
-          onCancel={() => setSelected([])}
-        />
-        <Grid container>
-          {drives.map((drive, index) => {
-            const isItemSelected = isSelected(drive.id);
-            return (
-              <Grid item xs={12} sm={12} md={6} key={index}>
-                <ListItem
-                  button
-                  selected={isItemSelected}
-                  classes={{
-                    root: classes.listItem,
-                    selected: classes.listItemSeleted,
-                  }}
+    <Paper className={classes.root}>
+      <MyToolbar>
+        <Button
+          variant="outlined"
+          color="primary"
+          startIcon={<AddCircleOutlineIcon />}
+          onClick={() => setOpenAddDrive(true)}
+        >
+          添加帐号
+        </Button>
+      </MyToolbar>
+      <SelectedToobar
+        ToolbarComponent={MyToolbar}
+        numSelected={selected.length}
+        onCancel={() => setSelected([])}
+        iconButtons={iconButtons}
+      />
+      <Grid container>
+        {drives.map((drive, index) => {
+          const isItemSelected = isSelected(drive.id);
+          return (
+            <Grid item xs={12} sm={12} md={6} key={index}>
+              <ListItem
+                button
+                selected={isItemSelected}
+                classes={{
+                  root: classes.listItem,
+                  selected: classes.listItemSeleted,
+                }}
+              >
+                {mediaUpSm ? (
+                  <ListItemIcon>
+                    <Checkbox
+                      checked={isItemSelected}
+                      onClick={() => handleClick(drive.id)}
+                    />
+                  </ListItemIcon>
+                ) : null}
+                <ListItemAvatar
+                  onClick={!mediaUpSm ? () => handleClick(drive.id) : null}
                 >
-                  {mediaUpSm ? (
-                    <ListItemIcon>
-                      <Checkbox
-                        checked={isItemSelected}
-                        onClick={() => handleClick(drive.id)}
-                      />
-                    </ListItemIcon>
-                  ) : null}
-                  <ListItemAvatar
-                    onClick={!mediaUpSm ? () => handleClick(drive.id) : null}
-                  >
-                    <Avatar>
-                      <CloudIcon />
-                    </Avatar>
-                  </ListItemAvatar>
-                  <ListItemText
-                    primary={drive.owner.user.displayName}
-                    secondary={drive.owner.user.email}
-                  />
-                </ListItem>
-              </Grid>
-            );
-          })}
-        </Grid>
-        <AddDriveDialog
-          open={openAddDrive}
-          onClose={() => setOpenAddDrive(false)}
-          onDriveAdded={updateDrives}
-        />
-        <MessageDialog
-          open={openDeleteDialog}
-          title="移除"
-          numSelected={selected.length}
-          onClose={() => setOpenDeleteDialog(false)}
-          onConfirm={handleRemoveDrives}
-        />
-        <MessageDialog
-          open={openFullUpdateDialog}
-          title="全量更新"
-          description="此操作会先删除大部分数据后再更新，操作时间较长"
-          numSelected={selected.length}
-          onClose={() => setOpenFullUpdateDialog(false)}
-          onConfirm={handleFullUpdateDrives}
-        />
-      </Paper>
-    </Container>
+                  <Avatar>
+                    <CloudIcon />
+                  </Avatar>
+                </ListItemAvatar>
+                <ListItemText
+                  primary={drive.owner.user.displayName}
+                  secondary={drive.owner.user.email}
+                />
+              </ListItem>
+            </Grid>
+          );
+        })}
+      </Grid>
+      <AddDriveDialog
+        open={openAddDrive}
+        onClose={() => setOpenAddDrive(false)}
+        onDriveAdded={updateDrives}
+      />
+      <MessageDialog
+        open={openDeleteDialog}
+        title="移除"
+        numSelected={selected.length}
+        onClose={() => setOpenDeleteDialog(false)}
+        onConfirm={handleRemoveDrives}
+      />
+      <MessageDialog
+        open={openFullUpdateDialog}
+        title="全量更新"
+        description="此操作会先删除大部分数据后再更新，操作时间较长"
+        numSelected={selected.length}
+        onClose={() => setOpenFullUpdateDialog(false)}
+        onConfirm={handleFullUpdateDrives}
+      />
+    </Paper>
   );
 };
 
@@ -389,10 +308,6 @@ Accounts.propTypes = {
   setOperationStatus: PropTypes.func.isRequired,
 };
 
-const mapStateToProps = (state) => ({
-  operationStatus: state.operationStatus,
-});
-
 const mapDispatchToProps = (dispatch) => {
   return {
     setGlobalSnackbarMessage: (message) =>
@@ -401,6 +316,6 @@ const mapDispatchToProps = (dispatch) => {
   };
 };
 
-Accounts = connect(mapStateToProps, mapDispatchToProps)(Accounts);
+Accounts = connect(null, mapDispatchToProps)(Accounts);
 
 export default Accounts;
