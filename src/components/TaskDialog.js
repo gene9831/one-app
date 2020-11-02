@@ -22,7 +22,7 @@ const initState = {
   folder_path: default_path,
 };
 export default function TaskDialog(props) {
-  const { open, setOpen, drives, type, title, message } = props;
+  const { open, onClose, drives, type, title, message } = props;
   const [pathes, setPathes] = useState(initState);
   const [snack, setSnack] = useState(false);
   const [clicked, setClicked] = useState(null);
@@ -57,7 +57,7 @@ export default function TaskDialog(props) {
   };
 
   const handleClose = () => {
-    setOpen(false);
+    onClose();
   };
 
   const setKeyValue = (id, value) => {
@@ -182,7 +182,7 @@ export default function TaskDialog(props) {
 
 TaskDialog.propTypes = {
   open: PropTypes.bool.isRequired,
-  setOpen: PropTypes.func.isRequired,
+  onClose: PropTypes.func.isRequired,
   drives: PropTypes.array.isRequired,
   type: PropTypes.string.isRequired,
   title: PropTypes.string.isRequired,

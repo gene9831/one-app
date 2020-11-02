@@ -1,132 +1,113 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import PropTypes from 'prop-types';
 import clsx from 'clsx';
-import { makeStyles } from '@material-ui/core/styles';
-import Box from '@material-ui/core/Box';
+import { makeStyles, styled } from '@material-ui/core/styles';
 import Collapse from '@material-ui/core/Collapse';
 import IconButton from '@material-ui/core/IconButton';
+import TableContainer from '@material-ui/core/TableContainer';
 import Table from '@material-ui/core/Table';
 import TableBody from '@material-ui/core/TableBody';
 import TableCell from '@material-ui/core/TableCell';
-import TableContainer from '@material-ui/core/TableContainer';
 import TableHead from '@material-ui/core/TableHead';
 import TableRow from '@material-ui/core/TableRow';
 import TablePagination from '@material-ui/core/TablePagination';
 import Paper from '@material-ui/core/Paper';
 import KeyboardArrowDownIcon from '@material-ui/icons/KeyboardArrowDown';
 import KeyboardArrowUpIcon from '@material-ui/icons/KeyboardArrowUp';
-import CircularProgressWithLabel from './CircularProgressWithLabel';
-import { Button, Typography } from '@material-ui/core';
-import DeleteOutlineIcon from '@material-ui/icons/DeleteOutline';
+import Button from '@material-ui/core/Button';
+import Grid from '@material-ui/core/Grid';
+import Toolbar from '@material-ui/core/Toolbar';
+import Typography from '@material-ui/core/Typography';
+import PauseIcon from '@material-ui/icons/Pause';
+import PlayArrowIcon from '@material-ui/icons/PlayArrow';
+import DeleteIcon from '@material-ui/icons/Delete';
 import Checkbox from '@material-ui/core/Checkbox';
 import TaskDialog from './TaskDialog';
-import PlayCircleOutlineIcon from '@material-ui/icons/PlayCircleOutline';
-import PauseCircleOutlineIcon from '@material-ui/icons/PauseCircleOutline';
 import { Upload, UploadMultiple } from './Icons';
 import ComponentShell from './ComponentShell';
+import Hidden from '@material-ui/core/Hidden';
 import rpcRequest from '../jsonrpc';
+import SelectedToobar from './SelectedToobar';
 
 const useRowStyles = makeStyles((theme) => ({
-  root: {
-    '& > *': {
-      borderBottom: 'unset',
-      position: 'relative',
-      zIndex: 1,
-    },
-    '& >*:first-child': {
-      width: '1rem',
-      paddingRight: 'unset',
-    },
+  filename: {
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
   },
   detail: {
-    '& > tr > td': {
-      borderBottom: 'unset',
-    },
-  },
-  green: {
-    color: theme.palette.success.main,
+    whiteSpace: 'normal',
+    padding: theme.spacing(1),
   },
   red: {
     color: theme.palette.error.main,
   },
 }));
 
+const bTokmg = (size) => {
+  let kb = size / 1024;
+  if (kb < 1000) {
+    return kb.toFixed(1) + 'KB';
+  }
+  let mb = kb / 1024;
+  if (mb < 1000) {
+    return mb.toFixed(1) + 'MB';
+  }
+  return (mb / 1024).toFixed(2) + 'GB';
+};
+
+const sTomhd = (seconds) => {
+  seconds = Math.floor(seconds);
+  if (seconds < 60) {
+    return seconds + 's';
+  }
+  let mins = Math.floor(seconds / 60);
+  if (mins < 60) {
+    let mo = seconds % 60;
+    return mins + 'm' + (mo === 0 ? '' : mo + 's');
+  }
+  let hours = Math.floor(mins / 60);
+  if (hours < 24) {
+    let mo = mins % 60;
+    return hours + 'h' + (mo === 0 ? '' : mo + 'm');
+  }
+  return (hours / 24).toFixed(1) + 'd';
+};
+
 function Row(props) {
-  // TODO selected, setSelected 状态需要提升
-  const { row, openId, setOpenId, selected, setSelected } = props;
+  const { row, openId, setOpenId, selected, onCheck } = props;
   const classes = useRowStyles();
-
-  const bTokmg = (size) => {
-    let kb = size / 1024;
-    if (kb < 1000) {
-      return kb.toFixed(1) + 'KB';
-    }
-    let mb = kb / 1024;
-    if (mb < 1000) {
-      return mb.toFixed(1) + 'MB';
-    }
-    return (mb / 1024).toFixed(2) + 'GB';
-  };
-
-  const sTomhd = (seconds) => {
-    seconds = Math.floor(seconds);
-    if (seconds < 60) {
-      return seconds + 's';
-    }
-    let mins = Math.floor(seconds / 60);
-    if (mins < 60) {
-      let mo = seconds % 60;
-      return mins + 'm' + (mo === 0 ? '' : mo + 's');
-    }
-    let hours = Math.floor(mins / 60);
-    if (hours < 24) {
-      let mo = mins % 60;
-      return hours + 'h' + (mo === 0 ? '' : mo + 'm');
-    }
-    return (hours / 24).toFixed(1) + 'd';
-  };
-
-  const handleClick = () => {
-    let newSelected = [];
-    if (!isSelected(row.uid)) {
-      newSelected = selected.concat(row.uid);
-    } else {
-      newSelected = selected.filter((uid) => uid !== row.uid);
-    }
-    setSelected(newSelected);
-  };
-
-  const isSelected = (name) => selected.indexOf(name) !== -1;
 
   return (
     <React.Fragment>
-      <TableRow
-        className={classes.root}
-        hover
-        id={row.uid}
-        selected={isSelected(row.uid)}
-      >
-        <TableCell>
-          <Checkbox checked={isSelected(row.uid)} onClick={handleClick} />
+      <TableRow hover id={row.uid} selected={selected}>
+        <Hidden xsDown>
+          <TableCell padding="checkbox">
+            <Checkbox checked={selected} onClick={onCheck} />
+          </TableCell>
+        </Hidden>
+        <TableCell align="left" className={classes.filename}>
+          {row.filename}
         </TableCell>
-        <TableCell align="left">{row.filename}</TableCell>
         <TableCell align="center">{bTokmg(row.size)}</TableCell>
         <TableCell align="center">
           {/* 进度 */}
-          <CircularProgressWithLabel value={(row.finished / row.size) * 100} />
+          {`${parseFloat(((row.finished / row.size) * 100).toFixed(1))}%`}
         </TableCell>
         <TableCell align="center">
           {/* 速度 */}
-          {row.status === 'running' ? bTokmg(row.speed) + '/s' : '---'}
+          {row.status === 'running'
+            ? bTokmg(row.speed) + '/s'
+            : row.status === 'finished'
+            ? `${bTokmg(row.finished / row.spend_time)}/s`
+            : '---'}
         </TableCell>
         <TableCell
           align="center"
           className={clsx({
-            [classes.green]: row.status === 'finished',
             [classes.red]: row.status === 'error',
           })}
         >
-          {/* 剩余时间 */}
+          {/* 剩余时间/耗时 */}
           {(() => {
             switch (row.status) {
               case 'running':
@@ -140,7 +121,7 @@ function Row(props) {
               case 'stopped':
                 return '已停止';
               case 'finished':
-                return '已完成';
+                return sTomhd(row.spend_time);
               case 'error':
                 return '错误';
               default:
@@ -148,7 +129,7 @@ function Row(props) {
             }
           })()}
         </TableCell>
-        <TableCell align="center">
+        <TableCell align="center" padding="checkbox">
           {/* 展开详情 */}
           <IconButton
             onClick={() => setOpenId(openId === row.uid ? '' : row.uid)}
@@ -164,42 +145,40 @@ function Row(props) {
       <TableRow>
         <TableCell style={{ paddingBottom: 0, paddingTop: 0 }} colSpan={7}>
           <Collapse in={openId === row.uid} timeout="auto" unmountOnExit>
-            <Box padding={1}>
-              <Table size="small">
-                <TableBody className={classes.detail}>
-                  <TableRow>
-                    <TableCell>
-                      OneDrive帐号：{row.user.displayName}({row.user.email})
-                    </TableCell>
-                  </TableRow>
-                  <TableRow>
-                    <TableCell>文件路径：{row.file_path}</TableCell>
-                    <TableCell>上传路径：{row.upload_path}</TableCell>
-                  </TableRow>
-                  <TableRow>
-                    <TableCell>文件大小：{bTokmg(row.size)}</TableCell>
-                    <TableCell>已上传：{bTokmg(row.finished)}</TableCell>
-                  </TableRow>
-                  <TableRow>
-                    <TableCell>创建时间：{row.created_date_time}</TableCell>
-                    <TableCell>完成时间：{row.finished_date_time}</TableCell>
-                  </TableRow>
-                  <TableRow>
-                    <TableCell>耗时：{sTomhd(row.spend_time)}</TableCell>
-                    <TableCell>
-                      平均速度：{bTokmg(row.finished / row.spend_time)}/s
-                    </TableCell>
-                  </TableRow>
-                  {row.status === 'error' ? (
-                    <TableRow>
-                      <TableCell className={classes.red}>
-                        错误详情：{row.error}
-                      </TableCell>
-                    </TableRow>
-                  ) : null}
-                </TableBody>
-              </Table>
-            </Box>
+            <Grid container spacing={1} className={classes.detail}>
+              <Grid item xs={12}>
+                OneDrive帐号：{row.user.displayName}({row.user.email})
+              </Grid>
+              <Grid item xs={12}>
+                文件路径：{row.file_path}
+              </Grid>
+              <Grid item xs={12}>
+                OneDrive路径：{row.upload_path + row.filename}
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                文件大小：{bTokmg(row.size)}
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                已上传：{bTokmg(row.finished)}
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                创建时间：{row.created_date_time}
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                完成时间：{row.finished_date_time}
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                耗时：{sTomhd(row.spend_time)}
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                平均速度：{`${bTokmg(row.finished / row.spend_time)}/s`}
+              </Grid>
+              {row.status === 'error' ? (
+                <Grid item xs={12}>
+                  错误详情：{row.error}
+                </Grid>
+              ) : null}
+            </Grid>
           </Collapse>
         </TableCell>
       </TableRow>
@@ -228,19 +207,29 @@ Row.propTypes = {
   }).isRequired,
   openId: PropTypes.string.isRequired,
   setOpenId: PropTypes.func.isRequired,
-  selected: PropTypes.array.isRequired,
-  setSelected: PropTypes.func.isRequired,
+  selected: PropTypes.bool.isRequired,
+  onCheck: PropTypes.func.isRequired,
 };
 
+const MyToolbar = styled(Toolbar)(({ theme }) => ({
+  paddingLeft: theme.spacing(2),
+  paddingRight: theme.spacing(2),
+}));
+
 const useStyles = makeStyles((theme) => ({
+  paperContent: {
+    overflow: 'auto',
+    position: 'relative',
+  },
+  table: {
+    whiteSpace: 'nowrap',
+    tableLayout: 'fixed',
+    minWidth: '600px',
+  },
   buttons: {
     '& > button': {
-      margin: theme.spacing(1),
+      marginRight: theme.spacing(2),
     },
-  },
-  tableContainer: {
-    marginTop: theme.spacing(1),
-    marginBottom: theme.spacing(1),
   },
 }));
 
@@ -258,11 +247,6 @@ const taskDialogProps = {
   },
 };
 
-const pageButtons = {
-  stopped: { text: '继续', method: 'startUpload', Icon: PlayCircleOutlineIcon },
-  running: { text: '暂停', method: 'stopUpload', Icon: PauseCircleOutlineIcon },
-};
-
 export default function UploadInfo(props) {
   const classes = useStyles();
   const { drives, name } = props;
@@ -273,36 +257,65 @@ export default function UploadInfo(props) {
   const [openUpload, setOpenUpload] = useState(false);
   const [selected, setSelected] = useState([]);
   const [taskDialogProp, setTaskDialogProp] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  const handleOperate = (method) => {
-    if (selected.length === 0) return;
-    const fetchData = async () => {
-      await rpcRequest('Onedrive.' + method, {
-        params: { uids: selected },
-        require_auth: true,
-      });
-      setSelected([]);
-    };
-    fetchData();
-  };
-
-  const handleClikCheckedAll = (e) => {
-    if (e.target.checked) {
-      // 全选
-      setSelected(rowData.data.map((item) => item.uid));
-      return;
-    }
+  useEffect(() => {
     setSelected([]);
-  };
+  }, [name]);
 
-  const handleChangePage = (_e, newPage) => {
+  const handleOperate = useCallback(
+    (method) => {
+      if (selected.length === 0) return;
+      const fetchData = async () => {
+        await rpcRequest('Onedrive.' + method, {
+          params: { uids: selected },
+          require_auth: true,
+        });
+        setSelected([]);
+      };
+      fetchData();
+    },
+    [selected]
+  );
+
+  const isSelected = useCallback((name) => selected.indexOf(name) !== -1, [
+    selected,
+  ]);
+
+  const handleCheck = useCallback(
+    (name) => {
+      let newSelected = [];
+
+      if (!isSelected(name)) {
+        newSelected = selected.concat(name);
+      } else {
+        newSelected = selected.filter((item) => item !== name);
+      }
+      setSelected(newSelected);
+    },
+    [isSelected, selected]
+  );
+
+  const handleCheckedAll = useCallback(
+    (e) => {
+      if (e.target.checked) {
+        // 全选
+        setSelected(rowData.data.map((item) => item.uid));
+        return;
+      }
+      setSelected([]);
+    },
+    [rowData.data]
+  );
+
+  const handleChangePage = useCallback((_e, newPage) => {
     setPage(newPage);
-  };
+  }, []);
 
-  const handleChangeRowsPerPage = (event) => {
+  const handleChangeRowsPerPage = useCallback((event) => {
     setRowsPerPage(parseInt(event.target.value, 10));
     setPage(0);
-  };
+  }, []);
 
   useEffect(() => {
     let unmounted = false;
@@ -319,6 +332,7 @@ export default function UploadInfo(props) {
         // Can't perform a React state update on an unmounted component.
         if (!unmounted) {
           setRowData(res.data.result);
+          setLoading(false);
         }
       };
       fetchData();
@@ -332,86 +346,119 @@ export default function UploadInfo(props) {
     }
   }, [drives, name, page, rowsPerPage]);
 
-  const handleOpenTaskDialog = (type) => {
+  const handleOpenTaskDialog = useCallback((type) => {
     setTaskDialogProp(taskDialogProps[type]);
     setOpenUpload(true);
-  };
+  }, []);
+
+  const iconButtons = useMemo(() => {
+    let res = [];
+
+    if (name === 'running') {
+      res.push({
+        name: 'pause',
+        text: '暂停',
+        onClick: () => handleOperate('stopUpload'),
+        Icon: PauseIcon,
+      });
+    } else if (name === 'stopped') {
+      res.push({
+        name: 'start',
+        text: '继续',
+        onClick: () => handleOperate('startUpload'),
+        Icon: PlayArrowIcon,
+      });
+    }
+
+    res.push({
+      name: 'delete',
+      text: '删除',
+      onClick: () => handleOperate('deleteUpload'),
+      Icon: DeleteIcon,
+    });
+    return res;
+  }, [handleOperate, name]);
 
   return (
-    <div>
-      <div className={classes.buttons}>
-        {/* TODO 将上传两个按钮合并 */}
-        {[
-          { type: 'file', text: '上传文件', Icon: Upload },
-          { type: 'folder', text: '上传文件夹', Icon: UploadMultiple },
-        ].map((item) => (
-          <Button
-            key={item.type}
-            variant="contained"
-            color="primary"
-            startIcon={<ComponentShell Component={item.Icon} />}
-            onClick={() => handleOpenTaskDialog(item.type)}
-          >
-            {item.text}
-          </Button>
-        ))}
-        {(() => {
-          if (name === 'stopped' || name === 'running') {
-            const pageButton = pageButtons[name];
-            const Icon = pageButton.Icon;
-            return (
-              <Button
-                variant="outlined"
-                color="primary"
-                startIcon={<Icon />}
-                onClick={() => handleOperate(pageButton.method)}
-              >
-                {pageButton.text}
-              </Button>
-            );
-          }
-        })()}
-        <Button
-          variant="outlined"
-          color="primary"
-          startIcon={<DeleteOutlineIcon />}
-          onClick={() => handleOperate('deleteUpload')}
-        >
-          删除
-        </Button>
-      </div>
+    <Paper className={classes.paperContent}>
+      <MyToolbar>
+        <div className={classes.buttons}>
+          {/* TODO 将上传两个按钮合并 */}
+          {[
+            { type: 'file', text: '上传文件', Icon: Upload },
+            { type: 'folder', text: '上传文件夹', Icon: UploadMultiple },
+          ].map((item) => (
+            <Button
+              key={item.type}
+              variant="contained"
+              color="primary"
+              startIcon={<ComponentShell Component={item.Icon} />}
+              onClick={() => handleOpenTaskDialog(item.type)}
+            >
+              {item.text}
+            </Button>
+          ))}
+        </div>
+      </MyToolbar>
+      <SelectedToobar
+        numSelected={selected.length}
+        ToolbarComponent={MyToolbar}
+        onCancel={() => setSelected([])}
+        iconButtons={iconButtons}
+      />
       {taskDialogProp ? (
         <TaskDialog
           open={openUpload}
-          setOpen={setOpenUpload}
+          onClose={() => setOpenUpload(false)}
           drives={drives}
           type={taskDialogProp.type}
           title={taskDialogProp.title}
           message={taskDialogProp.message}
         ></TaskDialog>
       ) : null}
-      <TableContainer component={Paper} className={classes.tableContainer}>
-        <Table size="small">
+      <TableContainer style={{ overflowY: 'hidden' }}>
+        <Table className={classes.table}>
           <TableHead>
             <TableRow>
-              <TableCell>
-                <Checkbox
-                  indeterminate={
-                    selected.length > 0 && selected.length < rowData.data.length
-                  }
-                  checked={
-                    rowData.data.length > 0 &&
-                    selected.length === rowData.data.length
-                  }
-                  onChange={handleClikCheckedAll}
-                ></Checkbox>
-              </TableCell>
-              {['文件名', '大小', '进度', '速度', '剩余时间'].map((item) => (
-                <TableCell align="center" key={item}>
-                  <Typography variant="subtitle1">{item}</Typography>
+              <Hidden xsDown>
+                <TableCell padding="checkbox">
+                  <Checkbox
+                    indeterminate={
+                      selected.length > 0 &&
+                      selected.length < rowData.data.length
+                    }
+                    checked={
+                      rowData.data.length > 0 &&
+                      selected.length === rowData.data.length
+                    }
+                    onChange={handleCheckedAll}
+                  ></Checkbox>
                 </TableCell>
-              ))}
-              <TableCell />
+              </Hidden>
+              <TableCell align="center" style={{ width: '40%' }}>
+                <Typography variant="subtitle1">文件名</Typography>
+              </TableCell>
+              <TableCell align="center" style={{ width: '15%' }}>
+                <Typography variant="subtitle1">大小</Typography>
+              </TableCell>
+              <TableCell align="center" style={{ width: '10%' }}>
+                <Typography variant="subtitle1">进度</Typography>
+              </TableCell>
+              <TableCell align="center" style={{ width: '15%' }}>
+                <Typography variant="subtitle1">
+                  {name === 'finished' ? '平均速度' : '速度'}
+                </Typography>
+              </TableCell>
+              <TableCell align="center" style={{ width: '15%' }}>
+                <Typography variant="subtitle1">
+                  {name === 'finished'
+                    ? '耗时'
+                    : name === 'stopped'
+                    ? '状态'
+                    : '剩余时间'}
+                </Typography>
+              </TableCell>
+              <TableCell padding="checkbox" />
             </TableRow>
           </TableHead>
           <TableBody>
@@ -421,13 +468,26 @@ export default function UploadInfo(props) {
                 row={row}
                 openId={openId}
                 setOpenId={setOpenId}
-                selected={selected}
-                setSelected={setSelected}
+                selected={isSelected(row.uid)}
+                onCheck={() => handleCheck(row.uid)}
               ></Row>
             ))}
           </TableBody>
         </Table>
       </TableContainer>
+      {rowData.data.length === 0 ? (
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            width: '100%',
+            height: '60px',
+          }}
+        >
+          {loading ? '加载中...' : '暂无数据'}
+        </div>
+      ) : null}
       <TablePagination
         rowsPerPageOptions={[10, 15, 20]}
         component="div"
@@ -436,9 +496,9 @@ export default function UploadInfo(props) {
         page={page}
         onChangePage={handleChangePage}
         onChangeRowsPerPage={handleChangeRowsPerPage}
-        labelRowsPerPage="每页行数："
+        labelRowsPerPage="每页个数："
       />
-    </div>
+    </Paper>
   );
 }
 
