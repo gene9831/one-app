@@ -7,13 +7,15 @@ import InputLabel from '@material-ui/core/InputLabel';
 import Input from '@material-ui/core/Input';
 import Tooltip from '@material-ui/core/Tooltip';
 import HelpIcon from '@material-ui/icons/Help';
-import LinearProgress from '@material-ui/core/LinearProgress';
 import rpcRequest from '../jsonrpc';
 import Container from '@material-ui/core/Container';
 import Paper from '@material-ui/core/Paper';
-import Fade from '@material-ui/core/Fade';
 import { connect } from 'react-redux';
-import { setGlobalSnackbarMessage } from '../actions';
+import {
+  setGlobalSnackbarMessage,
+  setOperationStatus,
+  OPERATING_STATUS,
+} from '../actions';
 
 const useSettingItemStyles = makeStyles((theme) => ({
   root: {
@@ -32,7 +34,12 @@ const useSettingItemStyles = makeStyles((theme) => ({
 }));
 
 let SettingItem = (props) => {
-  const { config, sectionName, setFetching, setGlobalSnackbarMessage } = props;
+  const {
+    config,
+    sectionName,
+    setGlobalSnackbarMessage,
+    setOperationStatus,
+  } = props;
   const [cfg, setCfg] = useState(null);
   const [error, setError] = useState('');
   const timer = useRef(null);
@@ -47,8 +54,7 @@ let SettingItem = (props) => {
       require_auth: true,
     });
     setError('');
-    setGlobalSnackbarMessage('');
-    setFetching(false);
+    setOperationStatus(OPERATING_STATUS.SUCCESS);
   };
 
   const delayFetch = (key, value) => {
@@ -57,6 +63,7 @@ let SettingItem = (props) => {
     }
     timer.current = setTimeout(() => {
       fetchData(key, value).catch((e) => {
+        setOperationStatus(OPERATING_STATUS.FAILED);
         if (e.response) {
           setError(e.response.data.error.message);
           setGlobalSnackbarMessage(e.response.data.error.message);
@@ -64,7 +71,6 @@ let SettingItem = (props) => {
           setError('网络错误');
           setGlobalSnackbarMessage('网络错误');
         }
-        setFetching(false);
       });
     }, 500);
   };
@@ -92,7 +98,8 @@ let SettingItem = (props) => {
     }
 
     setCfg({ ...cfg, value: isNaN(value) ? '' : value });
-    setFetching(true);
+    setOperationStatus(OPERATING_STATUS.RUNNING);
+    setGlobalSnackbarMessage('');
 
     delayFetch(e.target.id, value);
   };
@@ -129,18 +136,23 @@ let SettingItem = (props) => {
 SettingItem.propTypes = {
   config: PropTypes.object.isRequired,
   sectionName: PropTypes.string.isRequired,
-  setFetching: PropTypes.func.isRequired,
   setGlobalSnackbarMessage: PropTypes.func.isRequired,
+  setOperationStatus: PropTypes.func.isRequired,
 };
+
+const mapStateToProps = (state) => ({
+  operationStatus: state.operationStatus,
+});
 
 const mapDispatchToProps = (dispatch) => {
   return {
     setGlobalSnackbarMessage: (message) =>
       dispatch(setGlobalSnackbarMessage(message)),
+    setOperationStatus: (status) => dispatch(setOperationStatus(status)),
   };
 };
 
-SettingItem = connect(null, mapDispatchToProps)(SettingItem);
+SettingItem = connect(mapStateToProps, mapDispatchToProps)(SettingItem);
 
 const useSectionStyles = makeStyles((theme) => ({
   root: {
@@ -212,18 +224,9 @@ const configSections = [
   },
 ];
 
-const useStyles = makeStyles(() => ({
-  linearProgress: {
-    position: 'fixed',
-    width: '100%',
-  },
-}));
-
 export default function Settings(props) {
-  const classes = useStyles();
   const { authed } = props;
   const [cfgSections, setCfgSections] = useState([]);
-  const [fetching, setFetching] = useState(false);
 
   useEffect(() => {
     if (!authed) return;
@@ -246,22 +249,16 @@ export default function Settings(props) {
   }, [authed]);
 
   return (
-    <React.Fragment>
-      <Fade in={fetching} timeout={{ exit: 1000 }}>
-        <LinearProgress className={classes.linearProgress} />
-      </Fade>
-      <Container>
-        {cfgSections.map((section) => (
-          <Section
-            key={section.name}
-            name={section.name}
-            title={section.title}
-            configArray={section.configs}
-            setFetching={setFetching}
-          ></Section>
-        ))}
-      </Container>
-    </React.Fragment>
+    <Container>
+      {cfgSections.map((section) => (
+        <Section
+          key={section.name}
+          name={section.name}
+          title={section.title}
+          configArray={section.configs}
+        ></Section>
+      ))}
+    </Container>
   );
 }
 
