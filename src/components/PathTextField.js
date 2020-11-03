@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 import { makeStyles } from '@material-ui/core/styles';
-import Button from '@material-ui/core/Button';
 import ListItemText from '@material-ui/core/ListItemText';
 import ListItemIcon from '@material-ui/core/ListItemIcon';
 import FolderOpenOutlinedIcon from '@material-ui/icons/FolderOpenOutlined';
@@ -10,18 +9,20 @@ import InsertDriveFileIcon from '@material-ui/icons/InsertDriveFile';
 import ListItem from '@material-ui/core/ListItem';
 import List from '@material-ui/core/List';
 import Popper from '@material-ui/core/Popper';
+import DoneIcon from '@material-ui/icons/Done';
 import Paper from '@material-ui/core/Paper';
 import TextField from '@material-ui/core/TextField';
 import InputAdornment from '@material-ui/core/InputAdornment';
 import Fade from '@material-ui/core/Fade';
 import rpcRequest from '../jsonrpc';
+import Tooltip from '@material-ui/core/Tooltip';
 
 const useStyles = makeStyles((theme) => ({
   popper: {
     zIndex: theme.zIndex.modal,
   },
-  checkButton: {
-    bottom: '5px',
+  done: {
+    cursor: 'pointer',
   },
   itemIcon: {
     minWidth: '2rem',
@@ -87,9 +88,9 @@ export default function PathTextField(props) {
         );
       }
     }
-    textField.focus();
-    let len = textField.value.length;
-    textField.setSelectionRange(len, len);
+    // textField.focus();
+    // let len = textField.value.length;
+    // textField.setSelectionRange(len, len);
   };
 
   useEffect(() => {
@@ -135,17 +136,15 @@ export default function PathTextField(props) {
           endAdornment:
             anchorEl !== null ? (
               <InputAdornment position="end">
-                <Button
-                  variant="contained"
-                  size="small"
-                  disableElevation
-                  className={classes.checkButton}
-                  onClick={handlClosePopper}
-                >
-                  确定
-                </Button>
+                <Tooltip title="完成">
+                  <DoneIcon
+                    className={classes.done}
+                    onClick={handlClosePopper}
+                  />
+                </Tooltip>
               </InputAdornment>
             ) : null,
+          readOnly: true,
         }}
       ></TextField>
       <Popper
