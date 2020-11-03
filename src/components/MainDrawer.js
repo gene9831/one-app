@@ -58,11 +58,12 @@ const useStyles = makeStyles((theme) => ({
     overflow: 'auto',
   },
   content: {
-    paddingTop: theme.spacing(3),
-    paddingBottom: theme.spacing(3),
+    padding: theme.spacing(3),
+    [theme.breakpoints.down('sm')]: {
+      padding: theme.spacing(2),
+    },
     [theme.breakpoints.down('xs')]: {
-      paddingTop: theme.spacing(2),
-      paddingBottom: theme.spacing(2),
+      padding: theme.spacing(1),
     },
   },
 }));
