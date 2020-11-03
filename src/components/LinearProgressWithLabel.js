@@ -9,8 +9,8 @@ const useStyles = makeStyles((theme) => ({
     borderRadius: 2,
   },
   text: {
-    color: 'white',
-    textShadow: 'black 0 0 2px',
+    color: theme.palette.type === 'light' ? 'white' : 'black',
+    ...(theme.palette.type === 'light' ? { textShadow: 'black 0 0 2px' } : {}),
   },
 }));
 
