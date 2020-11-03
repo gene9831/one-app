@@ -30,7 +30,7 @@ const LinearProgressWithLabel = (props) => {
         justifyContent="center"
       >
         <Typography variant="body2" component="div" className={classes.text}>
-          {`${props.value}%`}
+          {`${props.value.toFixed(1)}%`}
         </Typography>
       </Box>
     </Box>

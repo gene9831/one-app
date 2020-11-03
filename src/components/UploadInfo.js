@@ -29,6 +29,7 @@ import Hidden from '@material-ui/core/Hidden';
 import rpcRequest from '../jsonrpc';
 import SelectedToobar from './SelectedToobar';
 import LinearProgressWithLabel from './LinearProgressWithLabel';
+import { useMediaQuery } from '@material-ui/core';
 
 const useRowStyles = makeStyles((theme) => ({
   filename: {
@@ -75,7 +76,15 @@ const sTomhd = (seconds) => {
 };
 
 function Row(props) {
-  const { row, openId, setOpenId, selected, onCheck } = props;
+  const {
+    row,
+    openId,
+    setOpenId,
+    selected,
+    onCheck,
+    onCellTouchStart,
+    onCellTouchEnd,
+  } = props;
   const classes = useRowStyles();
 
   return (
@@ -86,7 +95,12 @@ function Row(props) {
             <Checkbox checked={selected} onClick={onCheck} />
           </TableCell>
         </Hidden>
-        <TableCell align="left" className={classes.filename}>
+        <TableCell
+          align="left"
+          className={classes.filename}
+          onTouchStart={(e) => onCellTouchStart(e, row.uid)}
+          onTouchEnd={onCellTouchEnd}
+        >
           {row.filename}
         </TableCell>
         <TableCell align="center">{bTokmg(row.size)}</TableCell>
@@ -94,7 +108,7 @@ function Row(props) {
           {/* 进度 */}
           <LinearProgressWithLabel
             variant="determinate"
-            value={((row.finished / row.size) * 100).toFixed(1)}
+            value={(row.finished / row.size) * 100}
           />
         </TableCell>
         <TableCell align="center">
@@ -213,6 +227,13 @@ Row.propTypes = {
   setOpenId: PropTypes.func.isRequired,
   selected: PropTypes.bool.isRequired,
   onCheck: PropTypes.func.isRequired,
+  onCellTouchStart: PropTypes.func,
+  onCellTouchEnd: PropTypes.func,
+};
+
+Row.defaultProps = {
+  onCellTouchStart: () => {},
+  onCellTouchEnd: () => {},
 };
 
 const MyToolbar = styled(Toolbar)(({ theme }) => ({
@@ -263,6 +284,7 @@ export default function UploadInfo(props) {
   const [taskDialogProp, setTaskDialogProp] = useState(null);
   const [loading, setLoading] = useState(true);
   const [defaultLocalPath, setDefaultLocalPath] = useState(null);
+  const downXs = useMediaQuery((theme) => theme.breakpoints.down('xs'));
 
   useEffect(() => {
     setSelected([]);
@@ -311,17 +333,14 @@ export default function UploadInfo(props) {
     [isSelected, selected]
   );
 
-  const handleCheckedAll = useCallback(
-    (e) => {
-      if (e.target.checked) {
-        // 全选
-        setSelected(rowData.data.map((item) => item.uid));
-        return;
-      }
-      setSelected([]);
-    },
-    [rowData.data]
-  );
+  const handleCheckedAll = useCallback(() => {
+    if (selected.length < rowData.data.length) {
+      // 全选
+      setSelected(rowData.data.map((item) => item.uid));
+      return;
+    }
+    setSelected([]);
+  }, [rowData, selected]);
 
   const handleChangePage = useCallback((_e, newPage) => {
     setPage(newPage);
@@ -394,6 +413,30 @@ export default function UploadInfo(props) {
     return res;
   }, [handleOperate, name]);
 
+  const [touchStartPoint, setTouchStartPoint] = useState({ x: 0, y: 0 });
+  const [touchStartUid, setTouchStartUid] = useState(null);
+  const handleCellTouchStart = (e, uid) => {
+    setTouchStartUid(uid);
+    setTouchStartPoint({
+      x: e.changedTouches[0].pageX,
+      y: e.changedTouches[0].pageY,
+    });
+  };
+  const handleCellTouchEnd = (e) => {
+    const pageX = e.changedTouches[0].pageX;
+    const pageY = e.changedTouches[0].pageY;
+    if (
+      pageX - touchStartPoint.x >= 50 &&
+      Math.abs(pageY - touchStartPoint.y) <= 20
+    ) {
+      if (touchStartUid === 'all') {
+        handleCheckedAll();
+      } else {
+        handleCheck(touchStartUid);
+      }
+    }
+  };
+
   return (
     <Paper className={classes.paperContent}>
       <MyToolbar>
@@ -450,7 +493,16 @@ export default function UploadInfo(props) {
                   ></Checkbox>
                 </TableCell>
               </Hidden>
-              <TableCell align="center" style={{ width: '40%' }}>
+              <TableCell
+                align="center"
+                style={{ width: '40%' }}
+                {...(downXs
+                  ? {
+                      onTouchStart: (e) => handleCellTouchStart(e, 'all'),
+                      onTouchEnd: handleCellTouchEnd,
+                    }
+                  : {})}
+              >
                 <Typography variant="subtitle1">文件名</Typography>
               </TableCell>
               <TableCell align="center" style={{ width: '15%' }}>
@@ -485,6 +537,12 @@ export default function UploadInfo(props) {
                 setOpenId={setOpenId}
                 selected={isSelected(row.uid)}
                 onCheck={() => handleCheck(row.uid)}
+                {...(downXs
+                  ? {
+                      onCellTouchStart: handleCellTouchStart,
+                      onCellTouchEnd: handleCellTouchEnd,
+                    }
+                  : {})}
               ></Row>
             ))}
           </TableBody>
