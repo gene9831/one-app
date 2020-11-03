@@ -92,19 +92,20 @@ let SettingItem = (props) => {
     switch (config.type) {
       case 'int':
         value = parseInt(e.target.value);
+        value = isNaN(value) ? '' : value;
         break;
       case 'float':
         value = parseFloat(e.target.value);
+        value = isNaN(value) ? '' : value;
         break;
       default:
         value = e.target.value;
     }
-
     if (value === config.value) {
       return;
     }
 
-    setConfig({ ...config, value: isNaN(value) ? '' : value });
+    setConfig({ ...config, value });
     setOperationStatus(OPERATING_STATUS.RUNNING);
     setGlobalSnackbarMessage('');
 
@@ -219,12 +220,18 @@ const showSections = [
     title: '登录',
     ids: ['auth_password', 'auth_token_max_age'],
   },
+  {
+    name: 'others',
+    title: '其他',
+    ids: ['default_local_path'],
+  },
 ];
 
 let Settings = (props) => {
   const { authed, setGlobalSnackbarMessage } = props;
   const [sections, setSections] = useState([]);
   const downXs = useMediaQuery((theme) => theme.breakpoints.down('xs'));
+  const downSm = useMediaQuery((theme) => theme.breakpoints.down('sm'));
 
   useEffect(() => {
     if (!authed) return;
@@ -251,7 +258,7 @@ let Settings = (props) => {
   }, [authed, setGlobalSnackbarMessage]);
 
   return (
-    <Grid container spacing={downXs ? 2 : 3}>
+    <Grid container spacing={downXs ? 1 : downSm ? 2 : 3}>
       {sections.map((section) => (
         <Section
           key={section.name}
