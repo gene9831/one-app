@@ -231,7 +231,6 @@ let Accounts = (props) => {
         <Button
           variant="contained"
           color="primary"
-          size={mediaUpSm ? 'medium' : 'small'}
           startIcon={<AddCircleOutlineIcon />}
           onClick={() => setOpenAddDrive(true)}
         >

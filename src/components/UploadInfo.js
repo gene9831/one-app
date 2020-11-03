@@ -454,7 +454,6 @@ export default function UploadInfo(props) {
           ].map((item) => (
             <Button
               key={item.type}
-              size={downXs ? 'small' : 'medium'}
               variant="contained"
               color="primary"
               startIcon={<ComponentShell Component={item.Icon} />}
