@@ -239,6 +239,10 @@ Row.defaultProps = {
 const MyToolbar = styled(Toolbar)(({ theme }) => ({
   paddingLeft: theme.spacing(2),
   paddingRight: theme.spacing(2),
+  [theme.breakpoints.down('xs')]: {
+    paddingLeft: theme.spacing(1.5),
+    paddingRight: theme.spacing(1.5),
+  },
 }));
 
 const useStyles = makeStyles((theme) => ({
@@ -254,6 +258,9 @@ const useStyles = makeStyles((theme) => ({
   buttons: {
     '& > button': {
       marginRight: theme.spacing(2),
+      [theme.breakpoints.down('xs')]: {
+        marginRight: theme.spacing(1.5),
+      },
     },
   },
 }));
@@ -447,6 +454,7 @@ export default function UploadInfo(props) {
           ].map((item) => (
             <Button
               key={item.type}
+              size={downXs ? 'small' : 'medium'}
               variant="contained"
               color="primary"
               startIcon={<ComponentShell Component={item.Icon} />}

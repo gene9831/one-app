@@ -35,6 +35,10 @@ import SelectedToobar from './SelectedToobar';
 const MyToolbar = styled(Toolbar)(({ theme }) => ({
   paddingLeft: theme.spacing(2),
   paddingRight: theme.spacing(2),
+  [theme.breakpoints.down('xs')]: {
+    paddingLeft: theme.spacing(1.5),
+    paddingRight: theme.spacing(1.5),
+  },
 }));
 
 const useMessageDialogStyles = makeStyles((theme) => ({
@@ -225,8 +229,9 @@ let Accounts = (props) => {
     <Paper className={classes.root}>
       <MyToolbar>
         <Button
-          variant="outlined"
+          variant="contained"
           color="primary"
+          size={mediaUpSm ? 'medium' : 'small'}
           startIcon={<AddCircleOutlineIcon />}
           onClick={() => setOpenAddDrive(true)}
         >
