@@ -28,6 +28,7 @@ import ComponentShell from './ComponentShell';
 import Hidden from '@material-ui/core/Hidden';
 import rpcRequest from '../jsonrpc';
 import SelectedToobar from './SelectedToobar';
+import LinearProgressWithLabel from './LinearProgressWithLabel';
 
 const useRowStyles = makeStyles((theme) => ({
   filename: {
@@ -91,7 +92,10 @@ function Row(props) {
         <TableCell align="center">{bTokmg(row.size)}</TableCell>
         <TableCell align="center">
           {/* 进度 */}
-          {`${parseFloat(((row.finished / row.size) * 100).toFixed(1))}%`}
+          <LinearProgressWithLabel
+            variant="determinate"
+            value={((row.finished / row.size) * 100).toFixed(1)}
+          />
         </TableCell>
         <TableCell align="center">
           {/* 速度 */}
@@ -452,7 +456,7 @@ export default function UploadInfo(props) {
               <TableCell align="center" style={{ width: '15%' }}>
                 <Typography variant="subtitle1">大小</Typography>
               </TableCell>
-              <TableCell align="center" style={{ width: '10%' }}>
+              <TableCell align="center" style={{ width: 120 }}>
                 <Typography variant="subtitle1">进度</Typography>
               </TableCell>
               <TableCell align="center" style={{ width: '15%' }}>
