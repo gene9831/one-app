@@ -10,23 +10,41 @@ import DialogContentText from '@material-ui/core/DialogContentText';
 import DialogTitle from '@material-ui/core/DialogTitle';
 import InputAdornment from '@material-ui/core/InputAdornment';
 import AccountCircleOutlinedIcon from '@material-ui/icons/AccountCircleOutlined';
-import Snackbar from '@material-ui/core/Snackbar';
 import PathTextField from './PathTextField';
 import rpcRequest from '../jsonrpc';
+import { connect } from 'react-redux';
+import { setGlobalSnackbarMessage } from '../actions';
 
 const default_path = '/';
 const initState = {
   upload_path: '/',
-  // TODO file_path和folder_path远程接受
   file_path: default_path,
   folder_path: default_path,
 };
-export default function TaskDialog(props) {
-  const { open, onClose, drives, type, title, message } = props;
+let TaskDialog = (props) => {
+  const {
+    open,
+    onClose,
+    drives,
+    type,
+    title,
+    message,
+    defaultLocalPath,
+    setGlobalSnackbarMessage,
+  } = props;
   const [pathes, setPathes] = useState(initState);
-  const [snack, setSnack] = useState(false);
   const [clicked, setClicked] = useState(null);
   const [drive, setDrive] = useState(drives[0]);
+
+  React.useEffect(() => {
+    if (defaultLocalPath) {
+      setPathes((prev) => ({
+        ...prev,
+        file_path: defaultLocalPath,
+        folder_path: defaultLocalPath,
+      }));
+    }
+  }, [defaultLocalPath]);
 
   const handleSubmit = () => {
     if (drive) {
@@ -48,8 +66,12 @@ export default function TaskDialog(props) {
         handleClose();
         // setState(initState);
       };
-      fetchData().catch(() => {
-        setSnack(true);
+      fetchData().catch((e) => {
+        if (e.response) {
+          setGlobalSnackbarMessage('文件或文件夹未找到');
+        } else {
+          setGlobalSnackbarMessage('网络错误');
+        }
       });
     } else {
       handleClose();
@@ -72,7 +94,15 @@ export default function TaskDialog(props) {
   };
 
   const handleReset = () => {
-    setPathes(initState);
+    let newPathes = initState;
+    if (defaultLocalPath) {
+      newPathes = {
+        ...initState,
+        file_path: defaultLocalPath,
+        folder_path: defaultLocalPath,
+      };
+    }
+    setPathes(newPathes);
   };
 
   return (
@@ -167,18 +197,9 @@ export default function TaskDialog(props) {
           </Button>
         </DialogActions>
       </Dialog>
-      <Snackbar
-        anchorOrigin={{
-          vertical: 'top',
-          horizontal: 'center',
-        }}
-        open={snack}
-        onClose={() => setSnack(false)}
-        message="文件或文件夹未找到"
-      ></Snackbar>
     </React.Fragment>
   );
-}
+};
 
 TaskDialog.propTypes = {
   open: PropTypes.bool.isRequired,
@@ -187,4 +208,17 @@ TaskDialog.propTypes = {
   type: PropTypes.string.isRequired,
   title: PropTypes.string.isRequired,
   message: PropTypes.string.isRequired,
+  defaultLocalPath: PropTypes.string,
+  setGlobalSnackbarMessage: PropTypes.func.isRequired,
 };
+
+const mapDispatchToProps = (dispatch) => {
+  return {
+    setGlobalSnackbarMessage: (message) =>
+      dispatch(setGlobalSnackbarMessage(message)),
+  };
+};
+
+TaskDialog = connect(null, mapDispatchToProps)(TaskDialog);
+
+export default TaskDialog;

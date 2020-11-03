@@ -8,40 +8,33 @@ import FolderOpenOutlinedIcon from '@material-ui/icons/FolderOpenOutlined';
 import InsertDriveFileOutlinedIcon from '@material-ui/icons/InsertDriveFileOutlined';
 import InsertDriveFileIcon from '@material-ui/icons/InsertDriveFile';
 import ListItem from '@material-ui/core/ListItem';
+import List from '@material-ui/core/List';
 import Popper from '@material-ui/core/Popper';
 import Paper from '@material-ui/core/Paper';
 import TextField from '@material-ui/core/TextField';
 import InputAdornment from '@material-ui/core/InputAdornment';
 import Fade from '@material-ui/core/Fade';
-import Table from '@material-ui/core/Table';
-import TableBody from '@material-ui/core/TableBody';
-import TableCell from '@material-ui/core/TableCell';
-import TableContainer from '@material-ui/core/TableContainer';
-import TableRow from '@material-ui/core/TableRow';
 import rpcRequest from '../jsonrpc';
 
 const useStyles = makeStyles((theme) => ({
   popper: {
     zIndex: theme.zIndex.modal,
   },
-  cell: {
-    padding: 'unset',
-  },
-  container: {
-    maxHeight: '300px',
-  },
   checkButton: {
     bottom: '5px',
   },
-  item: {
-    paddingLeft: theme.spacing(1),
-    paddingRight: theme.spacing(1),
-    paddingTop: 0,
-    paddingBottom: 0,
-    cursor: 'default',
-  },
   itemIcon: {
     minWidth: '2rem',
+  },
+  pathList: {
+    maxHeight: '300px',
+    overflowY: 'auto',
+    wordBreak: 'break-word',
+    '& > li': {
+      paddingTop: 0,
+      paddingBottom: 0,
+      cursor: 'default',
+    },
   },
 }));
 
@@ -160,42 +153,35 @@ export default function PathTextField(props) {
         anchorEl={anchorEl}
         className={classes.popper}
         placement="bottom-start"
-        style={{ width: popperSize + 'px' }}
+        style={{ width: popperSize }}
         onClick={(e) => e.stopPropagation()}
         transition
       >
         {({ TransitionProps }) => (
-          <Fade {...TransitionProps} timeout={100}>
+          <Fade {...TransitionProps} timeout={300}>
             <Paper>
-              <TableContainer className={classes.container}>
-                <Table>
-                  <TableBody>
-                    {pathList.map((item, index) => (
-                      <TableRow
-                        key={index}
-                        hover={!onlyDir || item.type !== 'file'}
-                        onClick={() => handleClickPath(item)}
-                      >
-                        <TableCell className={classes.cell}>
-                          <ListItem
-                            className={classes.item}
-                            disabled={onlyDir && item.type === 'file'}
-                          >
-                            <ListItemIcon className={classes.itemIcon}>
-                              {item.type === 'dir' ? (
-                                <FolderOpenOutlinedIcon fontSize="small"></FolderOpenOutlinedIcon>
-                              ) : (
-                                <InsertDriveFileIcon fontSize="small"></InsertDriveFileIcon>
-                              )}
-                            </ListItemIcon>
-                            <ListItemText>{item.value}</ListItemText>
-                          </ListItem>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </TableContainer>
+              <List className={classes.pathList}>
+                {pathList.map((item, index) => (
+                  <React.Fragment key={index}>
+                    <ListItem
+                      button
+                      disabled={onlyDir && item.type === 'file'}
+                      onClick={() => handleClickPath(item)}
+                      component="li"
+                      divider
+                    >
+                      <ListItemIcon className={classes.itemIcon}>
+                        {item.type === 'dir' ? (
+                          <FolderOpenOutlinedIcon fontSize="small"></FolderOpenOutlinedIcon>
+                        ) : (
+                          <InsertDriveFileIcon fontSize="small"></InsertDriveFileIcon>
+                        )}
+                      </ListItemIcon>
+                      <ListItemText>{item.value}</ListItemText>
+                    </ListItem>
+                  </React.Fragment>
+                ))}
+              </List>
             </Paper>
           </Fade>
         )}

@@ -258,10 +258,21 @@ export default function UploadInfo(props) {
   const [selected, setSelected] = useState([]);
   const [taskDialogProp, setTaskDialogProp] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [defaultLocalPath, setDefaultLocalPath] = useState(null);
 
   useEffect(() => {
     setSelected([]);
   }, [name]);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      let res = await rpcRequest('Others.defaultLocalPath', {
+        require_auth: true,
+      });
+      setDefaultLocalPath(res.data.result);
+    };
+    fetchData();
+  }, []);
 
   const handleOperate = useCallback(
     (method) => {
@@ -383,7 +394,6 @@ export default function UploadInfo(props) {
     <Paper className={classes.paperContent}>
       <MyToolbar>
         <div className={classes.buttons}>
-          {/* TODO 将上传两个按钮合并 */}
           {[
             { type: 'file', text: '上传文件', Icon: Upload },
             { type: 'folder', text: '上传文件夹', Icon: UploadMultiple },
@@ -414,6 +424,7 @@ export default function UploadInfo(props) {
           type={taskDialogProp.type}
           title={taskDialogProp.title}
           message={taskDialogProp.message}
+          defaultLocalPath={defaultLocalPath}
         ></TaskDialog>
       ) : null}
       <TableContainer style={{ overflowY: 'hidden' }}>
