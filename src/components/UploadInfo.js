@@ -426,8 +426,8 @@ export default function UploadInfo(props) {
     const pageX = e.changedTouches[0].pageX;
     const pageY = e.changedTouches[0].pageY;
     if (
-      pageX - touchStartPoint.x >= 50 &&
-      Math.abs(pageY - touchStartPoint.y) <= 20
+      pageX - touchStartPoint.x >= 40 &&
+      Math.abs(pageY - touchStartPoint.y) <= 30
     ) {
       if (touchStartUid === 'all') {
         handleCheckedAll();
