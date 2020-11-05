@@ -88,7 +88,8 @@ const DialogWithPathList = (props) => {
     if (p.endsWith('/')) {
       p = p.slice(0, -1);
     }
-    return p.split('/');
+    if (p.length === 0) return ['根目录'];
+    return ['根目录'].concat(p.split('/'));
   }, [path]);
 
   const endWithFile = useMemo(() => !path.endsWith('/'), [path]);
@@ -108,11 +109,10 @@ const DialogWithPathList = (props) => {
       </DialogTitle>
       <DialogContent className={clsx(classes.pathContent, classes.xsPadding)}>
         <Breadcrumbs
-          maxItems={3}
-          itemsBeforeCollapse={1}
+          maxItems={2}
+          itemsBeforeCollapse={0}
           itemsAfterCollapse={2}
         >
-          <Typography />
           {pathSplited.map((item, index) =>
             index === pathSplited.length - 1 ? (
               <Typography key={index} color="textPrimary">
