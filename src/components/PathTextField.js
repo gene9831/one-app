@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import PropTypes from 'prop-types';
 import { makeStyles } from '@material-ui/core/styles';
 import ListItemText from '@material-ui/core/ListItemText';
@@ -8,195 +8,263 @@ import InsertDriveFileOutlinedIcon from '@material-ui/icons/InsertDriveFileOutli
 import InsertDriveFileIcon from '@material-ui/icons/InsertDriveFile';
 import ListItem from '@material-ui/core/ListItem';
 import List from '@material-ui/core/List';
-import Popper from '@material-ui/core/Popper';
-import DoneIcon from '@material-ui/icons/Done';
-import Paper from '@material-ui/core/Paper';
 import TextField from '@material-ui/core/TextField';
 import InputAdornment from '@material-ui/core/InputAdornment';
-import Fade from '@material-ui/core/Fade';
 import rpcRequest from '../jsonrpc';
-import Tooltip from '@material-ui/core/Tooltip';
+import Dialog from '@material-ui/core/Dialog';
+import DialogTitle from '@material-ui/core/DialogTitle';
+import Breadcrumbs from '@material-ui/core/Breadcrumbs';
+import Link from '@material-ui/core/Link';
+import Typography from '@material-ui/core/Typography';
+import DialogActions from '@material-ui/core/DialogActions';
+import DialogContent from '@material-ui/core/DialogContent';
+import Button from '@material-ui/core/Button';
+import clsx from 'clsx';
 
-const useStyles = makeStyles((theme) => ({
-  popper: {
-    zIndex: theme.zIndex.modal,
+const useDialogWithPathListStyles = makeStyles((theme) => ({
+  dialogPaper: {
+    height: '100%',
+    '@media(min-height: 720px)': {
+      maxHeight: 720 - theme.spacing(8),
+    },
   },
-  done: {
+  pathContent: {
+    overflowY: 'unset',
+    wordBreak: 'break-word',
+    flex: 'unset',
+  },
+  link: {
     cursor: 'pointer',
   },
-  itemIcon: {
-    minWidth: '2rem',
+  listContent: {
+    paddingTop: theme.spacing(1),
+    paddingBottom: theme.spacing(1),
   },
-  pathList: {
-    maxHeight: '300px',
-    overflowY: 'auto',
+  list: {
+    padding: 0,
+  },
+  listItem: {
+    paddingLeft: 8,
+    paddingRight: 8,
     wordBreak: 'break-word',
-    '& > li': {
-      paddingTop: 0,
-      paddingBottom: 0,
-      cursor: 'default',
+  },
+  listItemIcon: {
+    minWidth: theme.spacing(5),
+  },
+  listItemText: {
+    marginTop: 0,
+    marginBottom: 0,
+  },
+  xsPadding: {
+    [theme.breakpoints.down('xs')]: {
+      paddingLeft: theme.spacing(2),
+      paddingRight: theme.spacing(2),
     },
+  },
+  bigFile: {
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 }));
 
-const initPathList = [{ value: '..', type: 'dir' }];
+const DialogWithPathList = (props) => {
+  const classes = useDialogWithPathListStyles();
+  const {
+    open,
+    onClose,
+    onClickBreadcrumb,
+    path,
+    list,
+    onClickListItem,
+    type,
+  } = props;
+
+  const pathSplited = useMemo(() => {
+    let p = path;
+    if (p.startsWith('/')) {
+      p = p.slice(1);
+    }
+    if (p.endsWith('/')) {
+      p = p.slice(0, -1);
+    }
+    return p.split('/');
+  }, [path]);
+
+  const endWithFile = useMemo(() => !path.endsWith('/'), [path]);
+
+  return (
+    <Dialog
+      open={open}
+      onClose={onClose}
+      fullWidth
+      maxWidth="sm"
+      PaperProps={{
+        className: classes.dialogPaper,
+      }}
+    >
+      <DialogTitle className={classes.xsPadding}>
+        {type === 'file' ? '选择文件' : '选择目录'}
+      </DialogTitle>
+      <DialogContent className={clsx(classes.pathContent, classes.xsPadding)}>
+        <Breadcrumbs
+          maxItems={3}
+          itemsBeforeCollapse={1}
+          itemsAfterCollapse={2}
+        >
+          <Typography />
+          {pathSplited.map((item, index) =>
+            index === pathSplited.length - 1 ? (
+              <Typography key={index} color="textPrimary">
+                {item}
+              </Typography>
+            ) : (
+              <Link
+                key={index}
+                color="inherit"
+                onClick={(e) => onClickBreadcrumb(e, index)}
+                className={classes.link}
+              >
+                {item}
+              </Link>
+            )
+          )}
+        </Breadcrumbs>
+      </DialogContent>
+      <DialogContent
+        dividers
+        className={clsx(classes.listContent, classes.xsPadding, {
+          [classes.bigFile]: endWithFile,
+        })}
+      >
+        {endWithFile ? (
+          <Typography>{path.slice(path.lastIndexOf('/') + 1)}</Typography>
+        ) : (
+          <List className={classes.list}>
+            {list.map((item, index) => (
+              <ListItem
+                key={index}
+                button
+                divider
+                className={classes.listItem}
+                onClick={(e) => onClickListItem(e, item)}
+                disabled={type !== 'file' && item.type === 'file'}
+              >
+                <ListItemIcon className={classes.listItemIcon}>
+                  {item.type === 'file' ? (
+                    <InsertDriveFileIcon />
+                  ) : (
+                    <FolderOpenOutlinedIcon />
+                  )}
+                </ListItemIcon>
+                <ListItemText
+                  primary={item.value}
+                  className={classes.listItemText}
+                />
+              </ListItem>
+            ))}
+          </List>
+        )}
+      </DialogContent>
+      <DialogActions>
+        <Button color="primary" onClick={onClose}>
+          选择
+        </Button>
+      </DialogActions>
+    </Dialog>
+  );
+};
+
+DialogWithPathList.propTypes = {
+  open: PropTypes.bool,
+  onClose: PropTypes.func,
+  path: PropTypes.string,
+  onClickBreadcrumb: PropTypes.func,
+  list: PropTypes.arrayOf(
+    PropTypes.shape({
+      type: PropTypes.oneOf(['dir', 'file']).isRequired,
+      value: PropTypes.string.isRequired,
+    })
+  ),
+  onClickListItem: PropTypes.func,
+  type: PropTypes.oneOf(['file', 'folder']),
+};
+
+DialogWithPathList.defaultProps = {
+  list: [],
+};
 
 export default function PathTextField(props) {
-  const classes = useStyles();
   const {
-    id,
+    name,
     value,
-    setValue,
-    onlyDir,
-    api,
-    drive,
     label,
-    clicked,
-    setClicked,
+    type,
+    addPathChild,
+    goPathAncestry,
+    method,
+    drive,
   } = props;
-  const [anchorEl, setAnchorEl] = useState(null);
-  const [pathList, setPathList] = useState(initPathList);
-  const [textField, setTextField] = useState(null);
-  const [popperSize, setPopperSize] = useState(0);
-  const open = Boolean(anchorEl);
-
-  const handleClickTextField = (event) => {
-    if (clicked !== id) setClicked(id);
-    if (anchorEl === null) setAnchorEl(event.currentTarget);
-    if (textField === null) setTextField(event.currentTarget);
-  };
-
-  const handlClosePopper = () => {
-    setAnchorEl(null);
-  };
-
-  const handleClickPath = (item) => {
-    if (!onlyDir || item.type !== 'file') {
-      if (item.value === '..') {
-        if (value !== '/') {
-          let value1 = value;
-          if (value1.endsWith('/')) {
-            value1 = value1.slice(0, -1);
-          }
-          let index = value1.lastIndexOf('/');
-          if (index >= 0) setValue(id, value1.slice(0, index + 1));
-        }
-      } else {
-        setValue(
-          id,
-          value.concat(item.value).concat(item.type === 'dir' ? '/' : '')
-        );
-      }
-    }
-    // textField.focus();
-    // let len = textField.value.length;
-    // textField.setSelectionRange(len, len);
-  };
-
-  useEffect(() => {
-    if (textField !== null) setPopperSize(textField.offsetWidth);
-  }, [textField]);
-
-  useEffect(() => {
-    if (clicked !== id) setAnchorEl(null);
-  }, [clicked, id]);
+  const [pathList, setPathList] = useState([]);
+  const [openDialog, setOpenDialog] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
-      let res = await rpcRequest('Onedrive.' + api, {
+      let res = await rpcRequest('Onedrive.' + method, {
         params: drive ? [drive.id, value] : [value],
         require_auth: true,
       });
-      setPathList(initPathList.concat(res.data.result));
+      setPathList([].concat(res.data.result));
     };
     fetchData();
-  }, [value, api, drive]);
+  }, [value, method, drive]);
 
   return (
     <React.Fragment>
       <TextField
-        id={id}
         margin="dense"
         fullWidth
         label={label}
         value={value}
-        onChange={(e) => setValue(id, e.target.value)}
-        onFocus={handleClickTextField}
-        onClick={(e) => e.stopPropagation()}
+        onClick={() => setOpenDialog(true)}
         InputProps={{
           startAdornment: (
             <InputAdornment position="start">
-              {onlyDir ? (
-                <FolderOpenOutlinedIcon />
-              ) : (
+              {type === 'file' ? (
                 <InsertDriveFileOutlinedIcon />
+              ) : (
+                <FolderOpenOutlinedIcon />
               )}
             </InputAdornment>
           ),
-          endAdornment:
-            anchorEl !== null ? (
-              <InputAdornment position="end">
-                <Tooltip title="完成">
-                  <DoneIcon
-                    className={classes.done}
-                    onClick={handlClosePopper}
-                  />
-                </Tooltip>
-              </InputAdornment>
-            ) : null,
           readOnly: true,
         }}
       ></TextField>
-      <Popper
-        open={open}
-        anchorEl={anchorEl}
-        className={classes.popper}
-        placement="bottom-start"
-        style={{ width: popperSize }}
-        onClick={(e) => e.stopPropagation()}
-        transition
-      >
-        {({ TransitionProps }) => (
-          <Fade {...TransitionProps} timeout={300}>
-            <Paper>
-              <List className={classes.pathList}>
-                {pathList.map((item, index) => (
-                  <React.Fragment key={index}>
-                    <ListItem
-                      button
-                      disabled={onlyDir && item.type === 'file'}
-                      onClick={() => handleClickPath(item)}
-                      component="li"
-                      divider
-                    >
-                      <ListItemIcon className={classes.itemIcon}>
-                        {item.type === 'dir' ? (
-                          <FolderOpenOutlinedIcon fontSize="small"></FolderOpenOutlinedIcon>
-                        ) : (
-                          <InsertDriveFileIcon fontSize="small"></InsertDriveFileIcon>
-                        )}
-                      </ListItemIcon>
-                      <ListItemText>{item.value}</ListItemText>
-                    </ListItem>
-                  </React.Fragment>
-                ))}
-              </List>
-            </Paper>
-          </Fade>
-        )}
-      </Popper>
+      <DialogWithPathList
+        open={openDialog}
+        onClose={() => setOpenDialog(false)}
+        path={value}
+        onClickBreadcrumb={(e, index) => {
+          e.preventDefault();
+          goPathAncestry(name, index);
+        }}
+        list={pathList}
+        onClickListItem={(e, item) => {
+          addPathChild(name, item);
+        }}
+        type={type}
+      />
     </React.Fragment>
   );
 }
 
 PathTextField.propTypes = {
-  id: PropTypes.string.isRequired,
+  name: PropTypes.string.isRequired,
   value: PropTypes.string.isRequired,
-  api: PropTypes.string.isRequired,
   label: PropTypes.string.isRequired,
+  type: PropTypes.oneOf(['file', 'folder']).isRequired,
+  method: PropTypes.string.isRequired,
   drive: PropTypes.object,
-  clicked: PropTypes.string,
-  setClicked: PropTypes.func.isRequired,
-  setValue: PropTypes.func.isRequired,
-  onlyDir: PropTypes.bool.isRequired,
+  addPathChild: PropTypes.func,
+  goPathAncestry: PropTypes.func,
 };

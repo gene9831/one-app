@@ -15,12 +15,11 @@ import rpcRequest from '../jsonrpc';
 import { connect } from 'react-redux';
 import { setGlobalSnackbarMessage } from '../actions';
 
-const default_path = '/';
-const initState = {
+const initPathes = {
   upload_path: '/',
-  file_path: default_path,
-  folder_path: default_path,
+  local_path: '/',
 };
+
 let TaskDialog = (props) => {
   const {
     open,
@@ -32,37 +31,32 @@ let TaskDialog = (props) => {
     defaultLocalPath,
     setGlobalSnackbarMessage,
   } = props;
-  const [pathes, setPathes] = useState(initState);
-  const [clicked, setClicked] = useState(null);
+  const [pathes, setPathes] = useState(initPathes);
   const [drive, setDrive] = useState(drives[0]);
 
   React.useEffect(() => {
     if (defaultLocalPath) {
       setPathes((prev) => ({
         ...prev,
-        file_path: defaultLocalPath,
-        folder_path: defaultLocalPath,
+        local_path: defaultLocalPath,
       }));
     }
   }, [defaultLocalPath]);
 
   const handleSubmit = () => {
     if (drive) {
-      let method;
       let params = {
         drive_id: drive.id,
         upload_path: pathes.upload_path,
+        local_path: pathes.local_path,
+        type: type,
       };
-      if (type === 'file') {
-        method = 'Onedrive.uploadFile';
-        params.file_path = pathes.file_path;
-      } else {
-        method = 'Onedrive.uploadFolder';
-        params.folder_path = pathes.folder_path;
-      }
 
       const fetchData = async () => {
-        await rpcRequest(method, { params: params, require_auth: true });
+        await rpcRequest('Onedrive.upload', {
+          params: params,
+          require_auth: true,
+        });
         handleClose();
         // setState(initState);
       };
@@ -82,10 +76,32 @@ let TaskDialog = (props) => {
     onClose();
   };
 
-  const setKeyValue = (id, value) => {
+  const addPathChild = (name, item) => {
+    let newPath = pathes[name] + item.value;
+    if (item.type !== 'file') {
+      newPath += '/';
+    }
     setPathes({
       ...pathes,
-      [id]: value,
+      [name]: newPath,
+    });
+  };
+
+  const goPathAncestry = (name, index) => {
+    let newPath = pathes[name];
+    if (newPath.startsWith('/')) {
+      newPath = newPath.slice(1);
+    }
+    newPath =
+      '/' +
+      newPath
+        .split('/')
+        .slice(0, index + 1)
+        .join('/') +
+      '/';
+    setPathes({
+      ...pathes,
+      [name]: newPath,
     });
   };
 
@@ -94,110 +110,87 @@ let TaskDialog = (props) => {
   };
 
   const handleReset = () => {
-    let newPathes = initState;
+    let newPathes = initPathes;
     if (defaultLocalPath) {
       newPathes = {
-        ...initState,
-        file_path: defaultLocalPath,
-        folder_path: defaultLocalPath,
+        ...initPathes,
+        local_path: defaultLocalPath,
       };
     }
     setPathes(newPathes);
   };
 
   return (
-    <React.Fragment>
-      <Dialog
-        open={open}
-        onClose={handleClose}
-        onClick={() => setClicked(null)}
-      >
-        <DialogTitle>{title}</DialogTitle>
-        <DialogContent>
-          <DialogContentText>{message}</DialogContentText>
-          <TextField
-            margin="dense"
-            id="onedrive-email"
-            label="OneDrive 邮箱"
-            value={drive ? drive.owner.user.email : ''}
-            fullWidth
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <AccountCircleOutlinedIcon />
-                </InputAdornment>
-              ),
-            }}
-            onChange={handleChangeDrive}
-            select
-            SelectProps={{
-              MenuProps: {
-                anchorOrigin: {
-                  vertical: 'bottom',
-                  horizontal: 'left',
-                },
-                getContentAnchorEl: null,
+    <Dialog open={open} onClose={handleClose}>
+      <DialogTitle>{title}</DialogTitle>
+      <DialogContent>
+        <DialogContentText>{message}</DialogContentText>
+        <TextField
+          margin="dense"
+          id="onedrive-email"
+          label="OneDrive 邮箱"
+          value={drive ? drive.owner.user.email : ''}
+          fullWidth
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position="start">
+                <AccountCircleOutlinedIcon />
+              </InputAdornment>
+            ),
+          }}
+          onChange={handleChangeDrive}
+          select
+          SelectProps={{
+            MenuProps: {
+              anchorOrigin: {
+                vertical: 'bottom',
+                horizontal: 'left',
               },
-            }}
-            onFocus={() => setClicked(null)}
-          >
-            {drives.map((option) => (
-              <MenuItem
-                key={option.owner.user.email}
-                value={option.owner.user.email}
-              >
-                {option.owner.user.email}
-              </MenuItem>
-            ))}
-          </TextField>
-          <PathTextField
-            id="upload_path"
-            value={pathes.upload_path}
-            setValue={setKeyValue}
-            onlyDir={true}
-            api="listDrivePath"
-            label="OneDrive 目录"
-            drive={drive}
-            clicked={clicked}
-            setClicked={setClicked}
-          />
-          {type === 'file' ? (
-            <PathTextField
-              id="file_path"
-              value={pathes.file_path}
-              setValue={setKeyValue}
-              onlyDir={false}
-              api="listSysPath"
-              label="文件路径"
-              clicked={clicked}
-              setClicked={setClicked}
-            ></PathTextField>
-          ) : (
-            <PathTextField
-              id="folder_path"
-              value={pathes.folder_path}
-              setValue={setKeyValue}
-              onlyDir={true}
-              api="listSysPath"
-              label="文件夹路径"
-              clicked={clicked}
-              setClicked={setClicked}
-            ></PathTextField>
-          )}
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleReset} color="primary">
-            重置
-          </Button>
-          <Button onClick={handleClose} color="primary">
-            取消
-          </Button>
-          <Button onClick={handleSubmit} color="secondary">
-            提交
-          </Button>
-        </DialogActions>
-      </Dialog>
-    </React.Fragment>
+              getContentAnchorEl: null,
+            },
+          }}
+        >
+          {drives.map((option) => (
+            <MenuItem
+              key={option.owner.user.email}
+              value={option.owner.user.email}
+            >
+              {option.owner.user.email}
+            </MenuItem>
+          ))}
+        </TextField>
+        <PathTextField
+          name="upload_path"
+          value={pathes.upload_path}
+          addPathChild={addPathChild}
+          goPathAncestry={goPathAncestry}
+          method="listDrivePath"
+          label="OneDrive 目录"
+          drive={drive}
+          type="folder"
+        />
+        <PathTextField
+          name="local_path"
+          value={pathes.local_path}
+          addPathChild={addPathChild}
+          goPathAncestry={goPathAncestry}
+          method="listSysPath"
+          label={type === 'file' ? '文件路径' : '文件夹路径'}
+          type={type}
+        ></PathTextField>
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={handleReset} color="secondary">
+          重置
+        </Button>
+        <Button onClick={handleClose} color="secondary">
+          取消
+        </Button>
+        <Button onClick={handleSubmit} color="primary">
+          提交
+        </Button>
+      </DialogActions>
+    </Dialog>
   );
 };
 
