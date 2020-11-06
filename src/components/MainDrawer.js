@@ -76,54 +76,50 @@ export default function MainDrawer(props) {
   const { defaultIndex, sections, views } = pageProps;
 
   const [openDrawer, setOpenDrawer] = useState(false);
-  const [pageIndex, setPageIndex] = useState(initPageIndex);
+  const [pageIndex, setPageIndex] = useState(defaultIndex);
 
   const upMd = useMediaQuery((theme) => theme.breakpoints.up('md'));
   const upLg = useMediaQuery((theme) => theme.breakpoints.up('lg'));
 
-  useEffect(() => {
-    const cookieIndex = cookies.get('index');
-    if (cookieIndex) {
-      setPageIndex(cookieIndex);
-    } else if (defaultIndex) {
-      setPageIndex(defaultIndex);
-    }
-  }, [defaultIndex]);
+  const pIndex = useMemo(
+    () => pageIndex || cookies.get('index') || initPageIndex,
+    [pageIndex]
+  );
 
   useEffect(() => {
     // 保存页面位置
-    if (pageIndex !== initPageIndex) {
-      cookies.set('index', pageIndex, { maxAge: 3600 * 24 * 30 });
+    if (pIndex !== initPageIndex) {
+      cookies.set('index', pIndex, { maxAge: 3600 * 24 * 30 });
     }
-  }, [pageIndex]);
+  }, [pIndex]);
 
   const pageSection = useMemo(
-    () => (sections ? sections[pageIndex.section] : null),
-    [pageIndex.section, sections]
+    () => (sections ? sections[pIndex.section] : null),
+    [pIndex.section, sections]
   );
 
   const pageItem = useMemo(
-    () => (pageSection ? pageSection.items[pageIndex.item] : null),
-    [pageIndex.item, pageSection]
+    () => (pageSection ? pageSection.items[pIndex.item] : null),
+    [pIndex.item, pageSection]
   );
 
   const subComponent = useMemo(
     () =>
       sections
-        ? views[pageIndex.section].Component ||
-          views[pageIndex.section].items[pageIndex.item].Component
+        ? views[pIndex.section].Component ||
+          views[pIndex.section].items[pIndex.item].Component
         : null,
-    [pageIndex, sections, views]
+    [pIndex, sections, views]
   );
 
   const subComponentProps = useMemo(() => {
     if (!sections) return null;
-    const sectionProps = { ...views[pageIndex.section].props };
+    const sectionProps = { ...views[pIndex.section].props };
     const itemProps = {
-      ...((views[pageIndex.section].items || {})[pageIndex.item] || {}).props,
+      ...((views[pIndex.section].items || {})[pIndex.item] || {}).props,
     };
     return { name: pageItem.name, ...sectionProps, ...itemProps };
-  }, [pageIndex, pageItem.name, sections, views]);
+  }, [pIndex, pageItem.name, sections, views]);
 
   const handleClickMenuIcon = () => {
     if (showDrawer) {
@@ -185,8 +181,8 @@ export default function MainDrawer(props) {
                     button
                     key={itemIndex}
                     selected={
-                      pageIndex.section === sectionIndex &&
-                      pageIndex.item === itemIndex
+                      pIndex.section === sectionIndex &&
+                      pIndex.item === itemIndex
                     }
                     onClick={() =>
                       handleClickPageItem({

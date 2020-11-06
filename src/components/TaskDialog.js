@@ -89,10 +89,12 @@ let TaskDialog = (props) => {
 
   const goPathAncestry = (name, index) => {
     let newPath = pathes[name];
+    let flag = false;
     if (newPath.startsWith('/')) {
       newPath = newPath.slice(1);
+      flag = true;
     }
-    newPath = '/' + newPath.split('/').slice(0, index).join('/');
+    newPath = flag ? '/' : '' + newPath.split('/').slice(0, index).join('/');
     if (index !== 0) newPath += '/';
     setPathes({
       ...pathes,
