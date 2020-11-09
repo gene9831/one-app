@@ -165,7 +165,7 @@ let Accounts = (props) => {
     setSelected(newSelected);
   };
 
-  const handleOperateDrives = (method, setOpenDialog) => {
+  const handleOperateDrives = (method, params, setOpenDialog) => {
     setOperationStatus(OPERATING_STATUS.RUNNING);
     if (setOpenDialog) setOpenDialog(false);
     setSelected([]);
@@ -173,7 +173,7 @@ let Accounts = (props) => {
 
     const fetchData = async () => {
       let res = await rpcRequest(method, {
-        params: [selected],
+        params: params,
         require_auth: true,
       });
       // 加 await 保证当前页面 drive 数据最新
@@ -193,15 +193,23 @@ let Accounts = (props) => {
   };
 
   const handleRemoveDrives = () => {
-    handleOperateDrives('Onedrive.signOut', setOpenDeleteDialog);
+    handleOperateDrives(
+      'Onedrive.signOut',
+      { drive_ids: selected },
+      setOpenDeleteDialog
+    );
   };
 
   const handleFullUpdateDrives = () => {
-    handleOperateDrives('Onedrive.fullUpdateItems', setOpenFullUpdateDialog);
+    handleOperateDrives(
+      'Onedrive.update',
+      { drive_ids: selected, entire: true },
+      setOpenFullUpdateDialog
+    );
   };
 
   const handleUpdateDrives = () => {
-    handleOperateDrives('Onedrive.updateItems');
+    handleOperateDrives('Onedrive.update', { drive_ids: selected });
   };
 
   const iconButtons = [

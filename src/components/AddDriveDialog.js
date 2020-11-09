@@ -74,6 +74,7 @@ const initInstructions = [
   '点击打开新窗口按钮，在新窗口中登录微软账户进行授权',
   '登录成功后会重定向，复制重定向后的链接，粘贴到输入框',
   '等待结果',
+  '添加帐号成功',
 ];
 
 export default function AddDriveDialog(props) {
@@ -83,8 +84,11 @@ export default function AddDriveDialog(props) {
 
   const [signInUrl, setSignInUrl] = useState(null);
   const [activeStep, setActiveStep] = useState(0);
-  const [result, setResult] = useState(null);
+  // const [result, setResult] = useState(null);
+  const [error, setError] = useState('');
   const [callbackUrl, setCallbackUrl] = useState('');
+
+  const hasError = Boolean(error);
 
   useEffect(() => {
     if (!open) return;
@@ -100,20 +104,22 @@ export default function AddDriveDialog(props) {
   const handleNext = () => {
     if (activeStep === 1) {
       const fetchData = async () => {
-        let res = await rpcRequest('Onedrive.putCallbackUrl', {
+        await rpcRequest('Onedrive.putCallbackUrl', {
           params: [callbackUrl],
           require_auth: true,
         });
-        let res1 = res.data.result;
-        setResult(res.data.result);
-
-        if (res1.code === 0) {
-          await onDriveAdded();
-        }
+        await onDriveAdded();
         setActiveStep(steps.length);
       };
       fetchData().catch((e) => {
-        setResult({ code: -100, message: e.message });
+        if (e.response) {
+          console.log(e.response.data);
+          setError(e.response.data.error.message);
+        } else {
+          // 网络错误
+          setError('网络错误');
+        }
+        setActiveStep(steps.length);
       });
     }
     setActiveStep((prevActiveStep) => prevActiveStep + 1);
@@ -150,7 +156,13 @@ export default function AddDriveDialog(props) {
         </Stepper>
         <Container maxWidth="sm" className={classes.stepsContainer}>
           {(() => {
-            if (activeStep === 0)
+            if (hasError) {
+              return (
+                <Fab className={clsx(classes.buttonFailed)}>
+                  <PriorityHighIcon style={{ color: 'white' }} />
+                </Fab>
+              );
+            } else if (activeStep === 0)
               return (
                 <Button
                   component="a"
@@ -185,24 +197,13 @@ export default function AddDriveDialog(props) {
                 </div>
               );
             return (
-              <Fab
-                className={clsx({
-                  [classes.buttonSuccess]: result.code === 0,
-                  [classes.buttonFailed]: result.code !== 0,
-                })}
-              >
-                {result.code === 0 ? (
-                  <CheckIcon />
-                ) : (
-                  <PriorityHighIcon style={{ color: 'white' }} />
-                )}
+              <Fab className={clsx(classes.buttonSuccess)}>
+                <CheckIcon />
               </Fab>
             );
           })()}
           <Typography className={classes.instructions}>
-            {activeStep < steps.length
-              ? initInstructions[activeStep]
-              : result.message}
+            {hasError ? error : initInstructions[activeStep]}
           </Typography>
           <div>
             {activeStep < steps.length - 1 ? (
