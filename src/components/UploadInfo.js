@@ -298,14 +298,16 @@ export default function UploadInfo(props) {
   }, [name]);
 
   useEffect(() => {
-    const fetchData = async () => {
-      let res = await rpcRequest('Others.defaultLocalPath', {
-        require_auth: true,
-      });
-      setDefaultLocalPath(res.data.result);
-    };
-    fetchData();
-  }, []);
+    if (drives.length > 0) {
+      const fetchData = async () => {
+        let res = await rpcRequest('Others.defaultLocalPath', {
+          require_auth: true,
+        });
+        setDefaultLocalPath(res.data.result);
+      };
+      fetchData();
+    }
+  }, [drives]);
 
   const handleOperate = useCallback(
     (method) => {
