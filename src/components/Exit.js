@@ -9,12 +9,15 @@ import DialogContentText from '@material-ui/core/DialogContentText';
 import DialogTitle from '@material-ui/core/DialogTitle';
 import ExitToAppIcon from '@material-ui/icons/ExitToApp';
 import rpcRequest from '../jsonrpc';
-import cookies from '../cookies';
 import Tooltip from '@material-ui/core/Tooltip';
+import { setAuth } from '../actions';
+import { connect } from 'react-redux';
+import { useHistory } from 'react-router-dom';
 
-export default function Exit(props) {
-  const { setAuthed, setLogged } = props;
+let Exit = (props) => {
+  const { token, setAuth } = props;
   const [openLogout, setOpenLogout] = useState(false);
+  const history = useHistory();
 
   // Logout
   const handleClickLogout = () => {
@@ -26,12 +29,13 @@ export default function Exit(props) {
   const handleLogout = () => {
     const fetchData = async () => {
       await rpcRequest('Admin.logout', {
-        params: [cookies.get('token')],
+        params: [token],
         require_auth: true,
       });
-      setAuthed(false);
-      setLogged(false);
-      cookies.remove('token');
+      setAuth({
+        authed: false,
+      });
+      history.push('/login');
     };
     fetchData();
   };
@@ -64,9 +68,23 @@ export default function Exit(props) {
       </Dialog>
     </React.Fragment>
   );
-}
+};
 
 Exit.propTypes = {
-  setAuthed: PropTypes.func.isRequired,
-  setLogged: PropTypes.func.isRequired,
+  token: PropTypes.string,
+  setAuth: PropTypes.func,
 };
+
+const mapStateToProps = (state) => ({
+  token: state.auth.token,
+});
+
+const mapDispatchToProps = (dispatch) => {
+  return {
+    setAuth: (payload) => dispatch(setAuth(payload)),
+  };
+};
+
+Exit = connect(mapStateToProps, mapDispatchToProps)(Exit);
+
+export default Exit;

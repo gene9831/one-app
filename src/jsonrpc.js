@@ -1,5 +1,6 @@
 import Axios from 'axios';
-import cookies from './cookies';
+import store from './store';
+
 // const JSONRPC_API = 'http://localhost:5000/api/';
 const JSONRPC_API = 'http://onedrive.omv.local/api/';
 
@@ -12,7 +13,9 @@ const rpcRequest = (method, { params, require_auth } = {}) => {
       params: params || [],
       id: new Date().getTime(),
     },
-    require_auth ? { headers: { 'X-Password': cookies.get('token') } } : {}
+    require_auth
+      ? { headers: { 'X-Password': store.getState().auth.token } }
+      : {}
   );
 };
 

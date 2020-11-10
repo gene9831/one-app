@@ -25,3 +25,9 @@ export const OPERATING_STATUS = {
 export const setOperationStatus = (status) => {
   return { type: SET_OPERATING_STATUS, status };
 };
+
+export const SET_AUTH = 'SET_AUTH';
+// payload: { authed, token, expires}
+export const setAuth = (payload) => {
+  return { type: SET_AUTH, payload };
+};

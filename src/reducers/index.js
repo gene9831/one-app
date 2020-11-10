@@ -5,6 +5,7 @@ import {
   SET_GLOBAL_SNACKBAR_MESSAGE,
   SET_OPERATING_STATUS,
   OPERATING_STATUS,
+  SET_AUTH,
 } from '../actions';
 
 const palette = (state = { type: PALETTET_YPES.LIGHT }, action) => {
@@ -37,10 +38,20 @@ const operationStatus = (state = OPERATING_STATUS.READY, action) => {
   }
 };
 
+const auth = (state = {}, action) => {
+  switch (action.type) {
+    case SET_AUTH:
+      return action.payload;
+    default:
+      return state;
+  }
+};
+
 const CombinedState = combineReducers({
   palette,
   globalSnackbarMessage,
   operationStatus,
+  auth,
 });
 
 export default CombinedState;

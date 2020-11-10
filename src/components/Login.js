@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback, useMemo } from 'react';
 import PropTypes from 'prop-types';
 import Avatar from '@material-ui/core/Avatar';
 import Button from '@material-ui/core/Button';
@@ -10,6 +10,9 @@ import Container from '@material-ui/core/Container';
 import rpcRequest from '../jsonrpc';
 import MyAppBar from './MyAppBar';
 import Palette from './Palette';
+import { setAuth } from '../actions';
+import { connect } from 'react-redux';
+import { useHistory } from 'react-router-dom';
 
 const useLoginPageStyles = makeStyles((theme) => ({
   paper: {
@@ -31,11 +34,19 @@ const useLoginPageStyles = makeStyles((theme) => ({
   },
 }));
 
-function LoginPage(props) {
+let LoginPage = (props) => {
   const classes = useLoginPageStyles();
-  const { handleWriteToken } = props;
+  const { setAuth } = props;
   const [passwrod, setPassword] = React.useState('');
   const [error, setError] = React.useState('');
+  const history = useHistory();
+  const query = useMemo(() => new URLSearchParams(history.location.search), [
+    history,
+  ]);
+
+  const handleAuthSucceed = useCallback(() => {
+    history.push(query.get('redirect_url') || '/');
+  }, [history, query]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -46,7 +57,13 @@ function LoginPage(props) {
     setError('');
     const fetchData = async () => {
       let res = await rpcRequest('Admin.login', { params: [passwrod] });
-      handleWriteToken(res.data.result);
+      const { token, expires_at } = res.data.result;
+      setAuth({
+        authed: true,
+        token: token,
+        expires: new Date(expires_at * 1000),
+      });
+      handleAuthSucceed();
     };
     fetchData().catch((e) => {
       setError(
@@ -96,11 +113,23 @@ function LoginPage(props) {
       </form>
     </Container>
   );
-}
+};
 
 LoginPage.propTypes = {
-  handleWriteToken: PropTypes.func.isRequired,
+  onSuccess: PropTypes.func,
+  setAuth: PropTypes.func,
 };
+
+LoginPage.defaultProps = {
+  onSuccess: () => {},
+};
+
+const mapDispatchToProps = (dispatch) => {
+  return {
+    setAuth: (payload) => dispatch(setAuth(payload)),
+  };
+};
+LoginPage = connect(null, mapDispatchToProps)(LoginPage);
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -115,20 +144,16 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-export default function Login(props) {
+export default function Login() {
   const classes = useStyles();
-  const { handleWriteToken } = props;
+
   return (
     <div className={classes.root}>
       <MyAppBar title="登录" endComponents={<Palette />} />
       <div className={classes.container}>
         <div className={classes.toolbar}></div>
-        <LoginPage handleWriteToken={handleWriteToken} />
+        <LoginPage />
       </div>
     </div>
   );
 }
-
-Login.propTypes = {
-  handleWriteToken: PropTypes.func.isRequired,
-};

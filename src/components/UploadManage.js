@@ -40,7 +40,7 @@ const pageSections = [
 ];
 
 let UploadManage = (props) => {
-  const { authed, setAuthed, setLogged, operationStatus } = props;
+  const { authed, operationStatus } = props;
   const [drives, setDrives] = useState([]);
 
   const updateDrives = async () => {
@@ -101,21 +101,20 @@ let UploadManage = (props) => {
           ) : null}
         </React.Fragment>,
         <Palette key="palette" />,
-        <Exit key="exit" setAuthed={setAuthed} setLogged={setLogged} />,
+        <Exit key="exit" />,
       ]}
     ></MainDrawer>
   );
 };
 
 UploadManage.propTypes = {
-  authed: PropTypes.bool.isRequired,
-  setAuthed: PropTypes.func.isRequired,
-  setLogged: PropTypes.func.isRequired,
+  authed: PropTypes.bool,
   operationStatus: PropTypes.string,
 };
 
 const mapStateToProps = (state) => ({
   operationStatus: state.operationStatus,
+  authed: state.auth.authed,
 });
 
 UploadManage = connect(mapStateToProps)(UploadManage);

@@ -3,13 +3,7 @@ import ReactDOM from 'react-dom';
 import App from './App';
 import 'fontsource-roboto';
 import { Provider } from 'react-redux';
-import { createStore } from 'redux';
-import CombinedState from './reducers';
-import cookies from './cookies';
-
-const store = createStore(CombinedState, {
-  palette: cookies.get('palette'),
-});
+import store from './store';
 
 ReactDOM.render(
   <React.StrictMode>
