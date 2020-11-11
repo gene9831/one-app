@@ -3,6 +3,7 @@ import Admin from './components/Admin';
 import Theme from './components/Theme';
 import GlobalSnackbar from './components/GlobalSnackbar';
 import { BrowserRouter as Router, Switch, Route } from 'react-router-dom';
+import NoRoute from './components/NoRoute';
 
 export default function App() {
   return (
@@ -12,7 +13,9 @@ export default function App() {
           <Route path="/admin">
             <Admin />
           </Route>
-          <Route>Nothing for now</Route>
+          <Route>
+            <NoRoute />
+          </Route>
         </Switch>
       </Router>
       <GlobalSnackbar />
