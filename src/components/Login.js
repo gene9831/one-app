@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo } from 'react';
+import React, { useMemo } from 'react';
 import PropTypes from 'prop-types';
 import Avatar from '@material-ui/core/Avatar';
 import Button from '@material-ui/core/Button';
@@ -10,7 +10,7 @@ import Container from '@material-ui/core/Container';
 import rpcRequest from '../jsonrpc';
 import MyAppBar from './MyAppBar';
 import Palette from './Palette';
-import { setAuth } from '../actions';
+import { AUTH_STATUS, setAuth } from '../actions';
 import { connect } from 'react-redux';
 import { useHistory } from 'react-router-dom';
 
@@ -36,17 +36,13 @@ const useLoginPageStyles = makeStyles((theme) => ({
 
 let LoginPage = (props) => {
   const classes = useLoginPageStyles();
-  const { setAuth } = props;
+  const { setAuth, root } = props;
   const [passwrod, setPassword] = React.useState('');
   const [error, setError] = React.useState('');
   const history = useHistory();
   const query = useMemo(() => new URLSearchParams(history.location.search), [
     history,
   ]);
-
-  const handleAuthSucceed = useCallback(() => {
-    history.push(query.get('redirect_url') || '/');
-  }, [history, query]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -59,11 +55,11 @@ let LoginPage = (props) => {
       let res = await rpcRequest('Admin.login', { params: [passwrod] });
       const { token, expires_at } = res.data.result;
       setAuth({
-        authed: true,
+        status: AUTH_STATUS.PASS,
         token: token,
         expires: new Date(expires_at * 1000),
       });
-      handleAuthSucceed();
+      history.push(query.get('redirect_url') || root);
     };
     fetchData().catch((e) => {
       setError(
@@ -118,6 +114,7 @@ let LoginPage = (props) => {
 LoginPage.propTypes = {
   onSuccess: PropTypes.func,
   setAuth: PropTypes.func,
+  root: PropTypes.string,
 };
 
 LoginPage.defaultProps = {
@@ -144,7 +141,7 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-export default function Login() {
+export default function Login({ root }) {
   const classes = useStyles();
 
   return (
@@ -152,8 +149,12 @@ export default function Login() {
       <MyAppBar title="登录" endComponents={<Palette />} />
       <div className={classes.container}>
         <div className={classes.toolbar}></div>
-        <LoginPage />
+        <LoginPage root={root} />
       </div>
     </div>
   );
 }
+
+Login.propTypes = {
+  root: PropTypes.string,
+};

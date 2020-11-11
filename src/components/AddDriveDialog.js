@@ -113,7 +113,6 @@ export default function AddDriveDialog(props) {
       };
       fetchData().catch((e) => {
         if (e.response) {
-          console.log(e.response.data);
           setError(e.response.data.error.message);
         } else {
           // 网络错误

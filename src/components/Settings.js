@@ -15,6 +15,7 @@ import {
   setGlobalSnackbarMessage,
   setOperationStatus,
   OPERATING_STATUS,
+  AUTH_STATUS,
 } from '../actions';
 
 const useSettingItemStyles = makeStyles((theme) => ({
@@ -150,6 +151,7 @@ SettingItem.propTypes = {
 
 const mapStateToProps = (state) => ({
   operationStatus: state.operationStatus,
+  authed: state.auth.status === AUTH_STATUS.PASS,
 });
 
 const mapDispatchToProps = (dispatch) => ({
@@ -276,8 +278,5 @@ Settings.propTypes = {
   setGlobalSnackbarMessage: PropTypes.func.isRequired,
 };
 
-Settings = connect(null, (dispatch) => ({
-  setGlobalSnackbarMessage: (message) =>
-    dispatch(setGlobalSnackbarMessage(message)),
-}))(Settings);
+Settings = connect(mapStateToProps, mapDispatchToProps)(Settings);
 export default Settings;

@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useMemo } from 'react';
 import { connect } from 'react-redux';
 import { useHistory } from 'react-router-dom';
-import { setGlobalSnackbarMessage, setAuth } from '../actions';
+import { setGlobalSnackbarMessage, setAuth, AUTH_STATUS } from '../actions';
 import rpcRequest from '../jsonrpc';
 
 let ValidateToken = (props) => {
-  const { auth, setAuth, setGlobalSnackbarMessage } = props;
+  const { auth, root, setAuth, setGlobalSnackbarMessage } = props;
   const history = useHistory();
 
   const query = useMemo(() => new URLSearchParams(history.location.search), [
@@ -13,22 +13,38 @@ let ValidateToken = (props) => {
   ]);
   const pathname = useMemo(() => history.location.pathname, [history]);
 
-  const handleAuthSucceed = useCallback(() => {
-    history.push(query.get('redirect_url') || '/');
-  }, [history, query]);
+  const handleAuthSucceed = useCallback(
+    (token, expires) => {
+      // 成功，跳转路由
+      setAuth({
+        status: AUTH_STATUS.PASS,
+        token: token,
+        expires: new Date(expires * 1000),
+      });
+      history.push(query.get('redirect_url') || root);
+    },
+    [history, query, root, setAuth]
+  );
 
-  const handleAuthFailed = useCallback(() => {
-    // 失败，跳转路由
-    if (pathname !== '/login') {
-      history.push('/login?redirect_url=' + pathname);
-    }
-  }, [history, pathname]);
+  const handleAuthFailed = useCallback(
+    (notoken = false) => {
+      // 失败，跳转路由
+      setAuth({
+        status: notoken ? AUTH_STATUS.NOTOKEN : AUTH_STATUS.OUT,
+      });
+      if (pathname !== `${root}/login`) {
+        history.push(`${root}/login?redirect_url=` + pathname);
+      }
+    },
+    [history, pathname, root, setAuth]
+  );
 
   useEffect(() => {
-    if (auth.authed) return;
+    // auth.status 等于任何一个确定值
+    if (auth.status) return;
     if (!auth.token) {
       // 没有token
-      handleAuthFailed();
+      handleAuthFailed(true);
       return;
     }
     const fetchData = async () => {
@@ -36,18 +52,10 @@ let ValidateToken = (props) => {
         params: [auth.token],
       });
       const { token, expires_at } = res.data.result;
-      setAuth({
-        authed: true,
-        token: token,
-        expires: new Date(expires_at * 1000),
-      });
-      handleAuthSucceed();
+      handleAuthSucceed(token, expires_at);
     };
     fetchData().catch((e) => {
       if (e.response) {
-        setAuth({
-          authed: false,
-        });
         handleAuthFailed();
       } else {
         setGlobalSnackbarMessage('网络错误');

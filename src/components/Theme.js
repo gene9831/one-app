@@ -31,7 +31,7 @@ let Theme = (props) => {
   const { palette, children } = props;
 
   useEffect(() => {
-    cookies.set('palette', palette, { maxAge: 3600 * 60 * 24 });
+    cookies.set('palette', palette, { path: '/', maxAge: 3600 * 60 * 24 });
   }, [palette]);
 
   const customTheme = useMemo(

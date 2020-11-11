@@ -17,7 +17,7 @@ import IconButton from '@material-ui/core/IconButton';
 import Tooltip from '@material-ui/core/Tooltip';
 import Badge from '@material-ui/core/Badge';
 import { connect } from 'react-redux';
-import { OPERATING_STATUS } from '../actions';
+import { AUTH_STATUS, OPERATING_STATUS } from '../actions';
 
 const pageSections = [
   {
@@ -40,7 +40,7 @@ const pageSections = [
 ];
 
 let UploadManage = (props) => {
-  const { authed, operationStatus } = props;
+  const { authed, operationStatus, root } = props;
   const [drives, setDrives] = useState([]);
 
   const updateDrives = async () => {
@@ -68,7 +68,6 @@ let UploadManage = (props) => {
           {
             name: 'settings',
             Component: Settings,
-            props: { authed: authed },
           },
           {
             name: 'accounts',
@@ -78,7 +77,7 @@ let UploadManage = (props) => {
         ],
       },
     ],
-    [authed, drives]
+    [drives]
   );
 
   return (
@@ -101,7 +100,7 @@ let UploadManage = (props) => {
           ) : null}
         </React.Fragment>,
         <Palette key="palette" />,
-        <Exit key="exit" />,
+        <Exit key="exit" root={root} />,
       ]}
     ></MainDrawer>
   );
@@ -110,11 +109,12 @@ let UploadManage = (props) => {
 UploadManage.propTypes = {
   authed: PropTypes.bool,
   operationStatus: PropTypes.string,
+  root: PropTypes.string,
 };
 
 const mapStateToProps = (state) => ({
   operationStatus: state.operationStatus,
-  authed: state.auth.authed,
+  authed: state.auth.status === AUTH_STATUS.PASS,
 });
 
 UploadManage = connect(mapStateToProps)(UploadManage);

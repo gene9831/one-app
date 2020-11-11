@@ -10,12 +10,12 @@ import DialogTitle from '@material-ui/core/DialogTitle';
 import ExitToAppIcon from '@material-ui/icons/ExitToApp';
 import rpcRequest from '../jsonrpc';
 import Tooltip from '@material-ui/core/Tooltip';
-import { setAuth } from '../actions';
+import { AUTH_STATUS, setAuth } from '../actions';
 import { connect } from 'react-redux';
 import { useHistory } from 'react-router-dom';
 
 let Exit = (props) => {
-  const { token, setAuth } = props;
+  const { token, setAuth, root } = props;
   const [openLogout, setOpenLogout] = useState(false);
   const history = useHistory();
 
@@ -33,9 +33,9 @@ let Exit = (props) => {
         require_auth: true,
       });
       setAuth({
-        authed: false,
+        status: AUTH_STATUS.OUT,
       });
-      history.push('/login');
+      history.push(`${root}/login`);
     };
     fetchData();
   };
@@ -73,6 +73,7 @@ let Exit = (props) => {
 Exit.propTypes = {
   token: PropTypes.string,
   setAuth: PropTypes.func,
+  root: PropTypes.string,
 };
 
 const mapStateToProps = (state) => ({
