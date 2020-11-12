@@ -141,7 +141,7 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-export default function Login({ root }) {
+export default function AdminLogin({ root }) {
   const classes = useStyles();
 
   return (
@@ -155,6 +155,6 @@ export default function Login({ root }) {
   );
 }
 
-Login.propTypes = {
+AdminLogin.propTypes = {
   root: PropTypes.string,
 };

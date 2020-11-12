@@ -1,6 +1,6 @@
 import React from 'react';
-import UploadManage from './UploadManage';
-import Login from './Login';
+import AdminManage from './AdminManage';
+import AdminLogin from './AdminLogin';
 import { Switch, Route, useRouteMatch } from 'react-router-dom';
 import StoreToken from '../containers/StoreToken';
 import ValidateToken from '../containers/ValidateToken';
@@ -14,10 +14,10 @@ const Admin = () => {
       <ValidateToken root={match.path} />
       <Switch>
         <Route path={`${match.path}/login`}>
-          <Login root={match.path} />
+          <AdminLogin root={match.path} />
         </Route>
         <Route path={match.path}>
-          <UploadManage root={match.path} />
+          <AdminManage root={match.path} />
         </Route>
       </Switch>
     </React.Fragment>

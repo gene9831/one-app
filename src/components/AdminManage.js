@@ -39,7 +39,7 @@ const pageSections = [
   },
 ];
 
-let UploadManage = (props) => {
+let AdminManage = (props) => {
   const { authed, operationStatus, root } = props;
   const [drives, setDrives] = useState([]);
 
@@ -106,7 +106,7 @@ let UploadManage = (props) => {
   );
 };
 
-UploadManage.propTypes = {
+AdminManage.propTypes = {
   authed: PropTypes.bool,
   operationStatus: PropTypes.string,
   root: PropTypes.string,
@@ -117,6 +117,6 @@ const mapStateToProps = (state) => ({
   authed: state.auth.status === AUTH_STATUS.PASS,
 });
 
-UploadManage = connect(mapStateToProps)(UploadManage);
+AdminManage = connect(mapStateToProps)(AdminManage);
 
-export default UploadManage;
+export default AdminManage;

@@ -4,6 +4,7 @@ import Theme from './components/Theme';
 import GlobalSnackbar from './components/GlobalSnackbar';
 import { BrowserRouter as Router, Switch, Route } from 'react-router-dom';
 import NoRoute from './components/NoRoute';
+import ItemList from './components/ItemList';
 
 export default function App() {
   return (
@@ -12,6 +13,9 @@ export default function App() {
         <Switch>
           <Route path="/admin">
             <Admin />
+          </Route>
+          <Route path="/">
+            <ItemList />
           </Route>
           <Route>
             <NoRoute />
