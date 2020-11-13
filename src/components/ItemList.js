@@ -132,6 +132,32 @@ const ItemList = () => {
     }));
   }, [downSm, rows]);
 
+  const tableHeads = useMemo(
+    () => [
+      {
+        name: 'name',
+        style: { width: downSm ? '35%' : '50%' },
+        text: '名称',
+      },
+      {
+        name: 'lastModifiedDateTime',
+        style: { width: '20%' },
+        text: '修改日期',
+      },
+      {
+        name: 'type',
+        style: { width: downSm ? '30' : '20%' },
+        text: '类型',
+      },
+      {
+        name: 'size',
+        style: { width: downSm ? '15%' : '10%' },
+        text: '大小',
+      },
+    ],
+    [downSm]
+  );
+
   useEffect(() => {
     history.listen((location) => {
       setState((prev) => ({
@@ -225,28 +251,7 @@ const ItemList = () => {
               <Table className={classes.table}>
                 <TableHead>
                   <TableRow>
-                    {[
-                      {
-                        name: 'name',
-                        style: { width: downSm ? '35%' : '50%' },
-                        text: '名称',
-                      },
-                      {
-                        name: 'lastModifiedDateTime',
-                        style: { width: '20%' },
-                        text: '修改日期',
-                      },
-                      {
-                        name: 'type',
-                        style: { width: downSm ? '30' : '20%' },
-                        text: '类型',
-                      },
-                      {
-                        name: 'size',
-                        style: { width: downSm ? '15%' : '10%' },
-                        text: '大小',
-                      },
-                    ].map((item) => (
+                    {tableHeads.map((item) => (
                       <TableCell key={item.name} style={item.style}>
                         <TableSortLabel
                           active={order.orderBy === item.name}
@@ -270,22 +275,22 @@ const ItemList = () => {
                       onClick={() => handleClickItem(row)}
                       className={classes.row}
                     >
-                      {['name', 'lastModifiedDateTime', 'type', 'size'].map(
-                        (item) => (
+                      {tableHeads
+                        .map((item) => item.name)
+                        .map((name) => (
                           <TableCell
-                            key={item}
-                            align={item === 'size' ? 'right' : 'left'}
+                            key={name}
+                            align={name === 'size' ? 'right' : 'left'}
                           >
                             <Typography className={classes.ellipsis}>
-                              {item === 'size'
-                                ? row[item] === 0
+                              {name === 'size'
+                                ? row[name] === 0
                                   ? ''
-                                  : bTokmg(row[item])
-                                : row[item]}
+                                  : bTokmg(row[name])
+                                : row[name]}
                             </Typography>
                           </TableCell>
-                        )
-                      )}
+                        ))}
                     </TableRow>
                   ))}
                 </TableBody>
