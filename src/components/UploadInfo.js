@@ -30,6 +30,7 @@ import apiRequest from '../api';
 import SelectedToobar from './SelectedToobar';
 import LinearProgressWithLabel from './LinearProgressWithLabel';
 import { useMediaQuery } from '@material-ui/core';
+import { bTokmg } from '../utils';
 
 const useRowStyles = makeStyles((theme) => ({
   filename: {
@@ -44,18 +45,6 @@ const useRowStyles = makeStyles((theme) => ({
     color: theme.palette.error.main,
   },
 }));
-
-const bTokmg = (size) => {
-  let kb = size / 1024;
-  if (kb < 1000) {
-    return kb.toFixed(1) + 'KB';
-  }
-  let mb = kb / 1024;
-  if (mb < 1000) {
-    return mb.toFixed(1) + 'MB';
-  }
-  return (mb / 1024).toFixed(2) + 'GB';
-};
 
 const sTomhd = (seconds) => {
   seconds = Math.floor(seconds);

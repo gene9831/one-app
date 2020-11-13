@@ -5,14 +5,13 @@ import BackupIcon from '@material-ui/icons/Backup';
 import CloudDoneIcon from '@material-ui/icons/CloudDone';
 import CloudOffIcon from '@material-ui/icons/CloudOff';
 import SettingsIcon from '@material-ui/icons/Settings';
-import SupervisorAccountIcon from '@material-ui/icons/SupervisorAccount';
 import UploadInfo from './UploadInfo';
 import Palette from './Palette';
 import Settings from './Settings';
 import Accounts from './Accounts';
 import Exit from './Exit';
 import apiRequest from '../api';
-import { AutoRotateSyncIcon } from './Icons';
+import { AccountCog, AutoRotateSyncIcon } from './Icons';
 import IconButton from '@material-ui/core/IconButton';
 import Tooltip from '@material-ui/core/Tooltip';
 import Badge from '@material-ui/core/Badge';
@@ -34,7 +33,7 @@ const pageSections = [
     subHeader: '设置',
     items: [
       { name: 'settings', text: '应用设置', Icon: SettingsIcon },
-      { name: 'accounts', text: '帐号管理', Icon: SupervisorAccountIcon },
+      { name: 'accounts', text: '帐号管理', Icon: AccountCog },
     ],
   },
 ];

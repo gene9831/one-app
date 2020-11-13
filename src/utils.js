@@ -1,4 +1,7 @@
 const bTokmg = (size) => {
+  if (size < 1000) {
+    return size.toFixed(0) + ' B';
+  }
   let kb = size / 1024;
   if (kb < 1000) {
     return kb.toFixed(1) + ' KB';
