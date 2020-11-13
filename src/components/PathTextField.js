@@ -20,6 +20,8 @@ import DialogActions from '@material-ui/core/DialogActions';
 import DialogContent from '@material-ui/core/DialogContent';
 import Button from '@material-ui/core/Button';
 import clsx from 'clsx';
+import { ListItemSecondaryAction } from '@material-ui/core';
+import { bTokmg } from '../utils';
 
 const useDialogWithPathListStyles = makeStyles((theme) => ({
   dialogPaper: {
@@ -44,8 +46,8 @@ const useDialogWithPathListStyles = makeStyles((theme) => ({
     padding: 0,
   },
   listItem: {
-    paddingLeft: 8,
-    paddingRight: 8,
+    paddingLeft: theme.spacing(1),
+    paddingRight: theme.spacing(1),
     wordBreak: 'break-word',
   },
   listItemIcon: {
@@ -54,6 +56,7 @@ const useDialogWithPathListStyles = makeStyles((theme) => ({
   listItemText: {
     marginTop: 0,
     marginBottom: 0,
+    marginRight: 72,
   },
   xsPadding: {
     [theme.breakpoints.down('xs')]: {
@@ -161,6 +164,13 @@ const DialogWithPathList = (props) => {
                   primary={item.value}
                   className={classes.listItemText}
                 />
+                <ListItemSecondaryAction>
+                  <Typography color="textSecondary" variant="body2">
+                    {item.type === 'file'
+                      ? bTokmg(item.size)
+                      : `${item.childCount} 项`}
+                  </Typography>
+                </ListItemSecondaryAction>
               </ListItem>
             ))}
           </List>
@@ -182,7 +192,7 @@ DialogWithPathList.propTypes = {
   onClickBreadcrumb: PropTypes.func,
   list: PropTypes.arrayOf(
     PropTypes.shape({
-      type: PropTypes.oneOf(['dir', 'file']).isRequired,
+      type: PropTypes.oneOf(['folder', 'file']).isRequired,
       value: PropTypes.string.isRequired,
     })
   ),
