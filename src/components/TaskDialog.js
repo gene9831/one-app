@@ -94,7 +94,7 @@ let TaskDialog = (props) => {
       newPath = newPath.slice(1);
       flag = true;
     }
-    newPath = flag ? '/' : '' + newPath.split('/').slice(0, index).join('/');
+    newPath = (flag ? '/' : '') + newPath.split('/').slice(0, index).join('/');
     if (index !== 0) newPath += '/';
     setPathes({
       ...pathes,
