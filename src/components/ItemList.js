@@ -8,10 +8,11 @@ import {
   TableContainer,
   TableHead,
   TableRow,
+  TableSortLabel,
   Typography,
   useMediaQuery,
 } from '@material-ui/core';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import rpcRequest from '../jsonrpc';
 import DriveSelector from './DriveSelector';
 import MyAppBar from './MyAppBar';
@@ -48,7 +49,7 @@ const useStyles = makeStyles((theme) => ({
   row: {
     cursor: 'default',
   },
-  name: {
+  ellipsis: {
     overflow: 'hidden',
     textOverflow: 'ellipsis',
   },
@@ -60,6 +61,32 @@ const removeEndSlash = (s) => {
     r = r.slice(0, -1);
   }
   return r;
+};
+
+const descendingComparator = (a, b, orderBy) => {
+  if (b[orderBy] < a[orderBy]) {
+    return -1;
+  }
+  if (b[orderBy] > a[orderBy]) {
+    return 1;
+  }
+  return 0;
+};
+
+const getComparator = (order, orderBy) => {
+  return order === 'desc'
+    ? (a, b) => descendingComparator(a, b, orderBy)
+    : (a, b) => -descendingComparator(a, b, orderBy);
+};
+
+const stableSort = (array, comparator) => {
+  const stabilizedThis = array.map((el, index) => [el, index]);
+  stabilizedThis.sort((a, b) => {
+    const order = comparator(a[0], b[0]);
+    if (order !== 0) return order;
+    return a[1] - b[1];
+  });
+  return stabilizedThis.map((el) => el[0]);
 };
 
 const ItemList = () => {
@@ -75,6 +102,35 @@ const ItemList = () => {
     idIndex: 0,
     path: new URLSearchParams(history.location.search).get('path') || '',
   });
+  const [order, setOrder] = useState({
+    orderBy: 'name',
+    order: 'asc',
+  });
+
+  const computeRows = useMemo(() => {
+    return rows.map((row) => ({
+      ...row,
+      name: row.name,
+      lastModifiedDateTime: new Date(row.lastModifiedDateTime).toLocaleString(
+        [],
+        {
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit',
+          hour: downSm ? undefined : '2-digit',
+          minute: downSm ? undefined : '2-digit',
+          hour12: false,
+        }
+      ),
+      type: (() => {
+        if (row.folder) return '文件夹';
+        const idx = row.name.lastIndexOf('.');
+        if (idx < 0) return '.file';
+        return row.name.slice(idx + 1).toUpperCase();
+      })(),
+      size: row.file ? row.size : 0,
+    }));
+  }, [downSm, rows]);
 
   useEffect(() => {
     history.listen((location) => {
@@ -131,6 +187,22 @@ const ItemList = () => {
     }
   };
 
+  const handleClickSortCell = (name) => {
+    let newOrder;
+    if (order.orderBy === name) {
+      newOrder = {
+        ...order,
+        order: order.order === 'asc' ? 'desc' : 'asc',
+      };
+    } else {
+      newOrder = {
+        ...order,
+        orderBy: name,
+      };
+    }
+    setOrder(newOrder);
+  };
+
   return (
     <div className={classes.root}>
       <MyAppBar
@@ -153,54 +225,67 @@ const ItemList = () => {
               <Table className={classes.table}>
                 <TableHead>
                   <TableRow>
-                    <TableCell style={{ width: downSm ? '35%' : '50%' }}>
-                      <Typography variant="subtitle1">名称</Typography>
-                    </TableCell>
-                    <TableCell style={{ width: '20%' }}>
-                      <Typography variant="subtitle1">修改日期</Typography>
-                    </TableCell>
-                    <TableCell style={{ width: downSm ? '30' : '20%' }}>
-                      <Typography variant="subtitle1">类型</Typography>
-                    </TableCell>
-                    <TableCell style={{ width: downSm ? '15%' : '10%' }}>
-                      <Typography variant="subtitle1">大小</Typography>
-                    </TableCell>
+                    {[
+                      {
+                        name: 'name',
+                        style: { width: downSm ? '35%' : '50%' },
+                        text: '名称',
+                      },
+                      {
+                        name: 'lastModifiedDateTime',
+                        style: { width: '20%' },
+                        text: '修改日期',
+                      },
+                      {
+                        name: 'type',
+                        style: { width: downSm ? '30' : '20%' },
+                        text: '类型',
+                      },
+                      {
+                        name: 'size',
+                        style: { width: downSm ? '15%' : '10%' },
+                        text: '大小',
+                      },
+                    ].map((item) => (
+                      <TableCell key={item.name} style={item.style}>
+                        <TableSortLabel
+                          active={order.orderBy === item.name}
+                          direction={order.order}
+                          onClick={() => handleClickSortCell(item.name)}
+                        >
+                          <Typography>{item.text}</Typography>
+                        </TableSortLabel>
+                      </TableCell>
+                    ))}
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {rows.map((row, index) => (
+                  {stableSort(
+                    computeRows,
+                    getComparator(order.order, order.orderBy)
+                  ).map((row, index) => (
                     <TableRow
                       key={index}
                       hover
                       onClick={() => handleClickItem(row)}
                       className={classes.row}
                     >
-                      {/* 名称 */}
-                      <TableCell className={classes.name}>{row.name}</TableCell>
-                      <TableCell>
-                        {/* 修改日期 */}
-                        {new Date(row.lastModifiedDateTime).toLocaleString([], {
-                          year: 'numeric',
-                          month: '2-digit',
-                          day: '2-digit',
-                          hour: downSm ? undefined : '2-digit',
-                          minute: downSm ? undefined : '2-digit',
-                          hour12: false,
-                        })}
-                      </TableCell>
-                      {/* 类型 */}
-                      <TableCell>
-                        {(() => {
-                          if (row.folder) return '文件夹';
-                          const idx = row.name.lastIndexOf('.');
-                          if (idx < 0) return '.file';
-                          return row.name.slice(idx + 1).toUpperCase();
-                        })()}
-                      </TableCell>
-                      {/* 大小 */}
-                      <TableCell align="right">
-                        {row.file ? bTokmg(row.size) : ''}
-                      </TableCell>
+                      {['name', 'lastModifiedDateTime', 'type', 'size'].map(
+                        (item) => (
+                          <TableCell
+                            key={item}
+                            align={item === 'size' ? 'right' : 'left'}
+                          >
+                            <Typography className={classes.ellipsis}>
+                              {item === 'size'
+                                ? row[item] === 0
+                                  ? ''
+                                  : bTokmg(row[item])
+                                : row[item]}
+                            </Typography>
+                          </TableCell>
+                        )
+                      )}
                     </TableRow>
                   ))}
                 </TableBody>
