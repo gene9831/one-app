@@ -2,7 +2,7 @@ import Axios from 'axios';
 import store from './store';
 
 const API_URL = 'http://onedrive.omv.local';
-// const API_DOMAIN = 'http://localhost:5000';
+// const API_URL = 'http://localhost:5000';
 const JSONRPC_API = API_URL + '/api/';
 const FILE_URL = API_URL + '/file';
 
