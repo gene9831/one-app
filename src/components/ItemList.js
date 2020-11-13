@@ -1,5 +1,7 @@
 import {
+  Breadcrumbs,
   Container,
+  Link,
   makeStyles,
   Paper,
   Table,
@@ -19,6 +21,8 @@ import MyAppBar from './MyAppBar';
 import Palette from './Palette';
 import { bTokmg } from '../utils';
 import { useHistory } from 'react-router-dom';
+import ArrowBackIcon from '@material-ui/icons/ArrowBack';
+import NavigateNextIcon from '@material-ui/icons/NavigateNext';
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -52,6 +56,18 @@ const useStyles = makeStyles((theme) => ({
   ellipsis: {
     overflow: 'hidden',
     textOverflow: 'ellipsis',
+  },
+  breadcrumbs: {
+    padding: theme.spacing(2, 2, 0, 2),
+  },
+  breadcrumbsItem: {
+    cursor: 'pointer',
+  },
+  breadcrumbsLink: {
+    cursor: 'default',
+    '&:hover': {
+      textDecoration: 'none',
+    },
   },
 }));
 
@@ -107,6 +123,10 @@ const ItemList = () => {
     order: 'asc',
   });
 
+  const onTop = useMemo(() => Boolean(!removeEndSlash(state.path)), [
+    state.path,
+  ]);
+
   const computeRows = useMemo(() => {
     return rows.map((row) => ({
       ...row,
@@ -158,8 +178,13 @@ const ItemList = () => {
     [downSm]
   );
 
+  const pathList = useMemo(() => removeEndSlash(state.path).split('/'), [
+    state.path,
+  ]);
+
   useEffect(() => {
     history.listen((location) => {
+      // path根据history变化而变化，是为了实现浏览器返回时数据也会刷新
       setState((prev) => ({
         ...prev,
         path: new URLSearchParams(location.search).get('path') || '',
@@ -197,7 +222,6 @@ const ItemList = () => {
   const handleSelectDrive = (e) => {
     setState((prev) => ({
       ...prev,
-      path: '',
       idIndex: parseInt(e.target.id),
     }));
     history.push({
@@ -229,10 +253,24 @@ const ItemList = () => {
     setOrder(newOrder);
   };
 
+  const handleClickBack = () => {
+    if (!onTop) {
+      history.goBack();
+    }
+  };
+
+  const handleClickBreadcrumbsItem = (index) => {
+    history.push({
+      search: `?path=${pathList.slice(0, index + 1).join('/')}`,
+    });
+  };
+
   return (
     <div className={classes.root}>
       <MyAppBar
         title="文件列表"
+        startIcon={onTop ? undefined : <ArrowBackIcon />}
+        onClickMenu={handleClickBack}
         endComponents={[
           <Palette key="palette" />,
           <DriveSelector
@@ -247,6 +285,31 @@ const ItemList = () => {
         <div className={classes.toolbar}></div>
         <Container className={classes.content}>
           <Paper className={classes.paperContent}>
+            <Breadcrumbs
+              separator={<NavigateNextIcon fontSize="small" />}
+              className={classes.breadcrumbs}
+            >
+              {pathList.map((item, index) =>
+                index === pathList.length - 1 ? (
+                  <Link
+                    key={index}
+                    variant="body2"
+                    className={classes.breadcrumbsLink}
+                  >
+                    {item ? item : `网盘${state.idIndex + 1}`}
+                  </Link>
+                ) : (
+                  <Typography
+                    key={index}
+                    variant="body2"
+                    className={classes.breadcrumbsItem}
+                    onClick={() => handleClickBreadcrumbsItem(index)}
+                  >
+                    {item ? item : `网盘${state.idIndex + 1}`}
+                  </Typography>
+                )
+              )}
+            </Breadcrumbs>
             <TableContainer>
               <Table className={classes.table}>
                 <TableHead>

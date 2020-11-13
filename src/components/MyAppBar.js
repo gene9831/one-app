@@ -52,7 +52,7 @@ const useStyles = makeStyles((theme) => {
 });
 
 let MyAppBar = (props) => {
-  const { shift, title, onClickMenu, endComponents, color } = props;
+  const { shift, title, onClickMenu, endComponents, color, startIcon } = props;
   const classes = useStyles(props);
 
   return (
@@ -71,7 +71,7 @@ let MyAppBar = (props) => {
             [classes.menuButtonHide]: shift,
           })}
         >
-          <MenuIcon />
+          {startIcon}
         </IconButton>
         <Typography
           component="h1"
@@ -95,10 +95,12 @@ MyAppBar.propTypes = {
   onClickMenu: PropTypes.func,
   endComponents: PropTypes.any,
   color: PropTypes.string,
+  startIcon: PropTypes.node,
 };
 
 MyAppBar.defaultProps = {
   shiftWidth: 240,
+  startIcon: <MenuIcon />,
 };
 
 MyAppBar = connect((state) => ({
