@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo } from 'react';
 import { connect } from 'react-redux';
 import { useHistory } from 'react-router-dom';
 import { setGlobalSnackbarMessage, setAuth, AUTH_STATUS } from '../actions';
-import rpcRequest from '../jsonrpc';
+import apiRequest from '../api';
 
 let ValidateToken = (props) => {
   const { auth, root, setAuth, setGlobalSnackbarMessage } = props;
@@ -48,7 +48,7 @@ let ValidateToken = (props) => {
       return;
     }
     const fetchData = async () => {
-      let res = await rpcRequest('Admin.validateToken', {
+      let res = await apiRequest('Admin.validateToken', {
         params: [auth.token],
       });
       const { token, expires_at } = res.data.result;

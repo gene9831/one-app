@@ -18,7 +18,7 @@ import DialogContentText from '@material-ui/core/DialogContentText';
 import DialogTitle from '@material-ui/core/DialogTitle';
 import AddDriveDialog from './AddDriveDialog';
 import Paper from '@material-ui/core/Paper';
-import rpcRequest from '../jsonrpc';
+import apiRequest from '../api';
 import ListItemIcon from '@material-ui/core/ListItemIcon';
 import Checkbox from '@material-ui/core/Checkbox';
 import { useMediaQuery } from '@material-ui/core';
@@ -172,7 +172,7 @@ let Accounts = (props) => {
     setGlobalSnackbarMessage('');
 
     const fetchData = async () => {
-      let res = await rpcRequest(method, {
+      let res = await apiRequest(method, {
         params: params,
         require_auth: true,
       });

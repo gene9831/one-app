@@ -1,6 +1,12 @@
 import {
   Breadcrumbs,
+  Button,
   Container,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
   Link,
   makeStyles,
   Paper,
@@ -15,7 +21,7 @@ import {
   useMediaQuery,
 } from '@material-ui/core';
 import React, { useEffect, useMemo, useState } from 'react';
-import rpcRequest from '../jsonrpc';
+import apiRequest, { FILE_URL } from '../api';
 import DriveSelector from './DriveSelector';
 import MyAppBar from './MyAppBar';
 import Palette from './Palette';
@@ -23,6 +29,10 @@ import { bTokmg } from '../utils';
 import { useHistory } from 'react-router-dom';
 import ArrowBackIcon from '@material-ui/icons/ArrowBack';
 import NavigateNextIcon from '@material-ui/icons/NavigateNext';
+import PropTypes from 'prop-types';
+import { CopyToClipboard } from 'react-copy-to-clipboard';
+import { setGlobalSnackbarMessage } from '../actions';
+import { connect } from 'react-redux';
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -105,6 +115,80 @@ const stableSort = (array, comparator) => {
   return stabilizedThis.map((el) => el[0]);
 };
 
+const useFileDialogStyle = makeStyles((theme) => ({
+  buttons: {
+    display: 'flex',
+    justifyContent: 'space-around',
+    paddingTop: theme.spacing(1),
+  },
+  textOverflow: {
+    wordBreak: 'break-word',
+  },
+}));
+
+let FileDialog = (props) => {
+  const classes = useFileDialogStyle();
+  const { open, onClose, file, setGlobalSnackbarMessage } = props;
+  const file_url = useMemo(() => `${FILE_URL}/${file.id}/${file.name}`, [file]);
+
+  return (
+    <Dialog fullWidth maxWidth="sm" open={open} onClose={onClose}>
+      <DialogTitle>文件</DialogTitle>
+      <DialogContent>
+        <DialogContentText className={classes.textOverflow}>
+          文件名：{file.name}
+        </DialogContentText>
+        <DialogContentText className={classes.textOverflow}>
+          MIME 类型：{file.file && file.file.mimeType}
+        </DialogContentText>
+        <DialogContentText>
+          大小：{`${bTokmg(file.size)} (${file.size} 字节)`}
+        </DialogContentText>
+        <div className={classes.buttons}>
+          <CopyToClipboard text={file_url}>
+            <Button
+              color="primary"
+              variant="outlined"
+              onClick={() => setGlobalSnackbarMessage('已复制')}
+            >
+              复制链接
+            </Button>
+          </CopyToClipboard>
+          <Button
+            color="primary"
+            variant="outlined"
+            component={Link}
+            href={file_url}
+          >
+            直接下载
+          </Button>
+        </div>
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={onClose} color="secondary">
+          关闭
+        </Button>
+      </DialogActions>
+    </Dialog>
+  );
+};
+
+FileDialog.propTypes = {
+  open: PropTypes.bool,
+  onClose: PropTypes.func,
+  file: PropTypes.object.isRequired,
+  setGlobalSnackbarMessage: PropTypes.func,
+};
+
+const mapDispatchToProps = (dispatch) => {
+  return {
+    setGlobalSnackbarMessage: (message) =>
+      dispatch(setGlobalSnackbarMessage(message)),
+  };
+};
+
+FileDialog = connect(null, mapDispatchToProps)(FileDialog);
+
 const ItemList = () => {
   const classes = useStyles();
 
@@ -127,6 +211,11 @@ const ItemList = () => {
   const [order, setOrder] = useState({
     orderBy: 'name',
     order: 'asc',
+  });
+
+  const [dialogState, setDialogState] = useState({
+    open: false,
+    fileInfo: {},
   });
 
   const onTop = useMemo(() => Boolean(!removeEndSlash(state.path)), [
@@ -202,7 +291,7 @@ const ItemList = () => {
 
   useEffect(() => {
     const fetchData = async () => {
-      let res = await rpcRequest('Onedrive.getDriveIds');
+      let res = await apiRequest('Onedrive.getDriveIds');
       setState((prev) => ({
         ...prev,
         driveIds: res.data.result,
@@ -214,7 +303,7 @@ const ItemList = () => {
   useEffect(() => {
     if (state.driveIds.length > state.idIndex) {
       const fetchData = async () => {
-        let res = await rpcRequest('Onedrive.getItemsByPath', {
+        let res = await apiRequest('Onedrive.getItemsByPath', {
           params: {
             drive_id: state.driveIds[state.idIndex],
             path: removeEndSlash(state.path),
@@ -240,6 +329,12 @@ const ItemList = () => {
           row.name
         }`,
       });
+    } else {
+      setDialogState((prev) => ({
+        ...prev,
+        open: true,
+        fileInfo: row,
+      }));
     }
   };
 
@@ -365,6 +460,11 @@ const ItemList = () => {
               </Table>
             </TableContainer>
           </Paper>
+          <FileDialog
+            open={dialogState.open}
+            onClose={() => setDialogState((prev) => ({ ...prev, open: false }))}
+            file={dialogState.fileInfo}
+          />
         </Container>
       </div>
     </div>

@@ -10,7 +10,7 @@ import ListItem from '@material-ui/core/ListItem';
 import List from '@material-ui/core/List';
 import TextField from '@material-ui/core/TextField';
 import InputAdornment from '@material-ui/core/InputAdornment';
-import rpcRequest from '../jsonrpc';
+import apiRequest from '../api';
 import Dialog from '@material-ui/core/Dialog';
 import DialogTitle from '@material-ui/core/DialogTitle';
 import Breadcrumbs from '@material-ui/core/Breadcrumbs';
@@ -210,7 +210,7 @@ export default function PathTextField(props) {
 
   useEffect(() => {
     const fetchData = async () => {
-      let res = await rpcRequest('Onedrive.' + method, {
+      let res = await apiRequest('Onedrive.' + method, {
         params: drive ? [drive.id, value] : [value],
         require_auth: true,
       });

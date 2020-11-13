@@ -27,7 +27,7 @@ const DriveSelector = (props) => {
 
   return (
     <div>
-      <Button onClick={handleClick}>
+      <Button onClick={handleClick} color="inherit">
         <Typography>{text}</Typography>
       </Button>
       <Menu

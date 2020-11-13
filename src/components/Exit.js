@@ -8,7 +8,7 @@ import DialogContent from '@material-ui/core/DialogContent';
 import DialogContentText from '@material-ui/core/DialogContentText';
 import DialogTitle from '@material-ui/core/DialogTitle';
 import ExitToAppIcon from '@material-ui/icons/ExitToApp';
-import rpcRequest from '../jsonrpc';
+import apiRequest from '../api';
 import Tooltip from '@material-ui/core/Tooltip';
 import { AUTH_STATUS, setAuth } from '../actions';
 import { connect } from 'react-redux';
@@ -28,7 +28,7 @@ let Exit = (props) => {
   };
   const handleLogout = () => {
     const fetchData = async () => {
-      await rpcRequest('Admin.logout', {
+      await apiRequest('Admin.logout', {
         params: [token],
         require_auth: true,
       });

@@ -11,7 +11,7 @@ import Palette from './Palette';
 import Settings from './Settings';
 import Accounts from './Accounts';
 import Exit from './Exit';
-import rpcRequest from '../jsonrpc';
+import apiRequest from '../api';
 import { AutoRotateSyncIcon } from './Icons';
 import IconButton from '@material-ui/core/IconButton';
 import Tooltip from '@material-ui/core/Tooltip';
@@ -44,7 +44,7 @@ let AdminManage = (props) => {
   const [drives, setDrives] = useState([]);
 
   const updateDrives = async () => {
-    let res = await rpcRequest('Onedrive.getDrives', { require_auth: true });
+    let res = await apiRequest('Onedrive.getDrives', { require_auth: true });
     let result = res.data.result;
     setDrives(result);
   };

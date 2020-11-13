@@ -7,7 +7,7 @@ import LockOutlinedIcon from '@material-ui/icons/LockOutlined';
 import Typography from '@material-ui/core/Typography';
 import { makeStyles } from '@material-ui/core/styles';
 import Container from '@material-ui/core/Container';
-import rpcRequest from '../jsonrpc';
+import apiRequest from '../api';
 import MyAppBar from './MyAppBar';
 import Palette from './Palette';
 import { AUTH_STATUS, setAuth } from '../actions';
@@ -52,7 +52,7 @@ let LoginPage = (props) => {
     }
     setError('');
     const fetchData = async () => {
-      let res = await rpcRequest('Admin.login', { params: [passwrod] });
+      let res = await apiRequest('Admin.login', { params: [passwrod] });
       const { token, expires_at } = res.data.result;
       setAuth({
         status: AUTH_STATUS.PASS,

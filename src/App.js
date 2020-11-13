@@ -11,11 +11,11 @@ export default function App() {
     <Theme>
       <Router>
         <Switch>
+          <Route exact path="/">
+            <ItemList />
+          </Route>
           <Route path="/admin">
             <Admin />
-          </Route>
-          <Route path="/">
-            <ItemList />
           </Route>
           <Route>
             <NoRoute />

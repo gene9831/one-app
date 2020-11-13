@@ -26,7 +26,7 @@ import TaskDialog from './TaskDialog';
 import { Upload, UploadMultiple } from './Icons';
 import ComponentShell from './ComponentShell';
 import Hidden from '@material-ui/core/Hidden';
-import rpcRequest from '../jsonrpc';
+import apiRequest from '../api';
 import SelectedToobar from './SelectedToobar';
 import LinearProgressWithLabel from './LinearProgressWithLabel';
 import { useMediaQuery } from '@material-ui/core';
@@ -300,7 +300,7 @@ export default function UploadInfo(props) {
   useEffect(() => {
     if (drives.length > 0) {
       const fetchData = async () => {
-        let res = await rpcRequest('Others.defaultLocalPath', {
+        let res = await apiRequest('Others.defaultLocalPath', {
           require_auth: true,
         });
         setDefaultLocalPath(res.data.result);
@@ -313,7 +313,7 @@ export default function UploadInfo(props) {
     (method) => {
       if (selected.length === 0) return;
       const fetchData = async () => {
-        await rpcRequest('Onedrive.' + method, {
+        await apiRequest('Onedrive.' + method, {
           params: { uids: selected },
           require_auth: true,
         });
@@ -364,7 +364,7 @@ export default function UploadInfo(props) {
     let unmounted = false;
     if (drives.length > 0) {
       const fetchData = async () => {
-        let res = await rpcRequest('Onedrive.uploadStatus', {
+        let res = await apiRequest('Onedrive.uploadStatus', {
           params: {
             status: name,
             page: page,

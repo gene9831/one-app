@@ -9,7 +9,7 @@ import Dialog from '@material-ui/core/Dialog';
 import AppBar from '@material-ui/core/AppBar';
 import Toolbar from '@material-ui/core/Toolbar';
 import CloseIcon from '@material-ui/icons/Close';
-import rpcRequest from '../jsonrpc';
+import apiRequest from '../api';
 import TextField from '@material-ui/core/TextField';
 import Button from '@material-ui/core/Button';
 import Stepper from '@material-ui/core/Stepper';
@@ -93,7 +93,7 @@ export default function AddDriveDialog(props) {
   useEffect(() => {
     if (!open) return;
     const fetchData = async () => {
-      let res = await rpcRequest('Onedrive.getSignInUrl', {
+      let res = await apiRequest('Onedrive.getSignInUrl', {
         require_auth: true,
       });
       setSignInUrl(res.data.result);
@@ -104,7 +104,7 @@ export default function AddDriveDialog(props) {
   const handleNext = () => {
     if (activeStep === 1) {
       const fetchData = async () => {
-        await rpcRequest('Onedrive.putCallbackUrl', {
+        await apiRequest('Onedrive.putCallbackUrl', {
           params: [callbackUrl],
           require_auth: true,
         });

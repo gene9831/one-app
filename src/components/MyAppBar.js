@@ -66,6 +66,7 @@ let MyAppBar = (props) => {
       <Toolbar>
         <IconButton
           edge="start"
+          color="inherit"
           onClick={onClickMenu}
           className={clsx(classes.menuButton, {
             [classes.menuButtonHide]: shift,

@@ -11,7 +11,7 @@ import DialogTitle from '@material-ui/core/DialogTitle';
 import InputAdornment from '@material-ui/core/InputAdornment';
 import AccountCircleOutlinedIcon from '@material-ui/icons/AccountCircleOutlined';
 import PathTextField from './PathTextField';
-import rpcRequest from '../jsonrpc';
+import apiRequest from '../api';
 import { connect } from 'react-redux';
 import { setGlobalSnackbarMessage } from '../actions';
 
@@ -53,7 +53,7 @@ let TaskDialog = (props) => {
       };
 
       const fetchData = async () => {
-        await rpcRequest('Onedrive.upload', {
+        await apiRequest('Onedrive.upload', {
           params: params,
           require_auth: true,
         });

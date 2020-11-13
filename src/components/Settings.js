@@ -7,7 +7,7 @@ import InputLabel from '@material-ui/core/InputLabel';
 import Input from '@material-ui/core/Input';
 import Tooltip from '@material-ui/core/Tooltip';
 import HelpIcon from '@material-ui/icons/Help';
-import rpcRequest from '../jsonrpc';
+import apiRequest from '../api';
 import useMediaQuery from '@material-ui/core/useMediaQuery';
 import Paper from '@material-ui/core/Paper';
 import { connect } from 'react-redux';
@@ -57,7 +57,7 @@ let SettingItem = (props) => {
   }, [configProp]);
 
   const fetchData = async (key, value) => {
-    await rpcRequest('AppConfig.set', {
+    await apiRequest('AppConfig.set', {
       params: [sectionName, key, value],
       require_auth: true,
     });
@@ -238,7 +238,7 @@ let Settings = (props) => {
   useEffect(() => {
     if (!authed) return;
     const fetchData = async () => {
-      const res = await rpcRequest('AppConfig.getAll', {
+      const res = await apiRequest('AppConfig.getAll', {
         require_auth: true,
       });
       const cfg = res.data.result;
