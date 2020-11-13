@@ -113,11 +113,17 @@ const ItemList = () => {
   const downSm = useMediaQuery((theme) => theme.breakpoints.down('sm'));
   const history = useHistory();
 
-  const [state, setState] = useState({
-    driveIds: [],
-    idIndex: 0,
-    path: new URLSearchParams(history.location.search).get('path') || '',
-  });
+  const [state, setState] = useState(
+    (() => {
+      const query = new URLSearchParams(history.location.search);
+      return {
+        driveIds: [],
+        idIndex: parseInt(query.get('drive') || 0),
+        path: query.get('path') || '',
+      };
+    })()
+  );
+
   const [order, setOrder] = useState({
     orderBy: 'name',
     order: 'asc',
@@ -156,7 +162,7 @@ const ItemList = () => {
     () => [
       {
         name: 'name',
-        style: { width: downSm ? '35%' : '50%' },
+        style: { width: downSm ? '40%' : '50%' },
         text: '名称',
       },
       {
@@ -166,12 +172,12 @@ const ItemList = () => {
       },
       {
         name: 'type',
-        style: { width: downSm ? '30' : '20%' },
+        style: { width: downSm ? '20%' : '15%' },
         text: '类型',
       },
       {
         name: 'size',
-        style: { width: downSm ? '15%' : '10%' },
+        style: { width: downSm ? '20%' : '15%' },
         text: '大小',
       },
     ],
@@ -185,9 +191,11 @@ const ItemList = () => {
   useEffect(() => {
     history.listen((location) => {
       // path根据history变化而变化，是为了实现浏览器返回时数据也会刷新
+      const query = new URLSearchParams(location.search);
       setState((prev) => ({
         ...prev,
-        path: new URLSearchParams(location.search).get('path') || '',
+        idIndex: parseInt(query.get('drive') || 0),
+        path: query.get('path') || '',
       }));
     });
   }, [history]);
@@ -220,19 +228,17 @@ const ItemList = () => {
   }, [state]);
 
   const handleSelectDrive = (e) => {
-    setState((prev) => ({
-      ...prev,
-      idIndex: parseInt(e.target.id),
-    }));
     history.push({
-      search: '',
+      search: `?drive=${e.target.id}`,
     });
   };
 
   const handleClickItem = (row) => {
     if (row.folder) {
       history.push({
-        search: `?path=${removeEndSlash(state.path)}/${row.name}`,
+        search: `?drive=${state.idIndex}&path=${removeEndSlash(state.path)}/${
+          row.name
+        }`,
       });
     }
   };
@@ -261,7 +267,9 @@ const ItemList = () => {
 
   const handleClickBreadcrumbsItem = (index) => {
     history.push({
-      search: `?path=${pathList.slice(0, index + 1).join('/')}`,
+      search: `?drive=${state.idIndex}&path=${pathList
+        .slice(0, index + 1)
+        .join('/')}`,
     });
   };
 
@@ -341,14 +349,11 @@ const ItemList = () => {
                       {tableHeads
                         .map((item) => item.name)
                         .map((name) => (
-                          <TableCell
-                            key={name}
-                            align={name === 'size' ? 'right' : 'left'}
-                          >
+                          <TableCell key={name}>
                             <Typography className={classes.ellipsis}>
                               {name === 'size'
                                 ? row[name] === 0
-                                  ? ''
+                                  ? `${row.folder.childCount} 项`
                                   : bTokmg(row[name])
                                 : row[name]}
                             </Typography>
