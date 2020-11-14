@@ -20,14 +20,16 @@ import DialogActions from '@material-ui/core/DialogActions';
 import DialogContent from '@material-ui/core/DialogContent';
 import Button from '@material-ui/core/Button';
 import clsx from 'clsx';
-import { ListItemSecondaryAction } from '@material-ui/core';
+import { ListItemSecondaryAction, useMediaQuery } from '@material-ui/core';
 import { bTokmg } from '../utils';
 
 const useDialogWithPathListStyles = makeStyles((theme) => ({
   dialogPaper: {
     height: '100%',
-    '@media(min-height: 720px)': {
-      maxHeight: 720 - theme.spacing(8),
+    [theme.breakpoints.up('sm')]: {
+      '@media(min-height: 720px)': {
+        maxHeight: 720 - theme.spacing(8),
+      },
     },
   },
   pathContent: {
@@ -96,11 +98,13 @@ const DialogWithPathList = (props) => {
   }, [path]);
 
   const endWithFile = useMemo(() => !path.endsWith('/'), [path]);
+  const downXs = useMediaQuery((theme) => theme.breakpoints.down('xs'));
 
   return (
     <Dialog
       open={open}
       onClose={onClose}
+      fullScreen={downXs}
       fullWidth
       maxWidth="sm"
       PaperProps={{
