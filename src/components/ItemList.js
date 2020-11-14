@@ -42,6 +42,7 @@ import InsertDriveFileOutlinedIcon from '@material-ui/icons/InsertDriveFileOutli
 import ComponentShell from './ComponentShell';
 import { PlayBoxOutline } from './Icons';
 import DescriptionOutlinedIcon from '@material-ui/icons/DescriptionOutlined';
+import SubtitlesOutlinedIcon from '@material-ui/icons/SubtitlesOutlined';
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -211,6 +212,12 @@ const getItemIcon = (item) => {
   const mimeType = item.file.mimeType;
   if (mimeType.startsWith('video')) return PlayBoxOutline;
   if (mimeType.startsWith('text')) return DescriptionOutlinedIcon;
+  if (
+    item.name.endsWith('srt') ||
+    item.name.endsWith('ssa') ||
+    item.name.endsWith('ass')
+  )
+    return SubtitlesOutlinedIcon;
   return InsertDriveFileOutlinedIcon;
 };
 
