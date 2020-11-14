@@ -37,6 +37,11 @@ import { CopyToClipboard } from 'react-copy-to-clipboard';
 import { setGlobalSnackbarMessage } from '../actions';
 import { connect } from 'react-redux';
 import SettingsIcon from '@material-ui/icons/Settings';
+import FolderOpenIcon from '@material-ui/icons/FolderOpen';
+import InsertDriveFileOutlinedIcon from '@material-ui/icons/InsertDriveFileOutlined';
+import ComponentShell from './ComponentShell';
+import { PlayBoxOutline } from './Icons';
+import DescriptionOutlinedIcon from '@material-ui/icons/DescriptionOutlined';
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -83,6 +88,8 @@ const useStyles = makeStyles((theme) => ({
       textDecoration: 'none',
     },
   },
+  flex: { display: 'flex' },
+  itemIcon: { marginRight: theme.spacing(1) },
 }));
 
 const removeEndSlash = (s) => {
@@ -94,10 +101,16 @@ const removeEndSlash = (s) => {
 };
 
 const descendingComparator = (a, b, orderBy) => {
-  if (b[orderBy] < a[orderBy]) {
+  let aa = a[orderBy];
+  let bb = b[orderBy];
+  if (typeof aa === 'string') {
+    aa = aa.toUpperCase();
+    bb = bb.toUpperCase();
+  }
+  if (bb < aa) {
     return -1;
   }
-  if (b[orderBy] > a[orderBy]) {
+  if (bb > aa) {
     return 1;
   }
   return 0;
@@ -192,6 +205,14 @@ const mapDispatchToProps = (dispatch) => {
 };
 
 FileDialog = connect(null, mapDispatchToProps)(FileDialog);
+
+const getItemIcon = (item) => {
+  if (item.folder) return FolderOpenIcon;
+  const mimeType = item.file.mimeType;
+  if (mimeType.startsWith('video')) return PlayBoxOutline;
+  if (mimeType.startsWith('text')) return DescriptionOutlinedIcon;
+  return InsertDriveFileOutlinedIcon;
+};
 
 const ItemList = () => {
   const classes = useStyles();
@@ -455,17 +476,29 @@ const ItemList = () => {
                     >
                       {tableHeads
                         .map((item) => item.name)
-                        .map((name) => (
-                          <TableCell key={name}>
-                            <Typography className={classes.ellipsis}>
-                              {name === 'size'
-                                ? row[name] === 0
-                                  ? `${row.folder.childCount} 项`
-                                  : bTokmg(row[name])
-                                : row[name]}
-                            </Typography>
-                          </TableCell>
-                        ))}
+                        .map((name) =>
+                          name === 'name' ? (
+                            <TableCell key={name} className={classes.flex}>
+                              <ComponentShell
+                                Component={getItemIcon(row)}
+                                Props={{ className: classes.itemIcon }}
+                              />
+                              <Typography className={classes.ellipsis}>
+                                {row[name]}
+                              </Typography>
+                            </TableCell>
+                          ) : (
+                            <TableCell key={name}>
+                              <Typography className={classes.ellipsis}>
+                                {name === 'size'
+                                  ? row[name] === 0
+                                    ? `${row.folder.childCount} 项`
+                                    : bTokmg(row[name])
+                                  : row[name]}
+                              </Typography>
+                            </TableCell>
+                          )
+                        )}
                     </TableRow>
                   ))}
                 </TableBody>
