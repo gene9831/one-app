@@ -17,6 +17,9 @@ import Tooltip from '@material-ui/core/Tooltip';
 import Badge from '@material-ui/core/Badge';
 import { connect } from 'react-redux';
 import { AUTH_STATUS, OPERATING_STATUS } from '../actions';
+import HomeIcon from '@material-ui/icons/Home';
+import Link from '@material-ui/core/Link';
+import { styled } from '@material-ui/core';
 
 const pageSections = [
   {
@@ -99,6 +102,14 @@ let AdminManage = (props) => {
           ) : null}
         </React.Fragment>,
         <Palette key="palette" />,
+        <Tooltip key="home" title="主页">
+          <IconButton
+            component={styled(Link)(() => ({ color: 'inherit' }))}
+            href="/"
+          >
+            <HomeIcon />
+          </IconButton>
+        </Tooltip>,
         <Exit key="exit" root={root} />,
       ]}
     ></MainDrawer>

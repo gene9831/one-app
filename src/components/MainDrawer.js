@@ -82,14 +82,14 @@ export default function MainDrawer(props) {
   const upLg = useMediaQuery((theme) => theme.breakpoints.up('lg'));
 
   const pIndex = useMemo(
-    () => pageIndex || cookies.get('index') || initPageIndex,
+    () => pageIndex || cookies.get('index', { path: '/' }) || initPageIndex,
     [pageIndex]
   );
 
   useEffect(() => {
     // 保存页面位置
     if (pIndex !== initPageIndex) {
-      cookies.set('index', pIndex, { maxAge: 3600 * 24 * 30 });
+      cookies.set('index', pIndex, { path: '/', maxAge: 3600 * 24 * 30 });
     }
   }, [pIndex]);
 

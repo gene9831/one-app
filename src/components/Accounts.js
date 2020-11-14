@@ -21,7 +21,11 @@ import Paper from '@material-ui/core/Paper';
 import apiRequest from '../api';
 import ListItemIcon from '@material-ui/core/ListItemIcon';
 import Checkbox from '@material-ui/core/Checkbox';
-import { useMediaQuery } from '@material-ui/core';
+import {
+  ListItemSecondaryAction,
+  Typography,
+  useMediaQuery,
+} from '@material-ui/core';
 import UpdateIcon from '@material-ui/icons/Update';
 import AutorenewIcon from '@material-ui/icons/Autorenew';
 import { connect } from 'react-redux';
@@ -31,6 +35,7 @@ import {
   OPERATING_STATUS,
 } from '../actions';
 import SelectedToobar from './SelectedToobar';
+import { bTokmg } from '../utils';
 
 const MyToolbar = styled(Toolbar)(({ theme }) => ({
   paddingLeft: theme.spacing(2),
@@ -113,6 +118,9 @@ const useStyles = makeStyles((theme) => {
       },
     },
     listItemSeleted: {},
+    listStyleTypeNone: {
+      listStyleType: 'none',
+    },
   };
 });
 
@@ -262,6 +270,7 @@ let Accounts = (props) => {
                 classes={{
                   root: classes.listItem,
                   selected: classes.listItemSeleted,
+                  container: classes.listStyleTypeNone,
                 }}
               >
                 {mediaUpSm ? (
@@ -283,6 +292,11 @@ let Accounts = (props) => {
                   primary={drive.owner.user.displayName}
                   secondary={drive.owner.user.email}
                 />
+                <ListItemSecondaryAction style={{ transform: 'unset' }}>
+                  <Typography variant="body2" color="textSecondary">{`${bTokmg(
+                    drive.quota.used
+                  )} / ${bTokmg(drive.quota.total)}`}</Typography>
+                </ListItemSecondaryAction>
               </ListItem>
             </Grid>
           );

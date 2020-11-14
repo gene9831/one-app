@@ -7,9 +7,11 @@ import {
   DialogContent,
   DialogContentText,
   DialogTitle,
+  IconButton,
   Link,
   makeStyles,
   Paper,
+  styled,
   Table,
   TableBody,
   TableCell,
@@ -17,6 +19,7 @@ import {
   TableHead,
   TableRow,
   TableSortLabel,
+  Tooltip,
   Typography,
   useMediaQuery,
 } from '@material-ui/core';
@@ -33,6 +36,7 @@ import PropTypes from 'prop-types';
 import { CopyToClipboard } from 'react-copy-to-clipboard';
 import { setGlobalSnackbarMessage } from '../actions';
 import { connect } from 'react-redux';
+import SettingsIcon from '@material-ui/icons/Settings';
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -376,6 +380,14 @@ const ItemList = () => {
         onClickMenu={handleClickBack}
         endComponents={[
           <Palette key="palette" />,
+          <Tooltip key="supervisor" title="后台管理">
+            <IconButton
+              component={styled(Link)(() => ({ color: 'inherit' }))}
+              href="/admin"
+            >
+              <SettingsIcon />
+            </IconButton>
+          </Tooltip>,
           <DriveSelector
             key="driveSelector"
             driveIds={state.driveIds}
