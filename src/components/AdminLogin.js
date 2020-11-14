@@ -5,7 +5,7 @@ import Button from '@material-ui/core/Button';
 import TextField from '@material-ui/core/TextField';
 import LockOutlinedIcon from '@material-ui/icons/LockOutlined';
 import Typography from '@material-ui/core/Typography';
-import { makeStyles } from '@material-ui/core/styles';
+import { makeStyles, styled } from '@material-ui/core/styles';
 import Container from '@material-ui/core/Container';
 import apiRequest from '../api';
 import MyAppBar from './MyAppBar';
@@ -13,6 +13,8 @@ import Palette from './Palette';
 import { AUTH_STATUS, setAuth } from '../actions';
 import { connect } from 'react-redux';
 import { useHistory } from 'react-router-dom';
+import { IconButton, Link, Tooltip } from '@material-ui/core';
+import HomeIcon from '@material-ui/icons/Home';
 
 const useLoginPageStyles = makeStyles((theme) => ({
   paper: {
@@ -146,7 +148,20 @@ export default function AdminLogin({ root }) {
 
   return (
     <div className={classes.root}>
-      <MyAppBar title="登录" endComponents={<Palette />} />
+      <MyAppBar
+        title="登录"
+        endComponents={[
+          <Palette key="palette" />,
+          <Tooltip key="home" title="主页">
+            <IconButton
+              component={styled(Link)(() => ({ color: 'inherit' }))}
+              href="/"
+            >
+              <HomeIcon />
+            </IconButton>
+          </Tooltip>,
+        ]}
+      />
       <div className={classes.container}>
         <div className={classes.toolbar}></div>
         <LoginPage root={root} />
