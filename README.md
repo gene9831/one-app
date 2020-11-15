@@ -2,6 +2,8 @@
 
 网站示例 [https://oneapp.top](https://oneapp.top)
 
+[图片预览](./preview/preview.md)
+
 ## before
 
 修改 `/src/api.js` 中的 `DO_MAIN`
