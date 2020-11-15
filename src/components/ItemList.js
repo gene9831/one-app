@@ -43,6 +43,7 @@ import ComponentShell from './ComponentShell';
 import { PlayBoxOutline } from './Icons';
 import DescriptionOutlinedIcon from '@material-ui/icons/DescriptionOutlined';
 import SubtitlesOutlinedIcon from '@material-ui/icons/SubtitlesOutlined';
+import ForkMe from './ForkMe';
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -402,6 +403,7 @@ const ItemList = () => {
 
   return (
     <div className={classes.root}>
+      <ForkMe url="https://github.com/gene9831/my-app2" />
       <MyAppBar
         title="文件列表"
         startIcon={onTop ? undefined : <ArrowBackIcon />}
@@ -422,6 +424,7 @@ const ItemList = () => {
             idIndex={state.idIndex}
             onClickItem={handleSelectDrive}
           />,
+          <div key="marginRight" style={{ marginRight: 24 }}></div>,
         ]}
       />
       <div className={classes.container}>
