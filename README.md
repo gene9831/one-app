@@ -17,7 +17,7 @@ npm install
 num run build
 ```
 
-下面是我的 `nginx` 配置，需配合[另一个项目](https://github.com/gene9831/one-movie)使用
+下面是我的 `nginx` 配置，需配合[另一个项目](https://github.com/gene9831/one-app-api)使用
 
 ```nginx
 # /etc/nginx/sites-enabled/default -> /etc/nginx/sites-available/default
