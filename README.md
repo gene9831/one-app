@@ -5,7 +5,7 @@
 修改 `/src/api.js` 中的 `DO_MAIN`
 
 ```js
-const DO_MAIN = 'your.domain';
+const DO_MAIN = 'https://your.domain';
 ```
 
 ## build
