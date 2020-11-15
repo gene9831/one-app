@@ -1,10 +1,10 @@
 import Axios from 'axios';
 import store from './store';
 
-const API_URL = 'http://onedrive.omv.local';
+const DO_MAIN = 'http://onedrive.omv.local';
 // const API_URL = 'http://localhost:5000';
-const JSONRPC_API = API_URL + '/api/';
-const FILE_URL = API_URL + '/file';
+const JSONRPC_API = DO_MAIN + '/api/';
+const FILE_URL = DO_MAIN + '/file';
 
 const apiRequest = (method, { params, require_auth } = {}) => {
   return Axios.post(
@@ -21,5 +21,5 @@ const apiRequest = (method, { params, require_auth } = {}) => {
   );
 };
 
-export { API_URL, FILE_URL };
+export { DO_MAIN as API_URL, FILE_URL };
 export default apiRequest;

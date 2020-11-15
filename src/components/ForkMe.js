@@ -60,7 +60,7 @@ const useStyles = makeStyles((theme) => {
 const ForkMe = ({ url }) => {
   const classes = useStyles();
   return (
-    <a href={url} aria-label="View source on GitHub" target="_new">
+    <a href={url} aria-label="View source on GitHub">
       <svg viewBox="0 0 250 250" className={classes.svg} aria-hidden="true">
         <path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path>
         <path
