@@ -58,6 +58,8 @@ const useDialogWithPathListStyles = makeStyles((theme) => ({
   listItemText: {
     marginTop: 0,
     marginBottom: 0,
+  },
+  listItemTextMarginRight: {
     marginRight: 72,
   },
   xsPadding: {
@@ -166,15 +168,20 @@ const DialogWithPathList = (props) => {
                 </ListItemIcon>
                 <ListItemText
                   primary={item.value}
-                  className={classes.listItemText}
+                  className={clsx(classes.listItemText, {
+                    [classes.listItemTextMarginRight]:
+                      item.size !== undefined || item.childCount !== undefined,
+                  })}
                 />
-                <ListItemSecondaryAction>
-                  <Typography color="textSecondary" variant="body2">
-                    {item.type === 'file'
-                      ? bTokmg(item.size)
-                      : `${item.childCount} 项`}
-                  </Typography>
-                </ListItemSecondaryAction>
+                {item.size !== undefined || item.childCount !== undefined ? (
+                  <ListItemSecondaryAction>
+                    <Typography color="textSecondary" variant="body2">
+                      {item.type === 'file'
+                        ? bTokmg(item.size)
+                        : `${item.childCount} 项`}
+                    </Typography>
+                  </ListItemSecondaryAction>
+                ) : null}
               </ListItem>
             ))}
           </List>
@@ -193,13 +200,13 @@ DialogWithPathList.propTypes = {
   open: PropTypes.bool,
   onClose: PropTypes.func,
   path: PropTypes.string,
-  onClickBreadcrumb: PropTypes.func,
   list: PropTypes.arrayOf(
     PropTypes.shape({
       type: PropTypes.oneOf(['folder', 'file']).isRequired,
       value: PropTypes.string.isRequired,
     })
   ),
+  onClickBreadcrumb: PropTypes.func,
   onClickListItem: PropTypes.func,
   type: PropTypes.oneOf(['file', 'folder']),
 };
@@ -217,21 +224,30 @@ export default function PathTextField(props) {
     addPathChild,
     goPathAncestry,
     method,
-    drive,
+    drive_id,
+    onPathSelected,
   } = props;
   const [pathList, setPathList] = useState([]);
   const [openDialog, setOpenDialog] = useState(false);
 
   useEffect(() => {
-    const fetchData = async () => {
-      let res = await apiRequest('Onedrive.' + method, {
-        params: drive ? [drive.id, value] : [value],
-        require_auth: true,
-      });
-      setPathList([].concat(res.data.result));
-    };
-    fetchData();
-  }, [value, method, drive]);
+    if (method === 'listDrivePath' && !drive_id) return;
+    if (value) {
+      const fetchData = async () => {
+        let res = await apiRequest('Onedrive.' + method, {
+          params: method === 'listDrivePath' ? [drive_id, value] : [value],
+          require_auth: true,
+        });
+        setPathList([].concat(res.data.result));
+      };
+      fetchData();
+    }
+  }, [value, method, drive_id]);
+
+  const handlClose = () => {
+    onPathSelected(name, value);
+    setOpenDialog(false);
+  };
 
   return (
     <React.Fragment>
@@ -254,20 +270,22 @@ export default function PathTextField(props) {
           readOnly: true,
         }}
       ></TextField>
-      <DialogWithPathList
-        open={openDialog}
-        onClose={() => setOpenDialog(false)}
-        path={value}
-        onClickBreadcrumb={(e, index) => {
-          e.preventDefault();
-          goPathAncestry(name, index);
-        }}
-        list={pathList}
-        onClickListItem={(e, item) => {
-          addPathChild(name, item);
-        }}
-        type={type}
-      />
+      {value ? (
+        <DialogWithPathList
+          open={openDialog}
+          onClose={handlClose}
+          path={value}
+          onClickBreadcrumb={(e, index) => {
+            e.preventDefault();
+            goPathAncestry(name, index);
+          }}
+          list={pathList}
+          onClickListItem={(e, item) => {
+            addPathChild(name, item);
+          }}
+          type={type}
+        />
+      ) : null}
     </React.Fragment>
   );
 }
@@ -278,7 +296,15 @@ PathTextField.propTypes = {
   label: PropTypes.string.isRequired,
   type: PropTypes.oneOf(['file', 'folder']).isRequired,
   method: PropTypes.string.isRequired,
-  drive: PropTypes.object,
+  drive_id: PropTypes.string,
   addPathChild: PropTypes.func,
   goPathAncestry: PropTypes.func,
+  onPathSelected: PropTypes.func,
+};
+
+PathTextField.defaultProps = {
+  value: '',
+  addPathChild: () => {},
+  goPathAncestry: () => {},
+  onPathSelected: () => {},
 };

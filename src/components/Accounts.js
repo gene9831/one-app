@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 import { fade, makeStyles, styled } from '@material-ui/core/styles';
 import Grid from '@material-ui/core/Grid';
@@ -22,7 +22,9 @@ import apiRequest from '../api';
 import ListItemIcon from '@material-ui/core/ListItemIcon';
 import Checkbox from '@material-ui/core/Checkbox';
 import {
+  IconButton,
   ListItemSecondaryAction,
+  Switch,
   Typography,
   useMediaQuery,
 } from '@material-ui/core';
@@ -36,6 +38,9 @@ import {
 } from '../actions';
 import SelectedToobar from './SelectedToobar';
 import { bTokmg } from '../utils';
+import SettingsIcon from '@material-ui/icons/Settings';
+import PathTextField from './PathTextField';
+import PublicIcon from '@material-ui/icons/Public';
 
 const MyToolbar = styled(Toolbar)(({ theme }) => ({
   paddingLeft: theme.spacing(2),
@@ -100,6 +105,144 @@ MessageDialog.propTypes = {
   onClose: PropTypes.func,
 };
 
+const useSettingsDialogStyles = makeStyles((theme) => ({
+  listItem: { paddingLeft: 0, paddingRight: 0 },
+  listStyleType: { listStyleType: 'none' },
+  listItemIcon: { minWidth: theme.spacing(5) },
+}));
+
+let SettingsDialog = (props) => {
+  const classes = useSettingsDialogStyles();
+  const { open, onClose, drive_id, setGlobalSnackbarMessage } = props;
+  const [state, setState] = useState({});
+
+  useEffect(() => {
+    if (drive_id) {
+      const fetchData = async () => {
+        let res = await apiRequest('Onedrive.getSettings', {
+          params: [drive_id],
+          require_auth: true,
+        });
+        setState(res.data.result);
+      };
+      fetchData();
+    }
+  }, [drive_id]);
+
+  const addPathChild = (name, item) => {
+    let newPath = state[name] + item.value;
+    if (item.type !== 'file') {
+      newPath += '/';
+    }
+    setState((prev) => ({
+      ...prev,
+      [name]: newPath,
+    }));
+  };
+
+  const goPathAncestry = (name, index) => {
+    let newPath = state[name];
+    let flag = false;
+    if (newPath.startsWith('/')) {
+      newPath = newPath.slice(1);
+      flag = true;
+    }
+    newPath = (flag ? '/' : '') + newPath.split('/').slice(0, index).join('/');
+    if (index !== 0) newPath += '/';
+    setState((prev) => ({
+      ...prev,
+      [name]: newPath,
+    }));
+  };
+
+  const handleSettingsChange = (name, value) => {
+    const fetchData = async () => {
+      await apiRequest('Onedrive.modifySettings', {
+        params: [drive_id, name, value],
+        require_auth: true,
+      });
+    };
+    fetchData().catch((e) => {
+      if (e.response) {
+        setGlobalSnackbarMessage('操作失败');
+      } else {
+        setGlobalSnackbarMessage('网络错误');
+      }
+    });
+  };
+
+  const handleClose = () => {
+    onClose();
+    setState({});
+  };
+
+  const handleSwitchPublic = (e, name) => {
+    setState((prev) => ({
+      ...prev,
+      [name]: e.target.checked,
+    }));
+    handleSettingsChange(name, e.target.checked);
+  };
+
+  return (
+    <Dialog fullWidth maxWidth="sm" open={open} onClose={handleClose}>
+      <DialogTitle>设置</DialogTitle>
+      <DialogContent>
+        <ListItem
+          classes={{
+            root: classes.listItem,
+            container: classes.listStyleType,
+          }}
+        >
+          <ListItemIcon className={classes.listItemIcon}>
+            <PublicIcon />
+          </ListItemIcon>
+          <ListItemText primary="公开"></ListItemText>
+          <ListItemSecondaryAction>
+            <Switch
+              checked={Boolean(state.public)}
+              onChange={(e) => handleSwitchPublic(e, 'public')}
+            />
+          </ListItemSecondaryAction>
+        </ListItem>
+        <PathTextField
+          name="root_path"
+          label="根目录"
+          value={state.root_path}
+          type="folder"
+          method="listDrivePath"
+          drive_id={drive_id}
+          addPathChild={addPathChild}
+          goPathAncestry={goPathAncestry}
+          onPathSelected={handleSettingsChange}
+        />
+      </DialogContent>
+      <DialogActions>
+        <Button color="primary" onClick={onClose}>
+          确定
+        </Button>
+      </DialogActions>
+    </Dialog>
+  );
+};
+
+SettingsDialog.propTypes = {
+  open: PropTypes.bool.isRequired,
+  onClose: PropTypes.func.isRequired,
+  drive_id: PropTypes.string,
+  setGlobalSnackbarMessage: PropTypes.func,
+};
+
+const mapDispatchToProps = (dispatch) => {
+  return {
+    setGlobalSnackbarMessage: (message) =>
+      dispatch(setGlobalSnackbarMessage(message)),
+    setOperationStatus: (status) => dispatch(setOperationStatus(status)),
+  };
+};
+
+SettingsDialog = connect(null, mapDispatchToProps)(SettingsDialog);
+
 const useStyles = makeStyles((theme) => {
   const listItemBgColor =
     theme.palette.type === 'light'
@@ -120,6 +263,14 @@ const useStyles = makeStyles((theme) => {
     listItemSeleted: {},
     listStyleTypeNone: {
       listStyleType: 'none',
+    },
+    secondaryAction: {
+      display: 'flex',
+      alignItems: 'flex-end',
+    },
+    secondaryActionQuota: {
+      textAlign: 'end',
+      marginRight: theme.spacing(1),
     },
   };
 });
@@ -157,6 +308,8 @@ let Accounts = (props) => {
 
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
   const [openFullUpdateDialog, setOpenFullUpdateDialog] = useState(false);
+  const [openSettingsDialog, setOpenSettingsDialog] = useState(false);
+  const [dialogDriveId, setDialogDriveId] = useState(null);
 
   const mediaUpSm = useMediaQuery((theme) => theme.breakpoints.up('sm'));
 
@@ -241,6 +394,16 @@ let Accounts = (props) => {
     },
   ];
 
+  const handleOpenSettingsDialog = (drive_id) => {
+    setDialogDriveId(drive_id);
+    setOpenSettingsDialog(true);
+  };
+
+  const handleCloseSettingsDialog = () => {
+    setDialogDriveId(null);
+    setOpenSettingsDialog(false);
+  };
+
   return (
     <Paper className={classes.root}>
       <MyToolbar>
@@ -292,10 +455,22 @@ let Accounts = (props) => {
                   primary={drive.owner.user.displayName}
                   secondary={drive.owner.user.email}
                 />
-                <ListItemSecondaryAction style={{ transform: 'unset' }}>
-                  <Typography variant="body2" color="textSecondary">{`${bTokmg(
-                    drive.quota.used
-                  )} / ${bTokmg(drive.quota.total)}`}</Typography>
+                <ListItemSecondaryAction>
+                  <div className={classes.secondaryAction}>
+                    <div className={classes.secondaryActionQuota}>
+                      <Typography variant="body2" color="textSecondary">
+                        {bTokmg(drive.quota.used)}
+                      </Typography>
+                      <Typography variant="body2" color="textSecondary">
+                        {bTokmg(drive.quota.total)}
+                      </Typography>
+                    </div>
+                    <IconButton
+                      onClick={() => handleOpenSettingsDialog(drive.id)}
+                    >
+                      <SettingsIcon />
+                    </IconButton>
+                  </div>
                 </ListItemSecondaryAction>
               </ListItem>
             </Grid>
@@ -322,6 +497,11 @@ let Accounts = (props) => {
         onClose={() => setOpenFullUpdateDialog(false)}
         onConfirm={handleFullUpdateDrives}
       />
+      <SettingsDialog
+        open={openSettingsDialog}
+        onClose={handleCloseSettingsDialog}
+        drive_id={dialogDriveId}
+      />
     </Paper>
   );
 };
@@ -332,14 +512,6 @@ Accounts.propTypes = {
   setGlobalSnackbarMessage: PropTypes.func.isRequired,
   operationStatus: PropTypes.string,
   setOperationStatus: PropTypes.func.isRequired,
-};
-
-const mapDispatchToProps = (dispatch) => {
-  return {
-    setGlobalSnackbarMessage: (message) =>
-      dispatch(setGlobalSnackbarMessage(message)),
-    setOperationStatus: (status) => dispatch(setOperationStatus(status)),
-  };
 };
 
 Accounts = connect(null, mapDispatchToProps)(Accounts);

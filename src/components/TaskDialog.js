@@ -32,7 +32,7 @@ let TaskDialog = (props) => {
     setGlobalSnackbarMessage,
   } = props;
   const [pathes, setPathes] = useState(initPathes);
-  const [drive, setDrive] = useState(drives[0]);
+  const [drive, setDrive] = useState(drives[0] || {});
 
   React.useEffect(() => {
     if (defaultLocalPath) {
@@ -163,7 +163,7 @@ let TaskDialog = (props) => {
           goPathAncestry={goPathAncestry}
           method="listDrivePath"
           label="OneDrive 目录"
-          drive={drive}
+          drive_id={drive.id}
           type="folder"
         />
         <PathTextField
