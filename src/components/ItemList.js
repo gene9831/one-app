@@ -44,6 +44,7 @@ import { PlayBoxOutline } from './Icons';
 import DescriptionOutlinedIcon from '@material-ui/icons/DescriptionOutlined';
 import SubtitlesOutlinedIcon from '@material-ui/icons/SubtitlesOutlined';
 import ForkMe from './ForkMe';
+import DialogWithMovieInfo from './DialogWithMovieInfo';
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -199,6 +200,10 @@ FileDialog.propTypes = {
   setGlobalSnackbarMessage: PropTypes.func,
 };
 
+FileDialog.defaultProps = {
+  file: {},
+};
+
 const mapDispatchToProps = (dispatch) => {
   return {
     setGlobalSnackbarMessage: (message) =>
@@ -248,7 +253,7 @@ const ItemList = () => {
 
   const [dialogState, setDialogState] = useState({
     open: false,
-    fileInfo: {},
+    fileInfo: undefined,
   });
 
   const onTop = useMemo(() => Boolean(!removeEndSlash(state.path)), [
@@ -401,6 +406,31 @@ const ItemList = () => {
     });
   };
 
+  const [tmdbInfo, setTmdbInfo] = useState(null);
+  // TODO 暂时根据path判断
+  const isMovieVideo = useMemo(
+    () =>
+      state.path.startsWith('/Movies') &&
+      dialogState.fileInfo &&
+      dialogState.fileInfo.file.mimeType.startsWith('video'),
+    [dialogState.fileInfo, state.path]
+  );
+
+  useEffect(() => {
+    if (isMovieVideo) {
+      const fetchData = async () => {
+        let res = await apiRequest('TMDb.getDataByItemId', {
+          params: [dialogState.fileInfo.id],
+          require_auth: true,
+        });
+        setTmdbInfo(res.data.result);
+      };
+      fetchData().catch(() => {
+        setTmdbInfo(null);
+      });
+    }
+  }, [dialogState.fileInfo, isMovieVideo]);
+
   return (
     <div className={classes.root}>
       <ForkMe url="https://github.com/gene9831/one-app" />
@@ -515,11 +545,28 @@ const ItemList = () => {
               </Table>
             </TableContainer>
           </Paper>
-          <FileDialog
-            open={dialogState.open}
-            onClose={() => setDialogState((prev) => ({ ...prev, open: false }))}
-            file={dialogState.fileInfo}
-          />
+          {isMovieVideo && tmdbInfo ? (
+            <DialogWithMovieInfo
+              open={dialogState.open}
+              onClose={() =>
+                setDialogState((prev) => ({ ...prev, open: false }))
+              }
+              file={dialogState.fileInfo}
+              tmdbInfo={tmdbInfo}
+            />
+          ) : (
+            <FileDialog
+              open={dialogState.open}
+              onClose={() =>
+                setDialogState((prev) => ({
+                  ...prev,
+                  open: false,
+                  fileInfo: undefined,
+                }))
+              }
+              file={dialogState.fileInfo}
+            />
+          )}
         </Container>
       </div>
     </div>
