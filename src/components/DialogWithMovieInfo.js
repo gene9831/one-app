@@ -15,6 +15,22 @@ import { setGlobalSnackbarMessage } from '../actions';
 import { connect } from 'react-redux';
 import { FILE_URL } from '../api';
 
+const detectMob = () => {
+  const toMatch = [
+    /Android/i,
+    /webOS/i,
+    /iPhone/i,
+    /iPad/i,
+    /iPod/i,
+    /BlackBerry/i,
+    /Windows Phone/i,
+  ];
+
+  return toMatch.some((toMatchItem) => {
+    return navigator.userAgent.match(toMatchItem);
+  });
+};
+
 const imageUrl = 'https://image.tmdb.org/t/p';
 
 const useStyles = makeStyles((theme) => ({
@@ -22,6 +38,17 @@ const useStyles = makeStyles((theme) => ({
     background: (props) =>
       `linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.2)), url('${imageUrl}/w1280${props.backdrops_url}') 0% 0% / cover no-repeat`,
   },
+  content: detectMob()
+    ? {}
+    : {
+        '&::-webkit-scrollbar': {
+          width: theme.spacing(1),
+        },
+        '&::-webkit-scrollbar-thumb': {
+          borderRadius: theme.spacing(0.5),
+          backgroundColor: 'rgba(255, 255, 255, 0.2)',
+        },
+      },
   textPrimary: {
     color: '#fff',
   },
@@ -57,7 +84,7 @@ let DialogWithMovieInfo = ({
       onClose={onClose}
       PaperProps={{ className: classes.dialogPaper }}
     >
-      <DialogContent>
+      <DialogContent className={classes.content}>
         <div style={{ display: 'flex' }}>
           <img
             width={300}
