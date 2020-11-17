@@ -4,6 +4,10 @@
 
 ![item-list](./item-list.png)
 
+- TMDB 电影信息（有待完善）
+
+![item-movie_info](./movie_info.png)
+
 - 上传管理
 
 ![upload](./upload.png)
