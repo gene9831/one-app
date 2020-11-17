@@ -19,6 +19,7 @@ import {
   TableHead,
   TableRow,
   TableSortLabel,
+  TextField,
   Tooltip,
   Typography,
   useMediaQuery,
@@ -227,6 +228,78 @@ const getItemIcon = (item) => {
   return InsertDriveFileOutlinedIcon;
 };
 
+const AuthDialog = ({ open, onClose, state, setRows }) => {
+  const [pwd, setPwd] = useState('');
+  const [error, setError] = useState('');
+
+  const handleChange = (e) => {
+    setPwd(e.target.value);
+  };
+
+  const handleSubmit = () => {
+    const fetchData = async () => {
+      let res = await apiRequest('Onedrive.getItemsByPath', {
+        params: {
+          drive_id: state.driveIds[state.idIndex],
+          path: removeEndSlash(state.path),
+          limit: 0,
+          pwd: pwd,
+        },
+      });
+      setRows(res.data.result);
+      onClose();
+    };
+    fetchData().catch((e) => {
+      if (e.response) {
+        setError('密码错误');
+      } else {
+        setError('网络错误');
+      }
+    });
+  };
+
+  const handleKeyEnterDown = (e) => {
+    if (e.keyCode === 13) {
+      handleSubmit();
+    }
+  };
+
+  return (
+    <Dialog fullWidth maxWidth="xs" open={open} onClose={onClose}>
+      <DialogTitle>输入密码</DialogTitle>
+      <DialogContent>
+        <TextField
+          fullWidth
+          margin="dense"
+          label="密码"
+          value={pwd}
+          onChange={handleChange}
+          error={error.length > 0}
+          helperText={error}
+          onKeyDown={handleKeyEnterDown}
+        ></TextField>
+      </DialogContent>
+      <DialogActions>
+        <Button color="secondary" onClick={onClose}>
+          取消
+        </Button>
+        <Button color="primary" onClick={handleSubmit}>
+          确定
+        </Button>
+      </DialogActions>
+    </Dialog>
+  );
+};
+
+AuthDialog.propTypes = {
+  open: PropTypes.bool,
+  onClose: PropTypes.func,
+  state: PropTypes.object,
+  setRows: PropTypes.func,
+};
+
+const UNAUTHORIZED = 401;
+
 const ItemList = () => {
   const classes = useStyles();
 
@@ -261,6 +334,7 @@ const ItemList = () => {
   ]);
 
   const computeRows = useMemo(() => {
+    if (typeof rows === 'number') return UNAUTHORIZED;
     return rows.map((row) => ({
       ...row,
       name: row.name,
@@ -284,6 +358,13 @@ const ItemList = () => {
       size: row.file ? row.size : 0,
     }));
   }, [downSm, rows]);
+
+  const [openAuthDialog, setOpenAuthDialog] = useState(false);
+  useEffect(() => {
+    if (computeRows === UNAUTHORIZED) {
+      setOpenAuthDialog(true);
+    }
+  }, [computeRows]);
 
   const tableHeads = useMemo(
     () => [
@@ -505,7 +586,7 @@ const ItemList = () => {
                 </TableHead>
                 <TableBody>
                   {stableSort(
-                    computeRows,
+                    computeRows === UNAUTHORIZED ? [] : computeRows,
                     getComparator(order.order, order.orderBy)
                   ).map((row, index) => (
                     <TableRow
@@ -543,6 +624,33 @@ const ItemList = () => {
                   ))}
                 </TableBody>
               </Table>
+              {computeRows === UNAUTHORIZED ? (
+                <React.Fragment>
+                  <div
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'center',
+                      alignItems: 'center',
+                      width: '100%',
+                      height: '60px',
+                    }}
+                  >
+                    <Button
+                      variant="contained"
+                      color="primary"
+                      onClick={() => setOpenAuthDialog(true)}
+                    >
+                      输入密码
+                    </Button>
+                  </div>
+                  <AuthDialog
+                    open={openAuthDialog}
+                    onClose={() => setOpenAuthDialog(false)}
+                    state={state}
+                    setRows={setRows}
+                  />
+                </React.Fragment>
+              ) : null}
             </TableContainer>
           </Paper>
           {isMovieVideo && tmdbInfo ? (
