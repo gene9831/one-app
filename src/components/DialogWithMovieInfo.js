@@ -90,7 +90,7 @@ let DialogWithMovieInfo = ({
             width={300}
             height={450}
             src={`${imageUrl}/w300${tmdbInfo.images.posters[0].file_path}`}
-            style={{ borderRadius: 4 }}
+            style={{ borderRadius: 4, flexShrink: 0 }}
             alt={tmdbInfo.title}
           ></img>
           <div style={{ marginLeft: 16 }}>
