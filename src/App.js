@@ -1,17 +1,23 @@
 import React, { lazy, Suspense } from 'react';
-import Theme from './components/Theme';
-import GlobalSnackbar from './components/GlobalSnackbar';
 import { BrowserRouter as Router, Switch, Route } from 'react-router-dom';
-import NoRoute from './components/NoRoute';
 
-const ItemList = lazy(() => import('./components/ItemList'));
-const Admin = lazy(() => import('./components/Admin'));
+const Theme = lazy(() => import('./components/Theme'));
+const GlobalSnackbar = lazy(() => import('./components/GlobalSnackbar'));
+const ItemList = lazy(() =>
+  import(/* webpackChunkName: "item-list" */ './components/ItemList')
+);
+const Admin = lazy(() =>
+  import(/* webpackChunkName: "admin" */ './components/Admin')
+);
+const NoRoute = lazy(() =>
+  import(/* webpackChunkName: "no-route" */ './components/NoRoute')
+);
 
 export default function App() {
   return (
-    <Theme>
-      <Router>
-        <Suspense fallback={<div>Loading...</div>}>
+    <Suspense fallback={<div></div>}>
+      <Theme>
+        <Router>
           <Switch>
             <Route exact path="/">
               <ItemList />
@@ -23,9 +29,9 @@ export default function App() {
               <NoRoute />
             </Route>
           </Switch>
-        </Suspense>
-      </Router>
-      <GlobalSnackbar />
-    </Theme>
+        </Router>
+        <GlobalSnackbar />
+      </Theme>
+    </Suspense>
   );
 }
