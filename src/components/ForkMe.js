@@ -26,7 +26,7 @@ const useStyles = makeStyles((theme) => {
           ? theme.palette.success.main
           : theme.palette.info.light,
       color: '#fff',
-      position: 'absolute',
+      position: 'fixed',
       top: 0,
       border: 0,
       right: 0,
