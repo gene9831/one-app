@@ -1,8 +1,8 @@
 import React, { lazy, Suspense } from 'react';
 import { BrowserRouter as Router, Switch, Route } from 'react-router-dom';
+import Theme from './components/Theme';
+import GlobalSnackbar from './components/GlobalSnackbar';
 
-const Theme = lazy(() => import('./components/Theme'));
-const GlobalSnackbar = lazy(() => import('./components/GlobalSnackbar'));
 const ItemList = lazy(() =>
   import(/* webpackChunkName: "item-list" */ './components/ItemList')
 );
@@ -15,9 +15,9 @@ const NoRoute = lazy(() =>
 
 export default function App() {
   return (
-    <Suspense fallback={<div></div>}>
-      <Theme>
-        <Router>
+    <Theme>
+      <Router>
+        <Suspense fallback={<div>Loading...</div>}>
           <Switch>
             <Route exact path="/">
               <ItemList />
@@ -29,9 +29,9 @@ export default function App() {
               <NoRoute />
             </Route>
           </Switch>
-        </Router>
-        <GlobalSnackbar />
-      </Theme>
-    </Suspense>
+        </Suspense>
+      </Router>
+      <GlobalSnackbar />
+    </Theme>
   );
 }
