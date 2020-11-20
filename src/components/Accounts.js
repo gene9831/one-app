@@ -28,8 +28,7 @@ import {
   Typography,
   useMediaQuery,
 } from '@material-ui/core';
-import UpdateIcon from '@material-ui/icons/Update';
-import AutorenewIcon from '@material-ui/icons/Autorenew';
+import CloudDownloadIcon from '@material-ui/icons/CloudDownload';
 import { connect } from 'react-redux';
 import {
   setGlobalSnackbarMessage,
@@ -41,6 +40,7 @@ import { bTokmg } from '../utils';
 import SettingsIcon from '@material-ui/icons/Settings';
 import PathTextField from './PathTextField';
 import PublicIcon from '@material-ui/icons/Public';
+import { CloudRefresh, MoviePlus } from './Icons';
 
 const MyToolbar = styled(Toolbar)(({ theme }) => ({
   paddingLeft: theme.spacing(2),
@@ -265,26 +265,6 @@ const useStyles = makeStyles((theme) => {
   };
 });
 
-const resultToMessage = (result) => {
-  if (typeof result === 'number') {
-    return `已移除${result}个 OneDrive`;
-  }
-  if (result.added === 0 && result.deleted === 0 && result.updated === 0) {
-    return '无更新';
-  }
-  let res = '';
-  if (result.added > 0) {
-    res += `新增${result.added}项，`;
-  }
-  if (result.updated > 0) {
-    res += `更新${result.updated}项，`;
-  }
-  if (result.deleted > 0) {
-    res += `删除${result.deleted}项，`;
-  }
-  return res.slice(0, -1);
-};
-
 let Accounts = (props) => {
   const classes = useStyles();
   const {
@@ -316,21 +296,21 @@ let Accounts = (props) => {
     setSelected(newSelected);
   };
 
-  const handleOperateDrives = (method, params, setOpenDialog) => {
+  const handleOperate = (method, params, setOpenDialog = () => {}) => {
     setOperationStatus(OPERATING_STATUS.RUNNING);
-    if (setOpenDialog) setOpenDialog(false);
+    setOpenDialog(false);
     setSelected([]);
     setGlobalSnackbarMessage('');
 
     const fetchData = async () => {
-      let res = await apiRequest(method, {
+      await apiRequest(method, {
         params: params,
         require_auth: true,
       });
       // 加 await 保证当前页面 drive 数据最新
       await updateDrives();
       setOperationStatus(OPERATING_STATUS.SUCCESS);
-      setGlobalSnackbarMessage(resultToMessage(res.data.result));
+      setGlobalSnackbarMessage('操作成功');
     };
 
     fetchData().catch((e) => {
@@ -344,7 +324,7 @@ let Accounts = (props) => {
   };
 
   const handleRemoveDrives = () => {
-    handleOperateDrives(
+    handleOperate(
       'Onedrive.signOut',
       { drive_ids: selected },
       setOpenDeleteDialog
@@ -352,7 +332,7 @@ let Accounts = (props) => {
   };
 
   const handleFullUpdateDrives = () => {
-    handleOperateDrives(
+    handleOperate(
       'Onedrive.update',
       { drive_ids: selected, entire: true },
       setOpenFullUpdateDialog
@@ -360,21 +340,31 @@ let Accounts = (props) => {
   };
 
   const handleUpdateDrives = () => {
-    handleOperateDrives('Onedrive.update', { drive_ids: selected });
+    handleOperate('Onedrive.update', { drive_ids: selected });
+  };
+
+  const handleUpdateMovies = () => {
+    handleOperate('TMDb.updateMovies', { drive_ids: selected });
   };
 
   const iconButtons = [
     {
       name: 'update',
-      text: '更新',
+      text: '更新网盘',
       onClick: handleUpdateDrives,
-      Icon: UpdateIcon,
+      Icon: CloudRefresh,
     },
     {
       name: 'fullupdate',
-      text: '全量更新',
+      text: '全量更新网盘',
       onClick: () => setOpenFullUpdateDialog(true),
-      Icon: AutorenewIcon,
+      Icon: CloudDownloadIcon,
+    },
+    {
+      name: 'updateMovies',
+      text: '更新电影数据',
+      onClick: handleUpdateMovies,
+      Icon: MoviePlus,
     },
     {
       name: 'delete',
