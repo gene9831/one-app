@@ -3,17 +3,14 @@ import {
   Dialog,
   DialogActions,
   DialogContent,
-  Link,
   makeStyles,
   Typography,
 } from '@material-ui/core';
-import React, { useMemo } from 'react';
+import React, { useEffect, useState } from 'react';
 import clsx from 'clsx';
 import PropTypes from 'prop-types';
-import { CopyToClipboard } from 'react-copy-to-clipboard';
-import { setGlobalSnackbarMessage } from '../actions';
-import { connect } from 'react-redux';
-import { FILE_URL } from '../api';
+import apiRequest from '../api';
+import Chip from '@material-ui/core/Chip';
 
 const detectMob = () => {
   const toMatch = [
@@ -33,10 +30,12 @@ const detectMob = () => {
 
 const imageUrl = 'https://image.tmdb.org/t/p';
 
+const random = (n) => Math.floor(Math.random() * n);
+
 const useStyles = makeStyles((theme) => ({
   dialogPaper: {
     background: (props) =>
-      `linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.2)), url('${imageUrl}/w1280${props.backdrops_url}') 0% 0% / cover no-repeat`,
+      `linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.2)), url('${props.backdropsUrl}') 0% 0% / cover no-repeat`,
   },
   content: detectMob()
     ? {}
@@ -61,21 +60,36 @@ const useStyles = makeStyles((theme) => ({
   overview: {
     padding: theme.spacing(1, 0),
   },
+  chipBorder: {
+    border: '1px solid rgba(255, 255, 255, 0.7)',
+    margin: theme.spacing(0.5),
+  },
 }));
 
-let DialogWithMovieInfo = ({
-  open,
-  onClose,
-  file,
-  tmdbInfo,
-  setGlobalSnackbarMessage,
-}) => {
-  const classes = useStyles({
-    backdrops_url: tmdbInfo ? tmdbInfo.images.backdrops[0].file_path : '',
-  });
+let DialogWithMovieInfo = ({ open, onClose, file, handleAddPathChild }) => {
+  const [tmdbInfo, setTmdbInfo] = useState(null);
 
-  const file_url = useMemo(() => `${FILE_URL}/${file.id}/${file.name}`, [file]);
+  useEffect(() => {
+    const fetchData = async () => {
+      let res = await apiRequest('TMDb.getDataByTMDbId', {
+        params: [file.tmdb_info.id],
+      });
+      setTmdbInfo(res.data.result);
+    };
+    fetchData().catch(() => {
+      setTmdbInfo(null);
+    });
+  }, [file]);
 
+  const backdropsUrl = React.useMemo(() => {
+    if (!tmdbInfo) return '';
+    const backdrops = tmdbInfo.images.backdrops;
+    return `${imageUrl}/w1280${backdrops[random(backdrops.length)].file_path}`;
+  }, [tmdbInfo]);
+
+  const classes = useStyles({ backdropsUrl: backdropsUrl });
+
+  if (!tmdbInfo) return null;
   return (
     <Dialog
       fullWidth
@@ -89,8 +103,8 @@ let DialogWithMovieInfo = ({
           <img
             width={300}
             height={450}
-            src={`${imageUrl}/w300${tmdbInfo.images.posters[0].file_path}`}
-            style={{ borderRadius: 4, flexShrink: 0 }}
+            src={`${imageUrl}/w500${tmdbInfo.images.posters[0].file_path}`}
+            style={{ borderRadius: 4, flexShrink: 0, opacity: 0.85 }}
             alt={tmdbInfo.title}
           ></img>
           <div style={{ marginLeft: 16 }}>
@@ -105,10 +119,21 @@ let DialogWithMovieInfo = ({
                 ({tmdbInfo.release_date.slice(0, 4)})
               </Typography>
             </div>
-            <Typography className={classes.textSecondary}>
-              {tmdbInfo.genres.map((item) => `${item.name} `)}
-              {tmdbInfo.runtime}分钟
-            </Typography>
+            {tmdbInfo.genres.map((item) => (
+              <Chip
+                key={item.name}
+                variant="outlined"
+                size="small"
+                label={item.name}
+                className={clsx(classes.textSecondary, classes.chipBorder)}
+              />
+            ))}
+            <Chip
+              variant="outlined"
+              size="small"
+              label={`${tmdbInfo.runtime}分钟`}
+              className={clsx(classes.textSecondary, classes.chipBorder)}
+            />
             <Typography
               variant="h6"
               className={clsx(classes.textPrimary, classes.overview)}
@@ -122,20 +147,11 @@ let DialogWithMovieInfo = ({
         </div>
       </DialogContent>
       <DialogActions>
-        <CopyToClipboard text={file_url}>
-          <Button
-            className={classes.textPrimary}
-            onClick={() => setGlobalSnackbarMessage('已复制')}
-          >
-            复制链接
-          </Button>
-        </CopyToClipboard>
         <Button
           className={classes.textPrimary}
-          component={Link}
-          href={file_url}
+          onClick={() => handleAddPathChild(file.pathName)}
         >
-          直接下载
+          资源
         </Button>
         <Button className={classes.textPrimary} onClick={onClose}>
           关闭
@@ -150,16 +166,7 @@ DialogWithMovieInfo.propTypes = {
   onClose: PropTypes.func,
   file: PropTypes.object,
   tmdbInfo: PropTypes.object,
-  setGlobalSnackbarMessage: PropTypes.func,
+  handleAddPathChild: PropTypes.func,
 };
-
-const mapDispatchToProps = (dispatch) => {
-  return {
-    setGlobalSnackbarMessage: (message) =>
-      dispatch(setGlobalSnackbarMessage(message)),
-  };
-};
-
-DialogWithMovieInfo = connect(null, mapDispatchToProps)(DialogWithMovieInfo);
 
 export default DialogWithMovieInfo;

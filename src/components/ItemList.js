@@ -46,6 +46,8 @@ import DescriptionOutlinedIcon from '@material-ui/icons/DescriptionOutlined';
 import SubtitlesOutlinedIcon from '@material-ui/icons/SubtitlesOutlined';
 import ForkMe from './ForkMe';
 import DialogWithMovieInfo from './DialogWithMovieInfo';
+import ButtonWithLoading from './ButtonWithLoading';
+import MovieCreationOutlinedIcon from '@material-ui/icons/MovieCreationOutlined';
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -94,6 +96,13 @@ const useStyles = makeStyles((theme) => ({
   },
   flex: { display: 'flex' },
   itemIcon: { marginRight: theme.spacing(1) },
+  tableFoot: {
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    width: '100%',
+    height: '60px',
+  },
 }));
 
 const removeEndSlash = (s) => {
@@ -150,7 +159,43 @@ const useFileDialogStyle = makeStyles((theme) => ({
 let FileDialog = (props) => {
   const classes = useFileDialogStyle();
   const { open, onClose, file, setGlobalSnackbarMessage } = props;
-  const file_url = useMemo(() => `${FILE_URL}/${file.id}/${file.name}`, [file]);
+  const [fileUrl, setFileUrl] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (!open) return;
+    if (file.size <= 50 * 1024 * 1024) {
+      // 50M一下不需要生成共享连接
+      setFileUrl(`${FILE_URL}/${file.id}/${file.name}`);
+    } else {
+      const fetchData = async () => {
+        let res = await apiRequest('Onedrive.getItemSharedLink', {
+          params: [file.id],
+        });
+        setFileUrl(res.data.result);
+      };
+      fetchData();
+    }
+  }, [file, open]);
+
+  const handleCreateSharedLink = () => {
+    setLoading(true);
+    const fetchData = async () => {
+      let res = await apiRequest('Onedrive.createItemSharedLink', {
+        params: [file.id],
+      });
+      setFileUrl(res.data.result);
+      setLoading(false);
+    };
+    fetchData().catch((e) => {
+      setLoading(false);
+      if (e.response) {
+        setGlobalSnackbarMessage(e.response.data.error.message);
+      } else {
+        setGlobalSnackbarMessage('网络错误');
+      }
+    });
+  };
 
   return (
     <Dialog fullWidth maxWidth="sm" open={open} onClose={onClose}>
@@ -166,23 +211,36 @@ let FileDialog = (props) => {
           大小：{`${bTokmg(file.size)} (${file.size} 字节)`}
         </DialogContentText>
         <div className={classes.buttons}>
-          <CopyToClipboard text={file_url}>
-            <Button
+          {fileUrl ? (
+            <React.Fragment>
+              <CopyToClipboard text={fileUrl}>
+                <Button
+                  color="primary"
+                  variant="outlined"
+                  onClick={() => setGlobalSnackbarMessage('已复制')}
+                >
+                  复制链接
+                </Button>
+              </CopyToClipboard>
+              <Button
+                color="primary"
+                variant="outlined"
+                component={Link}
+                href={fileUrl}
+              >
+                直接下载
+              </Button>
+            </React.Fragment>
+          ) : (
+            <ButtonWithLoading
               color="primary"
               variant="outlined"
-              onClick={() => setGlobalSnackbarMessage('已复制')}
+              loading={loading}
+              onClick={handleCreateSharedLink}
             >
-              复制链接
-            </Button>
-          </CopyToClipboard>
-          <Button
-            color="primary"
-            variant="outlined"
-            component={Link}
-            href={file_url}
-          >
-            直接下载
-          </Button>
+              生成链接
+            </ButtonWithLoading>
+          )}
         </div>
       </DialogContent>
       <DialogActions>
@@ -215,6 +273,7 @@ const mapDispatchToProps = (dispatch) => {
 FileDialog = connect(null, mapDispatchToProps)(FileDialog);
 
 const getItemIcon = (item) => {
+  if ((item.tmdb_info || {}).type === 'movie') return MovieCreationOutlinedIcon;
   if (item.folder) return FolderOpenIcon;
   const mimeType = item.file.mimeType;
   if (mimeType.startsWith('video')) return PlayBoxOutline;
@@ -326,7 +385,9 @@ const ItemList = () => {
 
   const [dialogState, setDialogState] = useState({
     open: false,
-    fileInfo: undefined,
+    fileInfo: null,
+    // openDialogName: 'movie' or 'file'
+    openDialogName: null,
   });
 
   const onTop = useMemo(() => Boolean(!removeEndSlash(state.path)), [
@@ -337,7 +398,9 @@ const ItemList = () => {
     if (typeof rows === 'number') return UNAUTHORIZED;
     return rows.map((row) => ({
       ...row,
-      name: row.name,
+      name: row.tmdb_info ? row.tmdb_info.title : row.name,
+      hasTMDbInfo: Boolean(row.tmdb_info),
+      pathName: row.name,
       lastModifiedDateTime: new Date(row.lastModifiedDateTime).toLocaleString(
         [],
         {
@@ -350,12 +413,14 @@ const ItemList = () => {
         }
       ),
       type: (() => {
+        if ((row.tmdb_info || {}).type === 'movie') return '电影';
         if (row.folder) return '文件夹';
         const idx = row.name.lastIndexOf('.');
         if (idx < 0) return '.file';
         return row.name.slice(idx + 1).toUpperCase();
       })(),
-      size: row.file ? row.size : 0,
+      // row.size为-1表示是文件夹
+      size: row.file ? row.size : -1,
     }));
   }, [downSm, rows]);
 
@@ -441,18 +506,26 @@ const ItemList = () => {
     });
   };
 
+  const handleAddPathChild = (pathName) => {
+    history.push({
+      search: `?drive=${state.idIndex}&path=${removeEndSlash(
+        state.path
+      )}/${pathName}`,
+    });
+    setDialogState((prev) => ({
+      ...prev,
+      openDialogName: null,
+    }));
+  };
+
   const handleClickItem = (row) => {
-    if (row.folder) {
-      history.push({
-        search: `?drive=${state.idIndex}&path=${removeEndSlash(state.path)}/${
-          row.name
-        }`,
-      });
+    if (!row.hasTMDbInfo && row.folder) {
+      handleAddPathChild(row.pathName);
     } else {
       setDialogState((prev) => ({
         ...prev,
-        open: true,
         fileInfo: row,
+        openDialogName: row.hasTMDbInfo ? 'movie' : 'file',
       }));
     }
   };
@@ -486,31 +559,6 @@ const ItemList = () => {
         .join('/')}`,
     });
   };
-
-  const [tmdbInfo, setTmdbInfo] = useState(null);
-  // TODO 暂时根据path判断
-  const isMovieVideo = useMemo(
-    () =>
-      state.path.startsWith('/Movies') &&
-      dialogState.fileInfo &&
-      dialogState.fileInfo.file.mimeType.startsWith('video'),
-    [dialogState.fileInfo, state.path]
-  );
-
-  useEffect(() => {
-    if (isMovieVideo) {
-      const fetchData = async () => {
-        let res = await apiRequest('TMDb.getDataByItemId', {
-          params: [dialogState.fileInfo.id],
-          require_auth: true,
-        });
-        setTmdbInfo(res.data.result);
-      };
-      fetchData().catch(() => {
-        setTmdbInfo(null);
-      });
-    }
-  }, [dialogState.fileInfo, isMovieVideo]);
 
   return (
     <div className={classes.root}>
@@ -597,25 +645,26 @@ const ItemList = () => {
                     >
                       {tableHeads
                         .map((item) => item.name)
-                        .map((name) =>
-                          name === 'name' ? (
-                            <TableCell key={name} className={classes.flex}>
+                        .map((head) =>
+                          head === 'name' ? (
+                            <TableCell key={head} className={classes.flex}>
                               <ComponentShell
                                 Component={getItemIcon(row)}
                                 Props={{ className: classes.itemIcon }}
                               />
                               <Typography className={classes.ellipsis}>
-                                {row[name]}
+                                {row[head]}
                               </Typography>
                             </TableCell>
                           ) : (
-                            <TableCell key={name}>
+                            <TableCell key={head}>
                               <Typography className={classes.ellipsis}>
-                                {name === 'size'
-                                  ? row[name] === 0
-                                    ? `${row.folder.childCount} 项`
-                                    : bTokmg(row[name])
-                                  : row[name]}
+                                {head === 'size'
+                                  ? row[head] === -1
+                                    ? // row.size为-1表示是文件夹
+                                      `${row.folder.childCount} 项`
+                                    : bTokmg(row[head])
+                                  : row[head]}
                               </Typography>
                             </TableCell>
                           )
@@ -626,15 +675,7 @@ const ItemList = () => {
               </Table>
               {computeRows === UNAUTHORIZED ? (
                 <React.Fragment>
-                  <div
-                    style={{
-                      display: 'flex',
-                      justifyContent: 'center',
-                      alignItems: 'center',
-                      width: '100%',
-                      height: '60px',
-                    }}
-                  >
+                  <div className={classes.tableFoot}>
                     <Button
                       variant="contained"
                       color="primary"
@@ -653,28 +694,36 @@ const ItemList = () => {
               ) : null}
             </TableContainer>
           </Paper>
-          {isMovieVideo && tmdbInfo ? (
-            <DialogWithMovieInfo
-              open={dialogState.open}
-              onClose={() =>
-                setDialogState((prev) => ({ ...prev, open: false }))
-              }
-              file={dialogState.fileInfo}
-              tmdbInfo={tmdbInfo}
-            />
-          ) : (
-            <FileDialog
-              open={dialogState.open}
-              onClose={() =>
-                setDialogState((prev) => ({
-                  ...prev,
-                  open: false,
-                  fileInfo: undefined,
-                }))
-              }
-              file={dialogState.fileInfo}
-            />
-          )}
+          {(() => {
+            if (dialogState.openDialogName === 'file') {
+              return (
+                <FileDialog
+                  open={dialogState.openDialogName === 'file'}
+                  onClose={() =>
+                    setDialogState((prev) => ({
+                      ...prev,
+                      openDialogName: null,
+                    }))
+                  }
+                  file={dialogState.fileInfo}
+                />
+              );
+            } else if (dialogState.openDialogName === 'movie') {
+              return (
+                <DialogWithMovieInfo
+                  open={dialogState.openDialogName === 'movie'}
+                  onClose={() =>
+                    setDialogState((prev) => ({
+                      ...prev,
+                      openDialogName: null,
+                    }))
+                  }
+                  file={dialogState.fileInfo}
+                  handleAddPathChild={handleAddPathChild}
+                />
+              );
+            }
+          })()}
         </Container>
       </div>
     </div>
