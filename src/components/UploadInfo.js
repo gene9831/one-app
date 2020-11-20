@@ -258,13 +258,12 @@ const taskDialogProps = {
   file: {
     type: 'file',
     title: '上传文件',
-    message: '上传文件到OneDrive，暂不包括小于5MB的文件',
+    message: '上传文件到OneDrive',
   },
   folder: {
     type: 'folder',
     title: '上传文件夹',
-    message:
-      '上传文件夹到OneDrive。上传目录下的所有文件，不包括子目录，暂不包括小于5MB的文件',
+    message: '上传文件夹到OneDrive。上传目录下的所有文件，不包括子目录',
   },
 };
 
