@@ -82,24 +82,18 @@ const DialogWithPathList = (props) => {
     onClose,
     onClickBreadcrumb,
     path,
-    list,
+    childrenList,
     onClickListItem,
     type,
   } = props;
 
   const pathSplited = useMemo(() => {
-    let p = path;
-    if (p.startsWith('/')) {
-      p = p.slice(1);
-    }
-    if (p.endsWith('/')) {
-      p = p.slice(0, -1);
-    }
-    if (p.length === 0) return ['根目录'];
-    return ['根目录'].concat(p.split('/'));
+    const p = path.replace(/\/$/g, '');
+    let res = p.split('/');
+    if (res[0] === '') res[0] = '根目录';
+    return res;
   }, [path]);
 
-  const endWithFile = useMemo(() => !path.endsWith('/'), [path]);
   const downXs = useMediaQuery((theme) => theme.breakpoints.down('xs'));
 
   return (
@@ -143,20 +137,20 @@ const DialogWithPathList = (props) => {
       <DialogContent
         dividers
         className={clsx(classes.listContent, classes.xsPadding, {
-          [classes.bigFile]: endWithFile,
+          [classes.bigFile]: typeof childrenList === 'number',
         })}
       >
-        {endWithFile ? (
+        {typeof childrenList === 'number' ? (
           <Typography>{path.slice(path.lastIndexOf('/') + 1)}</Typography>
         ) : (
           <List className={classes.list}>
-            {list.map((item, index) => (
+            {childrenList.map((item, index) => (
               <ListItem
                 key={index}
                 button
                 divider
                 className={classes.listItem}
-                onClick={(e) => onClickListItem(e, item)}
+                onClick={(e) => onClickListItem(e, item.value)}
                 disabled={type !== 'file' && item.type === 'file'}
               >
                 <ListItemIcon className={classes.listItemIcon}>
@@ -200,53 +194,80 @@ DialogWithPathList.propTypes = {
   open: PropTypes.bool,
   onClose: PropTypes.func,
   path: PropTypes.string,
-  list: PropTypes.arrayOf(
-    PropTypes.shape({
-      type: PropTypes.oneOf(['folder', 'file']).isRequired,
-      value: PropTypes.string.isRequired,
-    })
-  ),
+  childrenList: PropTypes.oneOfType([PropTypes.array, PropTypes.number]),
   onClickBreadcrumb: PropTypes.func,
   onClickListItem: PropTypes.func,
   type: PropTypes.oneOf(['file', 'folder']),
 };
 
 DialogWithPathList.defaultProps = {
-  list: [],
+  childrenList: [],
 };
 
 export default function PathTextField(props) {
   const {
     name,
-    value,
+    pathValue,
     label,
     type,
-    addPathChild,
-    goPathAncestry,
     method,
     drive_id,
-    onPathSelected,
+    onPathValueChanged,
+    setNewPath,
   } = props;
   const [pathList, setPathList] = useState([]);
   const [openDialog, setOpenDialog] = useState(false);
+  const [firstPathValue, setFirstPathValue] = useState(pathValue);
+
+  useEffect(() => {
+    if (openDialog) {
+      if (firstPathValue.length === 0) {
+        // 保证 firstPathValue 是不为空的字符串
+        setFirstPathValue(pathValue);
+      }
+    } else {
+      setFirstPathValue(pathValue);
+    }
+  }, [firstPathValue, openDialog, pathValue]);
 
   useEffect(() => {
     if (method === 'listDrivePath' && !drive_id) return;
-    if (value) {
+    if (pathValue) {
       const fetchData = async () => {
         let res = await apiRequest('Onedrive.' + method, {
-          params: method === 'listDrivePath' ? [drive_id, value] : [value],
+          params:
+            method === 'listDrivePath' ? [drive_id, pathValue] : [pathValue],
           require_auth: true,
         });
-        setPathList([].concat(res.data.result));
+        setPathList(res.data.result);
       };
       fetchData();
     }
-  }, [value, method, drive_id]);
+  }, [pathValue, method, drive_id]);
 
   const handlClose = () => {
-    onPathSelected(name, value);
+    if (pathValue !== firstPathValue) {
+      onPathValueChanged(name, pathValue);
+    }
     setOpenDialog(false);
+  };
+
+  const addPathChild = (e, value) => {
+    let newPath = pathValue.replace(/\/$/g, '') + '/' + value;
+    setNewPath(name, newPath);
+  };
+
+  const goPathAncestry = (e, index) => {
+    e.preventDefault();
+    let newPath = pathValue
+      .split('/')
+      .slice(0, index + 1)
+      .join('/');
+    if (newPath.indexOf('/') < 0) {
+      // 这个仅仅是为了美观点
+      newPath += '/';
+    }
+    setNewPath(name, newPath);
   };
 
   return (
@@ -255,7 +276,7 @@ export default function PathTextField(props) {
         margin="dense"
         fullWidth
         label={label}
-        value={value}
+        value={pathValue}
         onClick={() => setOpenDialog(true)}
         InputProps={{
           startAdornment: (
@@ -270,19 +291,14 @@ export default function PathTextField(props) {
           readOnly: true,
         }}
       ></TextField>
-      {value ? (
+      {pathValue ? (
         <DialogWithPathList
           open={openDialog}
           onClose={handlClose}
-          path={value}
-          onClickBreadcrumb={(e, index) => {
-            e.preventDefault();
-            goPathAncestry(name, index);
-          }}
-          list={pathList}
-          onClickListItem={(e, item) => {
-            addPathChild(name, item);
-          }}
+          path={pathValue}
+          childrenList={pathList}
+          onClickListItem={addPathChild}
+          onClickBreadcrumb={goPathAncestry}
           type={type}
         />
       ) : null}
@@ -292,19 +308,16 @@ export default function PathTextField(props) {
 
 PathTextField.propTypes = {
   name: PropTypes.string.isRequired,
-  value: PropTypes.string.isRequired,
+  pathValue: PropTypes.string.isRequired,
   label: PropTypes.string.isRequired,
   type: PropTypes.oneOf(['file', 'folder']).isRequired,
   method: PropTypes.string.isRequired,
   drive_id: PropTypes.string,
-  addPathChild: PropTypes.func,
-  goPathAncestry: PropTypes.func,
-  onPathSelected: PropTypes.func,
+  setNewPath: PropTypes.func,
+  onPathValueChanged: PropTypes.func,
 };
 
 PathTextField.defaultProps = {
   value: '',
-  addPathChild: () => {},
-  goPathAncestry: () => {},
-  onPathSelected: () => {},
+  onPathValueChanged: () => {},
 };

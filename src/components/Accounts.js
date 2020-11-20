@@ -129,26 +129,7 @@ let SettingsDialog = (props) => {
     }
   }, [drive_id]);
 
-  const addPathChild = (name, item) => {
-    let newPath = state[name] + item.value;
-    if (item.type !== 'file') {
-      newPath += '/';
-    }
-    setState((prev) => ({
-      ...prev,
-      [name]: newPath,
-    }));
-  };
-
-  const goPathAncestry = (name, index) => {
-    let newPath = state[name];
-    let flag = false;
-    if (newPath.startsWith('/')) {
-      newPath = newPath.slice(1);
-      flag = true;
-    }
-    newPath = (flag ? '/' : '') + newPath.split('/').slice(0, index).join('/');
-    if (index !== 0) newPath += '/';
+  const setNewPath = (name, newPath) => {
     setState((prev) => ({
       ...prev,
       [name]: newPath,
@@ -208,13 +189,22 @@ let SettingsDialog = (props) => {
         <PathTextField
           name="root_path"
           label="根目录"
-          value={state.root_path}
+          pathValue={state.root_path || ''}
           type="folder"
           method="listDrivePath"
           drive_id={drive_id}
-          addPathChild={addPathChild}
-          goPathAncestry={goPathAncestry}
-          onPathSelected={handleSettingsChange}
+          setNewPath={setNewPath}
+          onPathValueChanged={handleSettingsChange}
+        />
+        <PathTextField
+          name="movies_path"
+          label="电影目录"
+          pathValue={state.movies_path || ''}
+          type="folder"
+          method="listDrivePath"
+          drive_id={drive_id}
+          setNewPath={setNewPath}
+          onPathValueChanged={handleSettingsChange}
         />
       </DialogContent>
       <DialogActions>

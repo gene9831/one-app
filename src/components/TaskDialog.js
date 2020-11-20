@@ -62,7 +62,7 @@ let TaskDialog = (props) => {
       };
       fetchData().catch((e) => {
         if (e.response) {
-          setGlobalSnackbarMessage('文件或文件夹未找到');
+          setGlobalSnackbarMessage(e.response.data.error.message);
         } else {
           setGlobalSnackbarMessage('网络错误');
         }
@@ -76,30 +76,11 @@ let TaskDialog = (props) => {
     onClose();
   };
 
-  const addPathChild = (name, item) => {
-    let newPath = pathes[name] + item.value;
-    if (item.type !== 'file') {
-      newPath += '/';
-    }
-    setPathes({
-      ...pathes,
+  const setNewPath = (name, newPath) => {
+    setPathes((prev) => ({
+      ...prev,
       [name]: newPath,
-    });
-  };
-
-  const goPathAncestry = (name, index) => {
-    let newPath = pathes[name];
-    let flag = false;
-    if (newPath.startsWith('/')) {
-      newPath = newPath.slice(1);
-      flag = true;
-    }
-    newPath = (flag ? '/' : '') + newPath.split('/').slice(0, index).join('/');
-    if (index !== 0) newPath += '/';
-    setPathes({
-      ...pathes,
-      [name]: newPath,
-    });
+    }));
   };
 
   const handleChangeDrive = (e) => {
@@ -158,22 +139,20 @@ let TaskDialog = (props) => {
         </TextField>
         <PathTextField
           name="upload_path"
-          value={pathes.upload_path}
-          addPathChild={addPathChild}
-          goPathAncestry={goPathAncestry}
+          pathValue={pathes.upload_path}
           method="listDrivePath"
           label="OneDrive 目录"
           drive_id={drive.id}
           type="folder"
+          setNewPath={setNewPath}
         />
         <PathTextField
           name="local_path"
-          value={pathes.local_path}
-          addPathChild={addPathChild}
-          goPathAncestry={goPathAncestry}
+          pathValue={pathes.local_path}
           method="listSysPath"
           label={type === 'file' ? '文件路径' : '文件夹路径'}
           type={type}
+          setNewPath={setNewPath}
         ></PathTextField>
       </DialogContent>
       <DialogActions>
