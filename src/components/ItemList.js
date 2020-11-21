@@ -1,7 +1,6 @@
 import {
   Breadcrumbs,
   Button,
-  Container,
   Dialog,
   DialogActions,
   DialogContent,
@@ -48,27 +47,11 @@ import ForkMe from './ForkMe';
 import DialogWithMovieInfo from './DialogWithMovieInfo';
 import ButtonWithLoading from './ButtonWithLoading';
 import MovieCreationOutlinedIcon from '@material-ui/icons/MovieCreationOutlined';
+import MyContainer from './MyContainer';
 
 const useStyles = makeStyles((theme) => ({
   root: {
     display: 'flex',
-  },
-  container: {
-    flexGrow: 1,
-    overflow: 'auto',
-  },
-  toolbar: {
-    // necessary for content to be below app bar
-    ...theme.mixins.toolbar,
-  },
-  content: {
-    padding: theme.spacing(3),
-    [theme.breakpoints.down('sm')]: {
-      padding: theme.spacing(2),
-    },
-    [theme.breakpoints.down('xs')]: {
-      padding: theme.spacing(1),
-    },
   },
   table: {
     whiteSpace: 'nowrap',
@@ -561,7 +544,7 @@ const ItemList = () => {
   };
 
   return (
-    <div className={classes.root}>
+    <React.Fragment>
       <ForkMe url="https://github.com/gene9831/one-app" />
       <MyAppBar
         title="文件列表"
@@ -586,147 +569,144 @@ const ItemList = () => {
           <div key="marginRight" style={{ marginRight: 24 }}></div>,
         ]}
       />
-      <div className={classes.container}>
-        <div className={classes.toolbar}></div>
-        <Container className={classes.content}>
-          <Paper className={classes.paperContent}>
-            <Breadcrumbs
-              separator={<NavigateNextIcon fontSize="small" />}
-              className={classes.breadcrumbs}
-            >
-              {pathList.map((item, index) =>
-                index === pathList.length - 1 ? (
-                  <Link
-                    key={index}
-                    variant="body2"
-                    className={classes.breadcrumbsLink}
-                  >
-                    {item ? item : `网盘${state.idIndex + 1}`}
-                  </Link>
-                ) : (
-                  <Typography
-                    key={index}
-                    variant="body2"
-                    className={classes.breadcrumbsItem}
-                    onClick={() => handleClickBreadcrumbsItem(index)}
-                  >
-                    {item ? item : `网盘${state.idIndex + 1}`}
-                  </Typography>
-                )
-              )}
-            </Breadcrumbs>
-            <TableContainer>
-              <Table className={classes.table}>
-                <TableHead>
-                  <TableRow>
-                    {tableHeads.map((item) => (
-                      <TableCell key={item.name} style={item.style}>
-                        <TableSortLabel
-                          active={order.orderBy === item.name}
-                          direction={order.order}
-                          onClick={() => handleClickSortCell(item.name)}
-                        >
-                          <Typography>{item.text}</Typography>
-                        </TableSortLabel>
-                      </TableCell>
-                    ))}
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {stableSort(
-                    computeRows === UNAUTHORIZED ? [] : computeRows,
-                    getComparator(order.order, order.orderBy)
-                  ).map((row, index) => (
-                    <TableRow
-                      key={index}
-                      hover
-                      onClick={() => handleClickItem(row)}
-                      className={classes.row}
-                    >
-                      {tableHeads
-                        .map((item) => item.name)
-                        .map((head) =>
-                          head === 'name' ? (
-                            <TableCell key={head} className={classes.flex}>
-                              <ComponentShell
-                                Component={getItemIcon(row)}
-                                Props={{ className: classes.itemIcon }}
-                              />
-                              <Typography className={classes.ellipsis}>
-                                {row[head]}
-                              </Typography>
-                            </TableCell>
-                          ) : (
-                            <TableCell key={head}>
-                              <Typography className={classes.ellipsis}>
-                                {head === 'size'
-                                  ? row[head] === -1
-                                    ? // row.size为-1表示是文件夹
-                                      `${row.folder.childCount} 项`
-                                    : bTokmg(row[head])
-                                  : row[head]}
-                              </Typography>
-                            </TableCell>
-                          )
-                        )}
-                    </TableRow>
+      <MyContainer>
+        <Paper className={classes.paperContent}>
+          <Breadcrumbs
+            separator={<NavigateNextIcon fontSize="small" />}
+            className={classes.breadcrumbs}
+          >
+            {pathList.map((item, index) =>
+              index === pathList.length - 1 ? (
+                <Link
+                  key={index}
+                  variant="body2"
+                  className={classes.breadcrumbsLink}
+                >
+                  {item ? item : `网盘${state.idIndex + 1}`}
+                </Link>
+              ) : (
+                <Typography
+                  key={index}
+                  variant="body2"
+                  className={classes.breadcrumbsItem}
+                  onClick={() => handleClickBreadcrumbsItem(index)}
+                >
+                  {item ? item : `网盘${state.idIndex + 1}`}
+                </Typography>
+              )
+            )}
+          </Breadcrumbs>
+          <TableContainer>
+            <Table className={classes.table}>
+              <TableHead>
+                <TableRow>
+                  {tableHeads.map((item) => (
+                    <TableCell key={item.name} style={item.style}>
+                      <TableSortLabel
+                        active={order.orderBy === item.name}
+                        direction={order.order}
+                        onClick={() => handleClickSortCell(item.name)}
+                      >
+                        <Typography>{item.text}</Typography>
+                      </TableSortLabel>
+                    </TableCell>
                   ))}
-                </TableBody>
-              </Table>
-              {computeRows === UNAUTHORIZED ? (
-                <React.Fragment>
-                  <div className={classes.tableFoot}>
-                    <Button
-                      variant="contained"
-                      color="primary"
-                      onClick={() => setOpenAuthDialog(true)}
-                    >
-                      输入密码
-                    </Button>
-                  </div>
-                  <AuthDialog
-                    open={openAuthDialog}
-                    onClose={() => setOpenAuthDialog(false)}
-                    state={state}
-                    setRows={setRows}
-                  />
-                </React.Fragment>
-              ) : null}
-            </TableContainer>
-          </Paper>
-          {(() => {
-            if (dialogState.openDialogName === 'file') {
-              return (
-                <FileDialog
-                  open={dialogState.openDialogName === 'file'}
-                  onClose={() =>
-                    setDialogState((prev) => ({
-                      ...prev,
-                      openDialogName: null,
-                    }))
-                  }
-                  file={dialogState.fileInfo}
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {stableSort(
+                  computeRows === UNAUTHORIZED ? [] : computeRows,
+                  getComparator(order.order, order.orderBy)
+                ).map((row, index) => (
+                  <TableRow
+                    key={index}
+                    hover
+                    onClick={() => handleClickItem(row)}
+                    className={classes.row}
+                  >
+                    {tableHeads
+                      .map((item) => item.name)
+                      .map((head) =>
+                        head === 'name' ? (
+                          <TableCell key={head} className={classes.flex}>
+                            <ComponentShell
+                              Component={getItemIcon(row)}
+                              Props={{ className: classes.itemIcon }}
+                            />
+                            <Typography className={classes.ellipsis}>
+                              {row[head]}
+                            </Typography>
+                          </TableCell>
+                        ) : (
+                          <TableCell key={head}>
+                            <Typography className={classes.ellipsis}>
+                              {head === 'size'
+                                ? row[head] === -1
+                                  ? // row.size为-1表示是文件夹
+                                    `${row.folder.childCount} 项`
+                                  : bTokmg(row[head])
+                                : row[head]}
+                            </Typography>
+                          </TableCell>
+                        )
+                      )}
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+            {computeRows === UNAUTHORIZED ? (
+              <React.Fragment>
+                <div className={classes.tableFoot}>
+                  <Button
+                    variant="contained"
+                    color="primary"
+                    onClick={() => setOpenAuthDialog(true)}
+                  >
+                    输入密码
+                  </Button>
+                </div>
+                <AuthDialog
+                  open={openAuthDialog}
+                  onClose={() => setOpenAuthDialog(false)}
+                  state={state}
+                  setRows={setRows}
                 />
-              );
-            } else if (dialogState.openDialogName === 'movie') {
-              return (
-                <DialogWithMovieInfo
-                  open={dialogState.openDialogName === 'movie'}
-                  onClose={() =>
-                    setDialogState((prev) => ({
-                      ...prev,
-                      openDialogName: null,
-                    }))
-                  }
-                  file={dialogState.fileInfo}
-                  handleAddPathChild={handleAddPathChild}
-                />
-              );
-            }
-          })()}
-        </Container>
-      </div>
-    </div>
+              </React.Fragment>
+            ) : null}
+          </TableContainer>
+        </Paper>
+        {(() => {
+          if (dialogState.openDialogName === 'file') {
+            return (
+              <FileDialog
+                open={dialogState.openDialogName === 'file'}
+                onClose={() =>
+                  setDialogState((prev) => ({
+                    ...prev,
+                    openDialogName: null,
+                  }))
+                }
+                file={dialogState.fileInfo}
+              />
+            );
+          } else if (dialogState.openDialogName === 'movie') {
+            return (
+              <DialogWithMovieInfo
+                open={dialogState.openDialogName === 'movie'}
+                onClose={() =>
+                  setDialogState((prev) => ({
+                    ...prev,
+                    openDialogName: null,
+                  }))
+                }
+                file={dialogState.fileInfo}
+                handleAddPathChild={handleAddPathChild}
+              />
+            );
+          }
+        })()}
+      </MyContainer>
+    </React.Fragment>
   );
 };
 

@@ -15,6 +15,7 @@ import { connect } from 'react-redux';
 import { useHistory } from 'react-router-dom';
 import { IconButton, Link, Tooltip } from '@material-ui/core';
 import HomeIcon from '@material-ui/icons/Home';
+import MyContainer from './MyContainer';
 
 const useLoginPageStyles = makeStyles((theme) => ({
   paper: {
@@ -130,24 +131,9 @@ const mapDispatchToProps = (dispatch) => {
 };
 LoginPage = connect(null, mapDispatchToProps)(LoginPage);
 
-const useStyles = makeStyles((theme) => ({
-  root: {
-    display: 'flex',
-  },
-  container: {
-    flexGrow: 1,
-  },
-  toolbar: {
-    // necessary for content to be below app bar
-    ...theme.mixins.toolbar,
-  },
-}));
-
 export default function AdminLogin({ root }) {
-  const classes = useStyles();
-
   return (
-    <div className={classes.root}>
+    <React.Fragment>
       <MyAppBar
         title="登录"
         endComponents={[
@@ -162,11 +148,10 @@ export default function AdminLogin({ root }) {
           </Tooltip>,
         ]}
       />
-      <div className={classes.container}>
-        <div className={classes.toolbar}></div>
+      <MyContainer>
         <LoginPage root={root} />
-      </div>
-    </div>
+      </MyContainer>
+    </React.Fragment>
   );
 }
 

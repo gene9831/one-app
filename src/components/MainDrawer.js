@@ -11,11 +11,11 @@ import ListItem from '@material-ui/core/ListItem';
 import ListItemIcon from '@material-ui/core/ListItemIcon';
 import ListItemText from '@material-ui/core/ListItemText';
 import ListSubheader from '@material-ui/core/ListSubheader';
-import Container from '@material-ui/core/Container';
 import useMediaQuery from '@material-ui/core/useMediaQuery';
 import ComponentShell from './ComponentShell';
 import cookies from '../cookies';
 import MyAppBar from './MyAppBar';
+import MyContainer from './MyContainer';
 
 const drawerWidth = 240;
 
@@ -52,19 +52,6 @@ const useStyles = makeStyles((theme) => ({
     padding: theme.spacing(0, 1),
     // necessary for content to be below app bar
     ...theme.mixins.toolbar,
-  },
-  container: {
-    flexGrow: 1,
-    overflow: 'auto',
-  },
-  content: {
-    padding: theme.spacing(3),
-    [theme.breakpoints.down('sm')]: {
-      padding: theme.spacing(2),
-    },
-    [theme.breakpoints.down('xs')]: {
-      padding: theme.spacing(1),
-    },
   },
 }));
 
@@ -202,12 +189,9 @@ export default function MainDrawer(props) {
           </List>
         </Drawer>
       ) : null}
-      <div className={classes.container}>
-        <div className={classes.toolbar} />
-        <Container className={classes.content}>
-          <ComponentShell Component={subComponent} Props={subComponentProps} />
-        </Container>
-      </div>
+      <MyContainer>
+        <ComponentShell Component={subComponent} Props={subComponentProps} />
+      </MyContainer>
     </div>
   );
 }
