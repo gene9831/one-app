@@ -11,26 +11,9 @@ import clsx from 'clsx';
 import PropTypes from 'prop-types';
 import apiRequest from '../api';
 import Chip from '@material-ui/core/Chip';
-
-const detectMob = () => {
-  const toMatch = [
-    /Android/i,
-    /webOS/i,
-    /iPhone/i,
-    /iPad/i,
-    /iPod/i,
-    /BlackBerry/i,
-    /Windows Phone/i,
-  ];
-
-  return toMatch.some((toMatchItem) => {
-    return navigator.userAgent.match(toMatchItem);
-  });
-};
+import { detectMob, random } from '../utils';
 
 const imageUrl = 'https://image.tmdb.org/t/p';
-
-const random = (n) => Math.floor(Math.random() * n);
 
 const useStyles = makeStyles((theme) => ({
   dialogPaper: {
@@ -71,8 +54,8 @@ let DialogWithMovieInfo = ({ open, onClose, file, handleAddPathChild }) => {
 
   useEffect(() => {
     const fetchData = async () => {
-      let res = await apiRequest('TMDb.getDataByTMDbId', {
-        params: [file.tmdb_info.id],
+      let res = await apiRequest('TMDb.getMovie', {
+        params: [file.tmdbInfo.id],
       });
       setTmdbInfo(res.data.result);
     };

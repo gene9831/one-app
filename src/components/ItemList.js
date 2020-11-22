@@ -256,7 +256,7 @@ const mapDispatchToProps = (dispatch) => {
 FileDialog = connect(null, mapDispatchToProps)(FileDialog);
 
 const getItemIcon = (item) => {
-  if ((item.tmdb_info || {}).type === 'movie') return MovieCreationOutlinedIcon;
+  if ((item.tmdbInfo || {}).type === 'movie') return MovieCreationOutlinedIcon;
   if (item.folder) return FolderOpenIcon;
   const mimeType = item.file.mimeType;
   if (mimeType.startsWith('video')) return PlayBoxOutline;
@@ -381,8 +381,8 @@ const ItemList = () => {
     if (typeof rows === 'number') return UNAUTHORIZED;
     return rows.map((row) => ({
       ...row,
-      name: row.tmdb_info ? row.tmdb_info.title : row.name,
-      hasTMDbInfo: Boolean(row.tmdb_info),
+      name: row.tmdbInfo ? row.tmdbInfo.title : row.name,
+      hasTMDbInfo: Boolean(row.tmdbInfo),
       pathName: row.name,
       lastModifiedDateTime: new Date(row.lastModifiedDateTime).toLocaleString(
         [],
@@ -396,7 +396,7 @@ const ItemList = () => {
         }
       ),
       type: (() => {
-        if ((row.tmdb_info || {}).type === 'movie') return '电影';
+        if ((row.tmdbInfo || {}).type === 'movie') return '电影';
         if (row.folder) return '文件夹';
         const idx = row.name.lastIndexOf('.');
         if (idx < 0) return '.file';
