@@ -10,6 +10,7 @@ const ItemList = lazy(() =>
 const Admin = lazy(() =>
   import(/* webpackChunkName: "admin" */ './components/Admin')
 );
+const Movies = lazy(() => import('./components/Movies'));
 const NoRoute = lazy(() =>
   import(/* webpackChunkName: "no-route" */ './components/NoRoute')
 );
@@ -25,6 +26,9 @@ export default function App() {
             </Route>
             <Route path="/admin">
               <Admin />
+            </Route>
+            <Route path="/movies">
+              <Movies />
             </Route>
             <Route>
               <NoRoute />
