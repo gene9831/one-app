@@ -10,7 +10,9 @@ const ItemList = lazy(() =>
 const Admin = lazy(() =>
   import(/* webpackChunkName: "admin" */ './components/Admin')
 );
-const Movies = lazy(() => import('./components/Movies'));
+const Movies = lazy(() =>
+  import(/* webpackChunkName: "movies" */ './components/Movies')
+);
 const NoRoute = lazy(() =>
   import(/* webpackChunkName: "no-route" */ './components/NoRoute')
 );
