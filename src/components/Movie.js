@@ -16,7 +16,7 @@ import apiRequest from '../api';
 import PropTypes from 'prop-types';
 import clsx from 'clsx';
 import { withResizeDetector } from 'react-resize-detector';
-import { bTokmg, detectMob } from '../utils';
+import { bTokmg, detectMob, getComparator, stableSort } from '../utils';
 import FolderOpenIcon from '@material-ui/icons/FolderOpen';
 import InsertDriveFileOutlinedIcon from '@material-ui/icons/InsertDriveFileOutlined';
 import { PlayBoxOutline } from './Icons';
@@ -34,17 +34,7 @@ const useStyles = makeStyles((theme) => ({
     background: ({ backdropsUrl }) =>
       `linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.3)), url('${backdropsUrl}') 0% 0% / cover no-repeat`,
     overflowY: 'auto',
-    ...(detectMob()
-      ? {}
-      : {
-          '&::-webkit-scrollbar': {
-            width: theme.spacing(1),
-          },
-          '&::-webkit-scrollbar-thumb': {
-            borderRadius: theme.spacing(0.5),
-            backgroundColor: 'rgba(255, 255, 255, 0.2)',
-          },
-        }),
+    paddingRight: 0,
   },
   poster: {
     width: 300,
@@ -85,6 +75,22 @@ const useStyles = makeStyles((theme) => ({
   ellipsis: {
     overflow: 'hidden',
     textOverflow: 'ellipsis',
+  },
+  textDiv: {
+    marginLeft: theme.spacing(3),
+    paddingRight: theme.spacing(2),
+    overflowY: 'auto',
+    ...(detectMob()
+      ? {}
+      : {
+          '&::-webkit-scrollbar': {
+            width: theme.spacing(1),
+          },
+          '&::-webkit-scrollbar-thumb': {
+            borderRadius: theme.spacing(0.5),
+            backgroundColor: 'rgba(255, 255, 255, 0.2)',
+          },
+        }),
   },
 }));
 
@@ -169,7 +175,7 @@ const Movie = (props) => {
           ) : null}
         </div>
         {valid ? (
-          <div style={{ marginLeft: 24 }}>
+          <div className={classes.textDiv}>
             <div style={{ display: 'flex', alignItems: 'flex-end' }}>
               <Typography variant="h4" className={classes.textPrimary}>
                 {movieData.title}
@@ -225,50 +231,52 @@ const Movie = (props) => {
               </TableRow>
             </TableHead>
             <TableBody>
-              {resourceItems.map((row, index) => (
-                <TableRow
-                  key={index}
-                  hover
-                  onClick={() => setSelectedFile(row)}
-                >
-                  <TableCell className={classes.flex}>
-                    <ComponentShell
-                      Component={getItemIcon(row)}
-                      Props={{ className: classes.itemIcon }}
-                    />
-                    <Typography className={classes.ellipsis}>
-                      {row.name}
-                    </Typography>
-                  </TableCell>
-                  <TableCell>
-                    <Typography className={classes.ellipsis}>
-                      {new Date(row.lastModifiedDateTime).toLocaleString([], {
-                        year: 'numeric',
-                        month: '2-digit',
-                        day: '2-digit',
-                        hour12: false,
-                      })}
-                    </Typography>
-                  </TableCell>
-                  <TableCell>
-                    <Typography className={classes.ellipsis}>
-                      {(() => {
-                        if (row.folder) return '文件夹';
-                        const idx = row.name.lastIndexOf('.');
-                        if (idx < 0) return '.file';
-                        return row.name.slice(idx + 1).toUpperCase();
-                      })()}
-                    </Typography>
-                  </TableCell>
-                  <TableCell>
-                    <Typography className={classes.ellipsis}>
-                      {row.folder
-                        ? `${row.folder.childCount}项`
-                        : bTokmg(row.size)}
-                    </Typography>
-                  </TableCell>
-                </TableRow>
-              ))}
+              {stableSort(resourceItems, getComparator('asc', 'name')).map(
+                (row, index) => (
+                  <TableRow
+                    key={index}
+                    hover
+                    onClick={() => setSelectedFile(row)}
+                  >
+                    <TableCell className={classes.flex}>
+                      <ComponentShell
+                        Component={getItemIcon(row)}
+                        Props={{ className: classes.itemIcon }}
+                      />
+                      <Typography className={classes.ellipsis}>
+                        {row.name}
+                      </Typography>
+                    </TableCell>
+                    <TableCell>
+                      <Typography className={classes.ellipsis}>
+                        {new Date(row.lastModifiedDateTime).toLocaleString([], {
+                          year: 'numeric',
+                          month: '2-digit',
+                          day: '2-digit',
+                          hour12: false,
+                        })}
+                      </Typography>
+                    </TableCell>
+                    <TableCell>
+                      <Typography className={classes.ellipsis}>
+                        {(() => {
+                          if (row.folder) return '文件夹';
+                          const idx = row.name.lastIndexOf('.');
+                          if (idx < 0) return '.file';
+                          return row.name.slice(idx + 1).toUpperCase();
+                        })()}
+                      </Typography>
+                    </TableCell>
+                    <TableCell>
+                      <Typography className={classes.ellipsis}>
+                        {row.folder
+                          ? `${row.folder.childCount}项`
+                          : bTokmg(row.size)}
+                      </Typography>
+                    </TableCell>
+                  </TableRow>
+                )
+              )}
             </TableBody>
           </Table>
         </TableContainer>

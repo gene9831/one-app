@@ -27,7 +27,7 @@ import apiRequest from '../api';
 import DriveSelector from './DriveSelector';
 import MyAppBar from './MyAppBar';
 import Palette from './Palette';
-import { bTokmg } from '../utils';
+import { bTokmg, getComparator, stableSort } from '../utils';
 import { useHistory } from 'react-router-dom';
 import NavigateNextIcon from '@material-ui/icons/NavigateNext';
 import PropTypes from 'prop-types';
@@ -38,12 +38,10 @@ import ComponentShell from './ComponentShell';
 import { PlayBoxOutline } from './Icons';
 import DescriptionOutlinedIcon from '@material-ui/icons/DescriptionOutlined';
 import SubtitlesOutlinedIcon from '@material-ui/icons/SubtitlesOutlined';
-import ForkMe from './ForkMe';
-import DialogWithMovieInfo from './DialogWithMovieInfo';
 import MovieCreationOutlinedIcon from '@material-ui/icons/MovieCreationOutlined';
 import MyContainer from './MyContainer';
 import DialogWithFIle from './DialogWithFIle';
-import FormatListBulletedIcon from '@material-ui/icons/FormatListBulleted';
+import TopButtons from './TopButtons';
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -90,38 +88,6 @@ const removeEndSlash = (s) => {
     r = r.slice(0, -1);
   }
   return r;
-};
-
-const descendingComparator = (a, b, orderBy) => {
-  let aa = a[orderBy];
-  let bb = b[orderBy];
-  if (typeof aa === 'string') {
-    aa = aa.toUpperCase();
-    bb = bb.toUpperCase();
-  }
-  if (bb < aa) {
-    return -1;
-  }
-  if (bb > aa) {
-    return 1;
-  }
-  return 0;
-};
-
-const getComparator = (order, orderBy) => {
-  return order === 'desc'
-    ? (a, b) => descendingComparator(a, b, orderBy)
-    : (a, b) => -descendingComparator(a, b, orderBy);
-};
-
-const stableSort = (array, comparator) => {
-  const stabilizedThis = array.map((el, index) => [el, index]);
-  stabilizedThis.sort((a, b) => {
-    const order = comparator(a[0], b[0]);
-    if (order !== 0) return order;
-    return a[1] - b[1];
-  });
-  return stabilizedThis.map((el) => el[0]);
 };
 
 const getItemIcon = (item) => {
@@ -237,9 +203,8 @@ const ItemList = () => {
 
   const [dialogState, setDialogState] = useState({
     open: false,
-    fileInfo: null,
-    // openDialogName: 'movie' or 'file'
-    openDialogName: null,
+    fileInfo: {},
+    openDialog: false,
   });
 
   const computeRows = useMemo(() => {
@@ -310,7 +275,7 @@ const ItemList = () => {
   ]);
 
   useEffect(() => {
-    history.listen((location) => {
+    const unregister = history.listen((location) => {
       // path根据history变化而变化，是为了实现浏览器返回时数据也会刷新
       const query = new URLSearchParams(location.search);
       setState((prev) => ({
@@ -319,6 +284,7 @@ const ItemList = () => {
         path: query.get('path') || '',
       }));
     });
+    return unregister;
   }, [history]);
 
   useEffect(() => {
@@ -362,18 +328,23 @@ const ItemList = () => {
     });
     setDialogState((prev) => ({
       ...prev,
-      openDialogName: null,
+      openDialog: false,
     }));
   };
 
   const handleClickItem = (row) => {
-    if (!row.hasTMDbInfo && row.folder) {
+    if (row.hasTMDbInfo) {
+      history.push(`/movies/${row.tmdbInfo.id}`);
+      return;
+    }
+
+    if (row.folder) {
       handleAddPathChild(row.pathName);
     } else {
       setDialogState((prev) => ({
         ...prev,
         fileInfo: row,
-        openDialogName: row.hasTMDbInfo ? 'movie' : 'file',
+        openDialog: true,
       }));
     }
   };
@@ -404,13 +375,8 @@ const ItemList = () => {
 
   return (
     <React.Fragment>
-      <ForkMe url="https://github.com/gene9831/one-app" />
       <MyAppBar
-        startComponents={
-          <Button color="inherit" startIcon={<FormatListBulletedIcon />}>
-            <Typography>文件列表</Typography>
-          </Button>
-        }
+        startComponents={<TopButtons />}
         endComponents={[
           <Palette key="palette" />,
           <Tooltip key="supervisor" title="后台管理">
@@ -427,7 +393,6 @@ const ItemList = () => {
             idIndex={state.idIndex}
             onClickItem={handleSelectDrive}
           />,
-          <div key="marginRight" style={{ marginRight: 24 }}></div>,
         ]}
       />
       <MyContainer>
@@ -536,36 +501,16 @@ const ItemList = () => {
             ) : null}
           </TableContainer>
         </Paper>
-        {(() => {
-          if (dialogState.openDialogName === 'file') {
-            return (
-              <DialogWithFIle
-                open={dialogState.openDialogName === 'file'}
-                onClose={() =>
-                  setDialogState((prev) => ({
-                    ...prev,
-                    openDialogName: null,
-                  }))
-                }
-                file={dialogState.fileInfo}
-              />
-            );
-          } else if (dialogState.openDialogName === 'movie') {
-            return (
-              <DialogWithMovieInfo
-                open={dialogState.openDialogName === 'movie'}
-                onClose={() =>
-                  setDialogState((prev) => ({
-                    ...prev,
-                    openDialogName: null,
-                  }))
-                }
-                file={dialogState.fileInfo}
-                handleAddPathChild={handleAddPathChild}
-              />
-            );
+        <DialogWithFIle
+          open={dialogState.openDialog}
+          onClose={() =>
+            setDialogState((prev) => ({
+              ...prev,
+              openDialog: false,
+            }))
           }
-        })()}
+          file={dialogState.fileInfo}
+        />
       </MyContainer>
     </React.Fragment>
   );

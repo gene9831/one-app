@@ -4,6 +4,7 @@ import AppBar from '@material-ui/core/AppBar';
 import Toolbar from '@material-ui/core/Toolbar';
 import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
+import ForkMe from './ForkMe';
 
 const useStyles = makeStyles(() => ({
   div: {
@@ -21,6 +22,8 @@ let MyAppBar = (props) => {
         {startComponents}
         <div className={styles.div}></div>
         {endComponents}
+        <div key="marginRight" style={{ marginRight: 32 }}></div>
+        <ForkMe url="https://github.com/gene9831/one-app" />
       </Toolbar>
     </AppBar>
   );

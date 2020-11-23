@@ -59,7 +59,7 @@ let MyAppBarWithDrawer = (props) => {
       }}
       startComponents={[
         <IconButton
-          key="1"
+          key="button"
           edge="start"
           color="inherit"
           onClick={onClickMenu}
@@ -69,7 +69,7 @@ let MyAppBarWithDrawer = (props) => {
         >
           {startIcon}
         </IconButton>,
-        <Typography key="2" component="h1" variant="h6" color="inherit" noWrap>
+        <Typography key="title" color="inherit" noWrap>
           {title}
         </Typography>,
       ]}

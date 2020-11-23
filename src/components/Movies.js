@@ -15,13 +15,14 @@ import {
 import SettingsIcon from '@material-ui/icons/Settings';
 import React, { useEffect, useState } from 'react';
 import { Route, Switch, useHistory, useRouteMatch } from 'react-router-dom';
-import MyAppBar from './MyAppBar';
 import MyContainer from './MyContainer';
 import Palette from './Palette';
 import apiRequest from '../api';
 import PropTypes from 'prop-types';
 import clsx from 'clsx';
 import Movie from './Movie';
+import MyAppBar from './MyAppBar';
+import TopButtons from './TopButtons';
 
 const useStyles = makeStyles((theme) => ({
   actionArea: {
@@ -31,14 +32,13 @@ const useStyles = makeStyles((theme) => ({
       transform: 'scale(1.05)',
     },
   },
-  card: {
-    // TODO width可以作为参数传入
-    width: 150,
+  card: ({ cardWidth }) => ({
+    width: cardWidth,
     borderRadius: theme.spacing(0.5),
     '&:hover': {
       boxShadow: '0 4px 8px 0 rgba(0, 0, 0, 0.5)',
     },
-  },
+  }),
   media: {
     width: '100%',
     height: 0,
@@ -91,7 +91,7 @@ const MovieCard = ({ classes, movie, ...others }) => {
             })}
           >
             <Typography className={classes.title} variant="body2">
-              {movie.title}
+              {`${movie.title} (${movie.release_date.slice(0, 4)})`}
             </Typography>
           </Box>
         </CardMedia>
@@ -111,7 +111,7 @@ const Movies = () => {
   const match = useRouteMatch();
   const history = useHistory();
 
-  const classes = useStyles();
+  const classes = useStyles({ cardWidth: 150 });
 
   const [movies, setMovies] = useState([]);
 
@@ -126,7 +126,7 @@ const Movies = () => {
   return (
     <>
       <MyAppBar
-        title="电影"
+        startComponents={<TopButtons />}
         endComponents={[
           <Palette key="palette" />,
           <Tooltip key="supervisor" title="后台管理">
