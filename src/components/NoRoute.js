@@ -1,9 +1,10 @@
-import { Typography, Box, makeStyles } from '@material-ui/core';
+import { Typography, Box, makeStyles, Button } from '@material-ui/core';
 import React from 'react';
 import { Link } from 'react-router-dom';
 import MyAppBar from './MyAppBar';
 import MyContainer from './MyContainer';
 import Palette from './Palette';
+import InfoIcon from '@material-ui/icons/Info';
 
 const useStyles = makeStyles((theme) => ({
   link: {
@@ -20,7 +21,14 @@ const NoRoute = () => {
   const classes = useStyles();
   return (
     <React.Fragment>
-      <MyAppBar title="404" endComponents={<Palette />} />
+      <MyAppBar
+        startComponents={
+          <Button color="inherit" startIcon={<InfoIcon />}>
+            <Typography>404</Typography>
+          </Button>
+        }
+        endComponents={<Palette />}
+      />
       <MyContainer>
         <Typography variant="h1" className={classes['404']}>
           404

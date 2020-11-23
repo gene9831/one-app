@@ -29,7 +29,6 @@ import MyAppBar from './MyAppBar';
 import Palette from './Palette';
 import { bTokmg } from '../utils';
 import { useHistory } from 'react-router-dom';
-import ArrowBackIcon from '@material-ui/icons/ArrowBack';
 import NavigateNextIcon from '@material-ui/icons/NavigateNext';
 import PropTypes from 'prop-types';
 import SettingsIcon from '@material-ui/icons/Settings';
@@ -44,6 +43,7 @@ import DialogWithMovieInfo from './DialogWithMovieInfo';
 import MovieCreationOutlinedIcon from '@material-ui/icons/MovieCreationOutlined';
 import MyContainer from './MyContainer';
 import DialogWithFIle from './DialogWithFIle';
+import FormatListBulletedIcon from '@material-ui/icons/FormatListBulleted';
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -242,10 +242,6 @@ const ItemList = () => {
     openDialogName: null,
   });
 
-  const onTop = useMemo(() => Boolean(!removeEndSlash(state.path)), [
-    state.path,
-  ]);
-
   const computeRows = useMemo(() => {
     if (typeof rows === 'number') return UNAUTHORIZED;
     return rows.map((row) => ({
@@ -398,12 +394,6 @@ const ItemList = () => {
     setOrder(newOrder);
   };
 
-  const handleClickBack = () => {
-    if (!onTop) {
-      history.goBack();
-    }
-  };
-
   const handleClickBreadcrumbsItem = (index) => {
     history.push({
       search: `?drive=${state.idIndex}&path=${pathList
@@ -416,9 +406,11 @@ const ItemList = () => {
     <React.Fragment>
       <ForkMe url="https://github.com/gene9831/one-app" />
       <MyAppBar
-        title="文件列表"
-        startIcon={onTop ? undefined : <ArrowBackIcon />}
-        onClickMenu={handleClickBack}
+        startComponents={
+          <Button color="inherit" startIcon={<FormatListBulletedIcon />}>
+            <Typography>文件列表</Typography>
+          </Button>
+        }
         endComponents={[
           <Palette key="palette" />,
           <Tooltip key="supervisor" title="后台管理">

@@ -14,7 +14,7 @@ import ListSubheader from '@material-ui/core/ListSubheader';
 import useMediaQuery from '@material-ui/core/useMediaQuery';
 import ComponentShell from './ComponentShell';
 import cookies from '../cookies';
-import MyAppBar from './MyAppBar';
+import MyAppBarWithDrawer from './MyAppBarWithDrawer';
 import MyContainer from './MyContainer';
 
 const drawerWidth = 240;
@@ -131,7 +131,7 @@ export default function MainDrawer(props) {
 
   return (
     <div className={classes.root}>
-      <MyAppBar
+      <MyAppBarWithDrawer
         shift={openDrawer}
         title={pageItem.text}
         onClickMenu={handleClickMenuIcon}

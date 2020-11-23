@@ -16,6 +16,7 @@ import { useHistory } from 'react-router-dom';
 import { IconButton, Link, Tooltip } from '@material-ui/core';
 import HomeIcon from '@material-ui/icons/Home';
 import MyContainer from './MyContainer';
+import LockIcon from '@material-ui/icons/Lock';
 
 const useLoginPageStyles = makeStyles((theme) => ({
   paper: {
@@ -135,7 +136,11 @@ export default function AdminLogin({ root }) {
   return (
     <React.Fragment>
       <MyAppBar
-        title="登录"
+        startComponents={
+          <Button color="inherit" startIcon={<LockIcon />}>
+            <Typography>登录</Typography>
+          </Button>
+        }
         endComponents={[
           <Palette key="palette" />,
           <Tooltip key="home" title="主页">
