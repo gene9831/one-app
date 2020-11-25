@@ -109,17 +109,19 @@ export default function AddDriveDialog(props) {
           require_auth: true,
         });
         await onDriveAdded();
-        setActiveStep(steps.length);
       };
-      fetchData().catch((e) => {
-        if (e.response) {
-          setError(e.response.data.error.message);
-        } else {
-          // 网络错误
-          setError('网络错误');
-        }
-        setActiveStep(steps.length);
-      });
+      fetchData()
+        .catch((e) => {
+          if (e.response) {
+            setError(e.response.data.error.message);
+          } else {
+            // 网络错误
+            setError('网络错误');
+          }
+        })
+        .finally(() => {
+          setActiveStep(steps.length);
+        });
     }
     setActiveStep((prevActiveStep) => prevActiveStep + 1);
   };

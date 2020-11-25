@@ -57,16 +57,18 @@ let DialogWithFIle = (props) => {
         params: [file.id],
       });
       setFileUrl(res.data.result);
-      setLoading(false);
     };
-    fetchData().catch((e) => {
-      setLoading(false);
-      if (e.response) {
-        setGlobalSnackbarMessage(e.response.data.error.message);
-      } else {
-        setGlobalSnackbarMessage('网络错误');
-      }
-    });
+    fetchData()
+      .catch((e) => {
+        if (e.response) {
+          setGlobalSnackbarMessage(e.response.data.error.message);
+        } else {
+          setGlobalSnackbarMessage('网络错误');
+        }
+      })
+      .finally(() => {
+        setLoading(false);
+      });
   };
 
   return (

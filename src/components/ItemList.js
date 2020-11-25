@@ -257,11 +257,12 @@ const ItemList = () => {
           count: res.data.result.count,
           list: prev.list.concat(res.data.result.list),
         }));
-        isBusy.current = false;
       };
-      fetchData().catch(() => {
-        isBusy.current = false;
-      });
+      fetchData()
+        .catch(() => {})
+        .finally(() => {
+          isBusy.current = false;
+        });
     }
   };
 
