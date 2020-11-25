@@ -16,7 +16,7 @@ import apiRequest from '../api';
 import PropTypes from 'prop-types';
 import clsx from 'clsx';
 import { withResizeDetector } from 'react-resize-detector';
-import { bTokmg, detectMob, getComparator, stableSort } from '../utils';
+import { bTokmg, detectMob, getComparator, random, stableSort } from '../utils';
 import FolderOpenIcon from '@material-ui/icons/FolderOpen';
 import InsertDriveFileOutlinedIcon from '@material-ui/icons/InsertDriveFileOutlined';
 import { PlayBoxOutline } from './Icons';
@@ -137,7 +137,9 @@ const Movie = (props) => {
   const backdropsUrl = React.useMemo(() => {
     if (!movieData) return '';
     const backdrops = movieData.images.backdrops;
-    return `${tmdbImageUrl}/w1280${backdrops[0].file_path}`;
+    return `${tmdbImageUrl}/w1280${
+      backdrops[random(backdrops.length)].file_path
+    }`;
   }, [movieData]);
 
   const classes = useStyles({ backdropsUrl: backdropsUrl });
