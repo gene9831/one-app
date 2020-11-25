@@ -13,7 +13,7 @@ import {
   Typography,
 } from '@material-ui/core';
 import SettingsIcon from '@material-ui/icons/Settings';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Route, Switch, useHistory, useRouteMatch } from 'react-router-dom';
 import MyContainer from './MyContainer';
 import Palette from './Palette';
@@ -23,6 +23,7 @@ import clsx from 'clsx';
 import Movie from './Movie';
 import MyAppBar from './MyAppBar';
 import TopButtons from './TopButtons';
+import RefreshIcon from '@material-ui/icons/Refresh';
 
 const useStyles = makeStyles((theme) => ({
   actionArea: {
@@ -31,6 +32,9 @@ const useStyles = makeStyles((theme) => ({
     '&:hover': {
       transform: 'scale(1.05)',
     },
+  },
+  loadMore: {
+    borderRadius: theme.spacing(0.5),
   },
   card: ({ cardWidth }) => ({
     width: cardWidth,
@@ -105,7 +109,37 @@ MovieCard.propTypes = {
   movie: PropTypes.object,
 };
 
+const LoadMoreCard = ({ classes, ...others }) => {
+  return (
+    <CardActionArea className={classes.loadMore} {...others}>
+      <Card className={classes.card}>
+        <CardMedia className={classes.media}>
+          <div
+            style={{
+              position: 'absolute',
+              width: '100%',
+              height: '100%',
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'center',
+              alignItems: 'center',
+            }}
+          >
+            <RefreshIcon color="disabled" />
+            <Typography color="textSecondary">加载更多</Typography>
+          </div>
+        </CardMedia>
+      </Card>
+    </CardActionArea>
+  );
+};
+
+LoadMoreCard.propTypes = {
+  classes: PropTypes.object,
+};
+
 const tmdbImageUrl = 'https://image.tmdb.org/t/p';
+const numLimit = 25;
 
 const Movies = () => {
   const match = useRouteMatch();
@@ -113,15 +147,56 @@ const Movies = () => {
 
   const classes = useStyles({ cardWidth: 150 });
 
-  const [movies, setMovies] = useState([]);
+  const [movieData, setMovieData] = useState({
+    count: 0,
+    list: [],
+  });
+
+  const [order, setOrder] = useState({
+    order: 'desc',
+    orderBy: 'release_date',
+  });
 
   useEffect(() => {
     const fetchData = async () => {
-      let res = await apiRequest('TMDb.getMovies');
-      setMovies(res.data.result);
+      let res = await apiRequest('TMDb.getMovies', {
+        params: {
+          limit: numLimit,
+          order: order.order,
+          order_by: order.orderBy,
+        },
+      });
+      setMovieData(res.data.result);
     };
     fetchData();
-  }, []);
+  }, [order]);
+
+  const isBusy = useRef(false);
+
+  const handleScrollToBottom = () => {
+    if (movieData.list.length < movieData.count && !isBusy.current) {
+      isBusy.current = true;
+      const fetchData = async () => {
+        let res = await apiRequest('TMDb.getMovies', {
+          params: {
+            skip: movieData.list.length,
+            limit: numLimit,
+            order: order.order,
+            order_by: order.orderBy,
+          },
+        });
+        setMovieData((prev) => ({
+          count: res.data.result.count,
+          list: prev.list.concat(res.data.result.list),
+        }));
+      };
+      fetchData()
+        .catch(() => {})
+        .finally(() => {
+          isBusy.current = false;
+        });
+    }
+  };
 
   return (
     <>
@@ -139,7 +214,7 @@ const Movies = () => {
           </Tooltip>,
         ]}
       />
-      <MyContainer>
+      <MyContainer onScrollToBottom={handleScrollToBottom}>
         <Switch>
           <Route path={`${match.path}/:movieId`}>
             <Movie />
@@ -147,7 +222,7 @@ const Movies = () => {
           <Route path={match.path}>
             <Paper className={classes.paper}>
               <Grid container spacing={2} className={classes.gridContainer}>
-                {movies.map((movie) => (
+                {movieData.list.map((movie) => (
                   <Grid item key={movie.id}>
                     <MovieCard
                       classes={classes}
@@ -156,6 +231,14 @@ const Movies = () => {
                     />
                   </Grid>
                 ))}
+                {movieData.list.length < movieData.count ? (
+                  <Grid item>
+                    <LoadMoreCard
+                      classes={classes}
+                      onClick={handleScrollToBottom}
+                    />
+                  </Grid>
+                ) : null}
               </Grid>
             </Paper>
           </Route>
