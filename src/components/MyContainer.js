@@ -1,6 +1,7 @@
 import { Container, makeStyles } from '@material-ui/core';
-import React from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
+import { useLocation } from 'react-router-dom';
 
 const useStyles = makeStyles((theme) => ({
   container: {
@@ -23,7 +24,32 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 const MyContainer = (props) => {
+  const { onScrollToBottom } = props;
   const classes = useStyles();
+  const [onBottom, setOnBottom] = useState(false);
+  const location = useLocation();
+
+  useEffect(() => {
+    if (onBottom) {
+      onScrollToBottom();
+    }
+  }, [onBottom, onScrollToBottom]);
+
+  useEffect(() => {
+    // location变化时，也要将onBottom置为false
+    setOnBottom(false);
+  }, [location]);
+
+  const handleScroll = useCallback((e) => {
+    const rect = e.target.body.getBoundingClientRect();
+    setOnBottom(rect.bottom < window.innerHeight + 20);
+  }, []);
+
+  useEffect(() => {
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('sroll', handleScroll);
+  }, [handleScroll]);
+
   return (
     <div className={classes.container}>
       <div className={classes.toolbar}></div>
@@ -34,6 +60,11 @@ const MyContainer = (props) => {
 
 MyContainer.propTypes = {
   children: PropTypes.node,
+  onScrollToBottom: PropTypes.func,
+};
+
+MyContainer.defaultProps = {
+  onScrollToBottom: () => {},
 };
 
 export default MyContainer;

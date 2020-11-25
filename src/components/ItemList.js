@@ -1,10 +1,6 @@
 import {
   Breadcrumbs,
   Button,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
   IconButton,
   Link,
   makeStyles,
@@ -17,20 +13,18 @@ import {
   TableHead,
   TableRow,
   TableSortLabel,
-  TextField,
   Tooltip,
   Typography,
   useMediaQuery,
 } from '@material-ui/core';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import apiRequest from '../api';
 import DriveSelector from './DriveSelector';
 import MyAppBar from './MyAppBar';
 import Palette from './Palette';
-import { bTokmg, getComparator, stableSort } from '../utils';
+import { bTokmg } from '../utils';
 import { useHistory } from 'react-router-dom';
 import NavigateNextIcon from '@material-ui/icons/NavigateNext';
-import PropTypes from 'prop-types';
 import SettingsIcon from '@material-ui/icons/Settings';
 import FolderOpenIcon from '@material-ui/icons/FolderOpen';
 import InsertDriveFileOutlinedIcon from '@material-ui/icons/InsertDriveFileOutlined';
@@ -42,6 +36,7 @@ import MovieCreationOutlinedIcon from '@material-ui/icons/MovieCreationOutlined'
 import MyContainer from './MyContainer';
 import DialogWithFIle from './DialogWithFIle';
 import TopButtons from './TopButtons';
+import RefreshIcon from '@material-ui/icons/Refresh';
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -91,7 +86,7 @@ const removeEndSlash = (s) => {
 };
 
 const getItemIcon = (item) => {
-  if ((item.tmdbInfo || {}).type === 'movie') return MovieCreationOutlinedIcon;
+  if (item.tmdb_movies) return MovieCreationOutlinedIcon;
   if (item.folder) return FolderOpenIcon;
   const mimeType = item.file.mimeType;
   if (mimeType.startsWith('video')) return PlayBoxOutline;
@@ -105,82 +100,13 @@ const getItemIcon = (item) => {
   return InsertDriveFileOutlinedIcon;
 };
 
-const AuthDialog = ({ open, onClose, state, setRows }) => {
-  const [pwd, setPwd] = useState('');
-  const [error, setError] = useState('');
-
-  const handleChange = (e) => {
-    setPwd(e.target.value);
-  };
-
-  const handleSubmit = () => {
-    const fetchData = async () => {
-      let res = await apiRequest('Onedrive.getItemsByPath', {
-        params: {
-          drive_id: state.driveIds[state.idIndex],
-          path: removeEndSlash(state.path),
-          limit: 0,
-          pwd: pwd,
-        },
-      });
-      setRows(res.data.result);
-      onClose();
-    };
-    fetchData().catch((e) => {
-      if (e.response) {
-        setError('密码错误');
-      } else {
-        setError('网络错误');
-      }
-    });
-  };
-
-  const handleKeyEnterDown = (e) => {
-    if (e.keyCode === 13) {
-      handleSubmit();
-    }
-  };
-
-  return (
-    <Dialog fullWidth maxWidth="xs" open={open} onClose={onClose}>
-      <DialogTitle>输入密码</DialogTitle>
-      <DialogContent>
-        <TextField
-          fullWidth
-          margin="dense"
-          label="密码"
-          value={pwd}
-          onChange={handleChange}
-          error={error.length > 0}
-          helperText={error}
-          onKeyDown={handleKeyEnterDown}
-        ></TextField>
-      </DialogContent>
-      <DialogActions>
-        <Button color="secondary" onClick={onClose}>
-          取消
-        </Button>
-        <Button color="primary" onClick={handleSubmit}>
-          确定
-        </Button>
-      </DialogActions>
-    </Dialog>
-  );
-};
-
-AuthDialog.propTypes = {
-  open: PropTypes.bool,
-  onClose: PropTypes.func,
-  state: PropTypes.object,
-  setRows: PropTypes.func,
-};
-
-const UNAUTHORIZED = 401;
-
 const ItemList = () => {
   const classes = useStyles();
 
-  const [rows, setRows] = useState([]);
+  const [rowData, setRowData] = useState({
+    count: 0,
+    list: [],
+  });
 
   const downSm = useMediaQuery((theme) => theme.breakpoints.down('sm'));
   const history = useHistory();
@@ -208,11 +134,9 @@ const ItemList = () => {
   });
 
   const computeRows = useMemo(() => {
-    if (typeof rows === 'number') return UNAUTHORIZED;
-    return rows.map((row) => ({
+    return rowData.list.map((row) => ({
       ...row,
-      name: row.tmdbInfo ? row.tmdbInfo.title : row.name,
-      hasTMDbInfo: Boolean(row.tmdbInfo),
+      name: row.name,
       pathName: row.name,
       lastModifiedDateTime: new Date(row.lastModifiedDateTime).toLocaleString(
         [],
@@ -226,7 +150,7 @@ const ItemList = () => {
         }
       ),
       type: (() => {
-        if ((row.tmdbInfo || {}).type === 'movie') return '电影';
+        if (row.tmdb_movies) return '电影';
         if (row.folder) return '文件夹';
         const idx = row.name.lastIndexOf('.');
         if (idx < 0) return '.file';
@@ -235,14 +159,7 @@ const ItemList = () => {
       // row.size为-1表示是文件夹
       size: row.file ? row.size : -1,
     }));
-  }, [downSm, rows]);
-
-  const [openAuthDialog, setOpenAuthDialog] = useState(false);
-  useEffect(() => {
-    if (computeRows === UNAUTHORIZED) {
-      setOpenAuthDialog(true);
-    }
-  }, [computeRows]);
+  }, [downSm, rowData]);
 
   const tableHeads = useMemo(
     () => [
@@ -250,11 +167,13 @@ const ItemList = () => {
         name: 'name',
         style: { width: downSm ? '40%' : '50%' },
         text: '名称',
+        sortable: true,
       },
       {
         name: 'lastModifiedDateTime',
         style: { width: '20%' },
         text: '修改日期',
+        sortable: true,
       },
       {
         name: 'type',
@@ -305,14 +224,46 @@ const ItemList = () => {
           params: {
             drive_id: state.driveIds[state.idIndex],
             path: removeEndSlash(state.path),
-            limit: 0,
+            order: order.order,
+            order_by: order.orderBy,
           },
         });
-        setRows(res.data.result);
+        setRowData(res.data.result);
       };
-      fetchData();
+      fetchData().catch(() => {});
     }
-  }, [state]);
+  }, [order, state]);
+
+  const isBusy = useRef(false);
+
+  const handleScrollToBottom = () => {
+    if (
+      state.driveIds.length > state.idIndex &&
+      rowData.list.length < rowData.count &&
+      !isBusy.current
+    ) {
+      isBusy.current = true;
+      const fetchData = async () => {
+        let res = await apiRequest('Onedrive.getItemsByPath', {
+          params: {
+            drive_id: state.driveIds[state.idIndex],
+            path: removeEndSlash(state.path),
+            skip: rowData.list.length,
+            order: order.order,
+            order_by: order.orderBy,
+          },
+        });
+        setRowData((prev) => ({
+          count: res.data.result.count,
+          list: prev.list.concat(res.data.result.list),
+        }));
+        isBusy.current = false;
+      };
+      fetchData().catch(() => {
+        isBusy.current = false;
+      });
+    }
+  };
 
   const handleSelectDrive = (e) => {
     history.push({
@@ -333,8 +284,8 @@ const ItemList = () => {
   };
 
   const handleClickItem = (row) => {
-    if (row.hasTMDbInfo) {
-      history.push(`/movies/${row.tmdbInfo.id}`);
+    if (row.tmdb_movies) {
+      history.push(`/movies/${row.movie_id}`);
       return;
     }
 
@@ -395,7 +346,7 @@ const ItemList = () => {
           />,
         ]}
       />
-      <MyContainer>
+      <MyContainer onScrollToBottom={handleScrollToBottom}>
         <Paper className={classes.paperContent}>
           <Breadcrumbs
             separator={<NavigateNextIcon fontSize="small" />}
@@ -428,22 +379,23 @@ const ItemList = () => {
                 <TableRow>
                   {tableHeads.map((item) => (
                     <TableCell key={item.name} style={item.style}>
-                      <TableSortLabel
-                        active={order.orderBy === item.name}
-                        direction={order.order}
-                        onClick={() => handleClickSortCell(item.name)}
-                      >
+                      {item.sortable ? (
+                        <TableSortLabel
+                          active={order.orderBy === item.name}
+                          direction={order.order}
+                          onClick={() => handleClickSortCell(item.name)}
+                        >
+                          <Typography>{item.text}</Typography>
+                        </TableSortLabel>
+                      ) : (
                         <Typography>{item.text}</Typography>
-                      </TableSortLabel>
+                      )}
                     </TableCell>
                   ))}
                 </TableRow>
               </TableHead>
               <TableBody>
-                {stableSort(
-                  computeRows === UNAUTHORIZED ? [] : computeRows,
-                  getComparator(order.order, order.orderBy)
-                ).map((row, index) => (
+                {computeRows.map((row, index) => (
                   <TableRow
                     key={index}
                     hover
@@ -480,24 +432,16 @@ const ItemList = () => {
                 ))}
               </TableBody>
             </Table>
-            {computeRows === UNAUTHORIZED ? (
-              <React.Fragment>
-                <div className={classes.tableFoot}>
-                  <Button
-                    variant="contained"
-                    color="primary"
-                    onClick={() => setOpenAuthDialog(true)}
-                  >
-                    输入密码
-                  </Button>
-                </div>
-                <AuthDialog
-                  open={openAuthDialog}
-                  onClose={() => setOpenAuthDialog(false)}
-                  state={state}
-                  setRows={setRows}
-                />
-              </React.Fragment>
+            {rowData.list.length < rowData.count ? (
+              <div style={{ display: 'flex' }}>
+                <Button
+                  startIcon={<RefreshIcon />}
+                  style={{ flex: 1 }}
+                  onClick={handleScrollToBottom}
+                >
+                  加载更多
+                </Button>
+              </div>
             ) : null}
           </TableContainer>
         </Paper>
