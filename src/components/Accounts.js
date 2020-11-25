@@ -472,7 +472,7 @@ let Accounts = (props) => {
       <MessageDialog
         open={openFullUpdateDialog}
         title="全量更新"
-        description="此操作会先删除大部分数据后再更新，操作时间较长"
+        description="此操作的操作时间较长"
         numSelected={selected.length}
         onClose={() => setOpenFullUpdateDialog(false)}
         onConfirm={handleFullUpdateDrives}

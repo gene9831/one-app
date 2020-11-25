@@ -374,6 +374,8 @@ export default function UploadInfo(props) {
         unmounted = true;
         clearInterval(timer);
       };
+    } else {
+      setLoading(false);
     }
   }, [drives, name, page, rowsPerPage]);
 
