@@ -66,7 +66,7 @@ let SettingItem = (props) => {
   };
 
   const delayFetch = (key, value) => {
-    if (timer) {
+    if (timer.current) {
       clearTimeout(timer.current);
     }
     timer.current = setTimeout(() => {
