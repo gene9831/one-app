@@ -1,8 +1,4 @@
 import {
-  Box,
-  Card,
-  CardActionArea,
-  CardMedia,
   fade,
   Grid,
   IconButton,
@@ -20,14 +16,12 @@ import { Route, Switch, useHistory, useRouteMatch } from 'react-router-dom';
 import MyContainer from './MyContainer';
 import Palette from './Palette';
 import apiRequest from '../api';
-import PropTypes from 'prop-types';
-import clsx from 'clsx';
 import Movie from './Movie';
 import MyAppBar from './MyAppBar';
 import TopButtons from './TopButtons';
-import RefreshIcon from '@material-ui/icons/Refresh';
 import SearchIcon from '@material-ui/icons/Search';
 import { RobotDeadOutline } from './Icons';
+import MovieCard, { LoadMoreCard } from './MovieCard';
 
 const useStyles = makeStyles((theme) => ({
   actionArea: {
@@ -117,72 +111,6 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-const MovieCard = ({ classes, movie, ...others }) => {
-  const [hover, setHover] = useState(false);
-
-  return (
-    <CardActionArea
-      className={classes.actionArea}
-      onMouseEnter={() => setHover(true)}
-      onMouseLeave={() => setHover(false)}
-      {...others}
-    >
-      <Card className={classes.card}>
-        <CardMedia
-          image={`${tmdbImageUrl}/w200${movie.poster}`}
-          className={classes.media}
-        >
-          <Box
-            className={clsx(classes.content, {
-              [classes.contentUp]: hover,
-              [classes.contentDown]: !hover,
-            })}
-          >
-            <Typography className={classes.title} variant="body2">
-              {`${movie.title} (${movie.release_date.slice(0, 4)})`}
-            </Typography>
-          </Box>
-        </CardMedia>
-      </Card>
-    </CardActionArea>
-  );
-};
-
-MovieCard.propTypes = {
-  classes: PropTypes.object,
-  movie: PropTypes.object,
-};
-
-const LoadMoreCard = ({ classes, ...others }) => {
-  return (
-    <CardActionArea className={classes.loadMore} {...others}>
-      <Card className={classes.card}>
-        <CardMedia className={classes.media}>
-          <div
-            style={{
-              position: 'absolute',
-              width: '100%',
-              height: '100%',
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'center',
-              alignItems: 'center',
-            }}
-          >
-            <RefreshIcon color="disabled" />
-            <Typography color="textSecondary">加载更多</Typography>
-          </div>
-        </CardMedia>
-      </Card>
-    </CardActionArea>
-  );
-};
-
-LoadMoreCard.propTypes = {
-  classes: PropTypes.object,
-};
-
-const tmdbImageUrl = 'https://image.tmdb.org/t/p';
 const numLimit = 25;
 
 const Movies = () => {
@@ -196,6 +124,8 @@ const Movies = () => {
     list: [],
   });
 
+  // TODO 筛选与排序
+  // eslint-disable-next-line no-unused-vars
   const [order, setOrder] = useState({
     order: 'desc',
     orderBy: 'release_date',
@@ -223,7 +153,11 @@ const Movies = () => {
   const isBusy = useRef(false);
 
   const handleScrollToBottom = () => {
-    if (movieData.list.length < movieData.count && !isBusy.current) {
+    if (
+      match.isExact &&
+      movieData.list.length < movieData.count &&
+      !isBusy.current
+    ) {
       isBusy.current = true;
       const fetchData = async () => {
         let res = await apiRequest('TMDb.getMovies', {

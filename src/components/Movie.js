@@ -1,5 +1,7 @@
 import {
+  Badge,
   Chip,
+  Grid,
   makeStyles,
   Paper,
   Table,
@@ -9,9 +11,10 @@ import {
   TableHead,
   TableRow,
   Typography,
+  useMediaQuery,
 } from '@material-ui/core';
 import React, { useEffect, useMemo, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useHistory, useParams } from 'react-router-dom';
 import apiRequest from '../api';
 import PropTypes from 'prop-types';
 import clsx from 'clsx';
@@ -24,17 +27,24 @@ import DescriptionOutlinedIcon from '@material-ui/icons/DescriptionOutlined';
 import SubtitlesOutlinedIcon from '@material-ui/icons/SubtitlesOutlined';
 import ComponentShell from './ComponentShell';
 import DialogWithFIle from './DialogWithFIle';
+import MovieCard from './MovieCard';
 
 const tmdbImageUrl = 'https://image.tmdb.org/t/p';
 
 const useStyles = makeStyles((theme) => ({
   paper: {
-    padding: theme.spacing(2),
     display: 'flex',
     background: ({ backdropsUrl }) =>
       `linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.3)), url('${backdropsUrl}') 0% 0% / cover no-repeat`,
     overflowY: 'auto',
     paddingRight: 0,
+  },
+  collectionPaper: {
+    display: 'flex',
+    flexDirection: 'column',
+  },
+  paperPadding: {
+    padding: theme.spacing(2),
   },
   poster: {
     width: 300,
@@ -92,8 +102,51 @@ const useStyles = makeStyles((theme) => ({
           },
         }),
   },
+  movieTitle: {
+    display: 'flex',
+    alignItems: 'flex-end',
+  },
+  actionArea: {
+    borderRadius: theme.shape.borderRadius,
+  },
+  card: ({ cardWidth }) => ({
+    width: cardWidth,
+    borderRadius: theme.shape.borderRadius,
+    '&:hover': {
+      boxShadow: '0 4px 8px 0 rgba(0, 0, 0, 0.5)',
+    },
+  }),
+  media: {
+    width: '100%',
+    height: 0,
+    paddingBottom: '150%',
+    backgroundColor: 'rgba(0, 0, 0, 0.08)',
+    position: 'relative',
+  },
+  content: {
+    width: '100%',
+    position: 'absolute',
+    bottom: 0,
+    borderRadius: theme.spacing(0, 0, 0.5, 0.5),
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    padding: theme.spacing(0.5, 1),
+    transition: theme.transitions.create('transform'),
+  },
+  title: {
+    color: '#fff',
+    textTransform: 'uppercase',
+  },
+  collectionDiv: {
+    display: 'flex',
+    overflow: 'auto',
+    '& > div': {
+      flex: 0,
+      padding: theme.spacing(1),
+    },
+  },
 }));
 
+// eslint-disable-next-line no-unused-vars
 let AdaptivePaper = ({ width, height, targetRef, children, ...others }) => {
   return (
     <Paper
@@ -133,6 +186,18 @@ const Movie = (props) => {
   const [movieData, setMovieData] = useState(props.movie);
   const [resourceItems, setResourceItems] = useState([]);
   const [selectedFile, setSelectedFile] = useState(null);
+  const [collectionData, setCollectionData] = useState(null);
+  const history = useHistory();
+
+  const collectionId = useMemo(() => {
+    if (movieData && movieData.belongs_to_collection) {
+      return movieData.belongs_to_collection.id;
+    }
+    return null;
+  }, [movieData]);
+
+  const downXs = useMediaQuery((theme) => theme.breakpoints.down('xs'));
+  const downSm = useMediaQuery((theme) => theme.breakpoints.down('sm'));
 
   const backdropsUrl = React.useMemo(() => {
     if (!movieData) return '';
@@ -142,8 +207,10 @@ const Movie = (props) => {
     }`;
   }, [movieData]);
 
-  const classes = useStyles({ backdropsUrl: backdropsUrl });
-  const valid = useMemo(() => Boolean(movieData), [movieData]);
+  const classes = useStyles({
+    backdropsUrl: backdropsUrl,
+    cardWidth: 150,
+  });
 
   useEffect(() => {
     const fetchData = async () => {
@@ -165,130 +232,184 @@ const Movie = (props) => {
     fetchData();
   }, [movieId]);
 
+  useEffect(() => {
+    if (typeof collectionId === 'number') {
+      const fetchData = async () => {
+        let res = await apiRequest('TMDb.getCollection', {
+          params: [collectionId],
+        });
+        setCollectionData(res.data.result);
+      };
+      fetchData();
+    }
+  }, [collectionId]);
+
+  const handleClickMovieCard = (movie) => {
+    if (!movie.exist || movieData.id === movie.id) {
+      return;
+    }
+    history.push(`./${movie.id}`);
+  };
+
   return (
-    <>
-      <AdaptivePaper className={classes.paper}>
-        <div className={classes.poster}>
-          {valid ? (
-            <img
-              src={`${tmdbImageUrl}/w500${movieData.images.posters[0].file_path}`}
-              alt="poster"
-            />
-          ) : null}
-        </div>
-        {valid ? (
-          <div className={classes.textDiv}>
-            <div style={{ display: 'flex', alignItems: 'flex-end' }}>
-              <Typography variant="h4" className={classes.textPrimary}>
-                {movieData.title}
-              </Typography>
-              <Typography
-                className={clsx(classes.textSecondary, classes.releaseDate)}
-              >
-                ({movieData.release_date.slice(0, 4)})
-              </Typography>
-            </div>
-            {movieData.genres.map((item) => (
+    <Grid container spacing={downXs ? 1 : downSm ? 2 : 3}>
+      <Grid item xs={12}>
+        <AdaptivePaper className={clsx(classes.paper, classes.paperPadding)}>
+          <div className={classes.poster}>
+            {movieData ? (
+              <img
+                src={`${tmdbImageUrl}/w500${movieData.images.posters[0].file_path}`}
+                alt="poster"
+              />
+            ) : null}
+          </div>
+          {movieData ? (
+            <div className={classes.textDiv}>
+              <div className={classes.movieTitle}>
+                <Typography variant="h4" className={classes.textPrimary}>
+                  {movieData.title}
+                </Typography>
+                <Typography
+                  className={clsx(classes.textSecondary, classes.releaseDate)}
+                >
+                  ({movieData.release_date.slice(0, 4)})
+                </Typography>
+              </div>
+              {movieData.genres.map((item) => (
+                <Chip
+                  key={item.name}
+                  variant="outlined"
+                  size="small"
+                  label={item.name}
+                  className={clsx(classes.textSecondary, classes.chipBorder)}
+                />
+              ))}
               <Chip
-                key={item.name}
                 variant="outlined"
                 size="small"
-                label={item.name}
+                label={`${movieData.runtime}分钟`}
                 className={clsx(classes.textSecondary, classes.chipBorder)}
               />
-            ))}
-            <Chip
-              variant="outlined"
-              size="small"
-              label={`${movieData.runtime}分钟`}
-              className={clsx(classes.textSecondary, classes.chipBorder)}
-            />
-            <Typography
-              variant="h6"
-              className={clsx(classes.textPrimary, classes.overview)}
-            >
-              剧情简介
-            </Typography>
-            <Typography variant="body1" className={classes.textPrimary}>
-              {movieData.overview}
-            </Typography>
-          </div>
-        ) : null}
-      </AdaptivePaper>
-      <Paper style={{ marginTop: 24, padding: 16 }}>
-        <Typography variant="h5">资源</Typography>
-        <TableContainer>
-          <Table
-            style={{
-              whiteSpace: 'nowrap',
-            }}
+              <Typography
+                variant="h6"
+                className={clsx(classes.textPrimary, classes.overview)}
+              >
+                剧情简介
+              </Typography>
+              <Typography variant="body1" className={classes.textPrimary}>
+                {movieData.overview}
+              </Typography>
+            </div>
+          ) : null}
+        </AdaptivePaper>
+      </Grid>
+      {collectionData ? (
+        <Grid item xs={12}>
+          <Paper
+            className={clsx(classes.collectionPaper, classes.paperPadding)}
           >
-            <TableHead>
-              <TableRow>
-                {['名称', '修改日期', '类型', '大小'].map((item, index) => (
-                  <TableCell key={index}>
-                    <Typography>{item}</Typography>
-                  </TableCell>
-                ))}
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {stableSort(resourceItems, getComparator('asc', 'name')).map(
-                (row, index) => (
-                  <TableRow
-                    key={index}
-                    hover
-                    onClick={() => setSelectedFile(row)}
+            <Typography variant="h6">{collectionData.name}</Typography>
+            <div className={classes.collectionDiv}>
+              {collectionData.parts.map((item) => (
+                <div key={item.id}>
+                  <Badge
+                    color={movieData.id === item.id ? 'secondary' : 'primary'}
+                    variant="dot"
+                    invisible={!item.exist}
                   >
-                    <TableCell className={classes.flex}>
-                      <ComponentShell
-                        Component={getItemIcon(row)}
-                        Props={{ className: classes.itemIcon }}
-                      />
-                      <Typography className={classes.ellipsis}>
-                        {row.name}
-                      </Typography>
-                    </TableCell>
-                    <TableCell>
-                      <Typography className={classes.ellipsis}>
-                        {new Date(row.lastModifiedDateTime).toLocaleString([], {
-                          year: 'numeric',
-                          month: '2-digit',
-                          day: '2-digit',
-                          hour12: false,
-                        })}
-                      </Typography>
-                    </TableCell>
-                    <TableCell>
-                      <Typography className={classes.ellipsis}>
-                        {(() => {
-                          if (row.folder) return '文件夹';
-                          const idx = row.name.lastIndexOf('.');
-                          if (idx < 0) return '.file';
-                          return row.name.slice(idx + 1).toUpperCase();
-                        })()}
-                      </Typography>
-                    </TableCell>
-                    <TableCell>
-                      <Typography className={classes.ellipsis}>
-                        {row.folder
-                          ? `${row.folder.childCount}项`
-                          : bTokmg(row.size)}
-                      </Typography>
-                    </TableCell>
+                    <MovieCard
+                      classes={classes}
+                      movie={item}
+                      onClick={() => handleClickMovieCard(item)}
+                    />
+                  </Badge>
+                </div>
+              ))}
+            </div>
+          </Paper>
+        </Grid>
+      ) : null}
+      {resourceItems.length > 0 ? (
+        <Grid item xs={12}>
+          <Paper className={classes.paperPadding}>
+            <Typography variant="h6">资源</Typography>
+            <TableContainer>
+              <Table
+                style={{
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                <TableHead>
+                  <TableRow>
+                    {['名称', '修改日期', '类型', '大小'].map((item, index) => (
+                      <TableCell key={index}>
+                        <Typography>{item}</Typography>
+                      </TableCell>
+                    ))}
                   </TableRow>
-                )
-              )}
-            </TableBody>
-          </Table>
-        </TableContainer>
-        <DialogWithFIle
-          open={Boolean(selectedFile)}
-          file={selectedFile || {}}
-          onClose={() => setSelectedFile(null)}
-        />
-      </Paper>
-    </>
+                </TableHead>
+                <TableBody>
+                  {stableSort(resourceItems, getComparator('asc', 'name')).map(
+                    (row, index) => (
+                      <TableRow
+                        key={index}
+                        hover
+                        onClick={() => setSelectedFile(row)}
+                      >
+                        <TableCell className={classes.flex}>
+                          <ComponentShell
+                            Component={getItemIcon(row)}
+                            Props={{ className: classes.itemIcon }}
+                          />
+                          <Typography className={classes.ellipsis}>
+                            {row.name}
+                          </Typography>
+                        </TableCell>
+                        <TableCell>
+                          <Typography className={classes.ellipsis}>
+                            {new Date(row.lastModifiedDateTime).toLocaleString(
+                              [],
+                              {
+                                year: 'numeric',
+                                month: '2-digit',
+                                day: '2-digit',
+                                hour12: false,
+                              }
+                            )}
+                          </Typography>
+                        </TableCell>
+                        <TableCell>
+                          <Typography className={classes.ellipsis}>
+                            {(() => {
+                              if (row.folder) return '文件夹';
+                              const idx = row.name.lastIndexOf('.');
+                              if (idx < 0) return '.file';
+                              return row.name.slice(idx + 1).toUpperCase();
+                            })()}
+                          </Typography>
+                        </TableCell>
+                        <TableCell>
+                          <Typography className={classes.ellipsis}>
+                            {row.folder
+                              ? `${row.folder.childCount}项`
+                              : bTokmg(row.size)}
+                          </Typography>
+                        </TableCell>
+                      </TableRow>
+                    )
+                  )}
+                </TableBody>
+              </Table>
+            </TableContainer>
+            <DialogWithFIle
+              open={Boolean(selectedFile)}
+              file={selectedFile || {}}
+              onClose={() => setSelectedFile(null)}
+            />
+          </Paper>
+        </Grid>
+      ) : null}
+    </Grid>
   );
 };
 
