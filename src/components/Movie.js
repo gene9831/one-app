@@ -45,7 +45,7 @@ const useStyles = makeStyles((theme) => ({
     display: 'flex',
     '& > img': {
       width: '100%',
-      opacity: 0.8,
+      opacity: 0.9,
       borderRadius: theme.spacing(0.4),
     },
   },
