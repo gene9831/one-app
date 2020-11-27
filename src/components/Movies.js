@@ -1,17 +1,24 @@
 import {
+  Chip,
+  Collapse,
   fade,
   Grid,
   IconButton,
   InputBase,
   Link,
+  List,
+  ListItem,
+  ListItemText,
   makeStyles,
+  MenuItem,
   Paper,
   styled,
+  TextField,
   Tooltip,
   Typography,
 } from '@material-ui/core';
 import SettingsIcon from '@material-ui/icons/Settings';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Route, Switch, useHistory, useRouteMatch } from 'react-router-dom';
 import MyContainer from './MyContainer';
 import Palette from './Palette';
@@ -22,6 +29,9 @@ import TopButtons from './TopButtons';
 import SearchIcon from '@material-ui/icons/Search';
 import { RobotDeadOutline } from './Icons';
 import MovieCard, { LoadMoreCard } from './MovieCard';
+import FilterListIcon from '@material-ui/icons/FilterList';
+import { ExpandLess, ExpandMore } from '@material-ui/icons';
+import clsx from 'clsx';
 
 const useStyles = makeStyles((theme) => ({
   actionArea: {
@@ -67,9 +77,62 @@ const useStyles = makeStyles((theme) => ({
     color: '#fff',
     textTransform: 'uppercase',
   },
-  paper: { padding: theme.spacing(2) },
-  gridContainer: { justifyContent: 'center' },
+  paper: {
+    padding: theme.spacing(2),
+    display: 'flex',
+    '& > *': {
+      paddingRight: theme.spacing(2),
+    },
+    '& > *:last-child': {
+      paddingRight: theme.spacing(0),
+    },
+  },
+  filterOpen: {
+    width: ({ filterWidth }) => filterWidth,
+    flexShrink: 0,
+    transition: theme.transitions.create('width', {
+      easing: theme.transitions.easing.sharp,
+      duration: theme.transitions.duration.enteringScreen,
+    }),
+  },
+  filterClose: {
+    width: 0,
+    transition: theme.transitions.create('width', {
+      easing: theme.transitions.easing.sharp,
+      duration: theme.transitions.duration.leavingScreen,
+    }),
+    overflowX: 'hidden',
+    paddingRight: theme.spacing(0),
+  },
+  gridContainer: {
+    justifyContent: 'center',
+    flexGrow: 1,
+  },
+  list: {
+    '&> *': {
+      borderRadius: theme.shape.borderRadius,
+      whiteSpace: 'nowrap',
+    },
+  },
+  sortSlector: {
+    padding: theme.spacing(1, 2),
+    whiteSpace: 'nowrap',
+  },
+  sortSlectorInput: {
+    paddingTop: theme.spacing(1),
+    paddingBottom: theme.spacing(1),
+  },
+  genresDiv: {
+    width: ({ filterWidth }) => filterWidth - theme.spacing(1),
+    display: 'flex',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+  },
+  genresChip: {
+    margin: theme.spacing(0.5),
+  },
   search: {
+    display: ({ matchIsExact }) => (matchIsExact ? null : 'none'),
     position: 'relative',
     borderRadius: theme.shape.borderRadius,
     backgroundColor: fade(theme.palette.common.white, 0.15),
@@ -113,33 +176,62 @@ const useStyles = makeStyles((theme) => ({
 
 const numLimit = 25;
 
+const orderList = [
+  { text: '热门降序', order: { order: 'desc', orderBy: 'popularity' } },
+  { text: '热门升序', order: { order: 'asc', orderBy: 'popularity' } },
+  { text: '日期降序', order: { order: 'desc', orderBy: 'release_date' } },
+  { text: '日期升序', order: { order: 'asc', orderBy: 'release_date' } },
+  { text: '评分降序', order: { order: 'desc', orderBy: 'vote_average' } },
+  { text: '评分升序', order: { order: 'asc', orderBy: 'vote_average' } },
+];
+
 const Movies = () => {
   const match = useRouteMatch();
   const history = useHistory();
 
-  const classes = useStyles({ cardWidth: 150 });
+  const classes = useStyles({
+    cardWidth: 150,
+    matchIsExact: match.isExact,
+    filterWidth: 200,
+  });
 
   const [movieData, setMovieData] = useState({
     count: 0,
     list: [],
   });
 
-  // TODO 筛选与排序
-  // eslint-disable-next-line no-unused-vars
-  const [order, setOrder] = useState({
-    order: 'desc',
-    orderBy: 'release_date',
+  const [openFilter, setOpenFilter] = useState(false);
+  const [filter, setFilter] = useState({
+    sort: true,
+    filter: true,
   });
 
-  const [query, setQuery] = useState({});
+  const [orderIndex, setOrderIndex] = useState(0);
+  const order = useMemo(() => orderList[orderIndex].order, [orderIndex]);
 
+  const [search, setSearch] = useState({});
   const [keyword, setKeyword] = useState('');
+
+  const [genres, setGenres] = useState([]);
+  const [selectedGenres, setSelectedGenres] = useState([]);
+  const [genresLogical, setGenresLogical] = useState('$or');
 
   useEffect(() => {
     const fetchData = async () => {
       let res = await apiRequest('TMDb.getMovies', {
         params: {
-          match: query,
+          match: {
+            $and: [
+              search,
+              selectedGenres.length > 0
+                ? {
+                    [genresLogical]: selectedGenres.map((id) => ({
+                      'genres.id': id,
+                    })),
+                  }
+                : {},
+            ],
+          },
           limit: numLimit,
           order: order.order,
           order_by: order.orderBy,
@@ -148,7 +240,17 @@ const Movies = () => {
       setMovieData(res.data.result);
     };
     fetchData();
-  }, [order, query]);
+  }, [genresLogical, order, search, selectedGenres]);
+
+  useEffect(() => {
+    if (genres.length === 0) {
+      const fetchData = async () => {
+        let res = await apiRequest('TMDb.getMovieGenres');
+        setGenres(res.data.result);
+      };
+      fetchData();
+    }
+  }, [genres]);
 
   const isBusy = useRef(false);
 
@@ -190,7 +292,7 @@ const Movies = () => {
     }
     searchTimer.current = setTimeout(() => {
       if (value) {
-        setQuery({
+        setSearch({
           $or: [
             { title: { $regex: value, $options: 'i' } },
             { original_title: { $regex: value, $options: 'i' } },
@@ -198,9 +300,27 @@ const Movies = () => {
           ],
         });
       } else {
-        setQuery({});
+        setSearch({});
       }
     }, 300);
+  };
+
+  const findSelectedGenre = (id) => {
+    return selectedGenres.find((item) => item === id);
+  };
+
+  const handleClickGenre = (id) => {
+    let newSelectedGenres = [];
+    if (findSelectedGenre(id)) {
+      newSelectedGenres = selectedGenres.filter((item) => item !== id);
+    } else {
+      newSelectedGenres = selectedGenres.concat(id);
+    }
+    setSelectedGenres(newSelectedGenres);
+  };
+
+  const clearSelectedGenres = () => {
+    setSelectedGenres([]);
   };
 
   return (
@@ -223,6 +343,14 @@ const Movies = () => {
               inputProps={{ 'aria-label': 'search' }}
             />
           </div>,
+          <Tooltip key="filter" title="筛选">
+            <IconButton
+              color={openFilter ? 'primary' : 'inherit'}
+              onClick={() => setOpenFilter((prev) => !prev)}
+            >
+              <FilterListIcon />
+            </IconButton>
+          </Tooltip>,
           <Palette key="palette" />,
           <Tooltip key="supervisor" title="后台管理">
             <IconButton
@@ -241,6 +369,111 @@ const Movies = () => {
           </Route>
           <Route path={match.path}>
             <Paper className={classes.paper}>
+              <div
+                className={clsx(classes.filter, {
+                  [classes.filterOpen]: openFilter,
+                  [classes.filterClose]: !openFilter,
+                })}
+              >
+                <List className={classes.list}>
+                  <ListItem
+                    button
+                    onClick={() =>
+                      setFilter((prev) => ({
+                        ...prev,
+                        sort: !prev.sort,
+                      }))
+                    }
+                  >
+                    <ListItemText primary="排序"></ListItemText>
+                    {filter.sort ? <ExpandLess /> : <ExpandMore />}
+                  </ListItem>
+                  <Collapse in={filter.sort} timeout="auto" unmountOnExit>
+                    <TextField
+                      fullWidth
+                      variant="outlined"
+                      value={orderList[orderIndex].text}
+                      className={classes.sortSlector}
+                      select
+                      SelectProps={{
+                        MenuProps: {
+                          anchorOrigin: {
+                            vertical: 'bottom',
+                            horizontal: 'left',
+                          },
+                          getContentAnchorEl: null,
+                        },
+                        classes: {
+                          root: classes.sortSlectorInput,
+                        },
+                      }}
+                    >
+                      {orderList.map((item, index) => (
+                        <MenuItem
+                          key={index}
+                          value={item.text}
+                          onClick={() => setOrderIndex(index)}
+                        >
+                          {item.text}
+                        </MenuItem>
+                      ))}
+                    </TextField>
+                  </Collapse>
+                  <ListItem
+                    button
+                    onClick={() =>
+                      setFilter((prev) => ({
+                        ...prev,
+                        filter: !prev.filter,
+                      }))
+                    }
+                  >
+                    <ListItemText primary="筛选"></ListItemText>
+                    {filter.filter ? <ExpandLess /> : <ExpandMore />}
+                  </ListItem>
+                  <Collapse in={filter.filter}>
+                    <div className={classes.genresDiv}>
+                      {genres.map((item) => (
+                        <Chip
+                          label={item.name}
+                          key={item.id}
+                          variant="outlined"
+                          color={
+                            findSelectedGenre(item.id) ? 'primary' : 'default'
+                          }
+                          className={classes.genresChip}
+                          onClick={() => handleClickGenre(item.id)}
+                        />
+                      ))}
+                      <Chip
+                        label="重置"
+                        variant="outlined"
+                        color="secondary"
+                        className={classes.genresChip}
+                        onClick={clearSelectedGenres}
+                      />
+                      <Chip
+                        label="$or"
+                        variant="outlined"
+                        color={
+                          genresLogical === '$or' ? 'primary' : 'secondary'
+                        }
+                        className={classes.genresChip}
+                        onClick={() => setGenresLogical('$or')}
+                      />
+                      <Chip
+                        label="$and"
+                        variant="outlined"
+                        color={
+                          genresLogical === '$and' ? 'primary' : 'secondary'
+                        }
+                        className={classes.genresChip}
+                        onClick={() => setGenresLogical('$and')}
+                      />
+                    </div>
+                  </Collapse>
+                </List>
+              </div>
               <Grid container spacing={2} className={classes.gridContainer}>
                 {movieData.list.map((movie) => (
                   <Grid item key={movie.id}>
