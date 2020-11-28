@@ -50,14 +50,14 @@ const useStyles = makeStyles((theme) => ({
   poster: {
     width: 300,
     height: 450,
-    borderRadius: theme.spacing(0.4),
+    borderRadius: theme.spacing(1),
     backgroundColor: 'rgba(0, 0, 0, 0.08)',
     flexShrink: 0,
     display: 'flex',
     '& > img': {
       width: '100%',
       opacity: 0.9,
-      borderRadius: theme.spacing(0.4),
+      borderRadius: theme.spacing(1),
     },
   },
   textPrimary: {
