@@ -131,8 +131,10 @@ const useStyles = makeStyles((theme) => ({
   genresChip: {
     margin: theme.spacing(0.5),
   },
-  search: {
+  displayWhenMatchIsExact: {
     display: ({ matchIsExact }) => (matchIsExact ? null : 'none'),
+  },
+  search: {
     position: 'relative',
     borderRadius: theme.shape.borderRadius,
     backgroundColor: fade(theme.palette.common.white, 0.15),
@@ -328,7 +330,10 @@ const Movies = () => {
       <MyAppBar
         startComponents={<TopButtons />}
         endComponents={[
-          <div className={classes.search} key="search">
+          <div
+            className={clsx(classes.search, classes.displayWhenMatchIsExact)}
+            key="search"
+          >
             <div className={classes.searchIcon}>
               <SearchIcon />
             </div>
@@ -343,7 +348,11 @@ const Movies = () => {
               inputProps={{ 'aria-label': 'search' }}
             />
           </div>,
-          <Tooltip key="filter" title="筛选">
+          <Tooltip
+            key="filter"
+            title="筛选"
+            className={classes.displayWhenMatchIsExact}
+          >
             <IconButton
               color={openFilter ? 'primary' : 'inherit'}
               onClick={() => setOpenFilter((prev) => !prev)}

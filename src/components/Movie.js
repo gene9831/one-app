@@ -1,5 +1,4 @@
 import {
-  Badge,
   Chip,
   Grid,
   makeStyles,
@@ -10,6 +9,7 @@ import {
   TableContainer,
   TableHead,
   TableRow,
+  Tooltip,
   Typography,
   useMediaQuery,
 } from '@material-ui/core';
@@ -28,6 +28,7 @@ import SubtitlesOutlinedIcon from '@material-ui/icons/SubtitlesOutlined';
 import ComponentShell from './ComponentShell';
 import DialogWithFIle from './DialogWithFIle';
 import MovieCard from './MovieCard';
+import CheckCircleIcon from '@material-ui/icons/CheckCircle';
 
 const tmdbImageUrl = 'https://image.tmdb.org/t/p';
 
@@ -143,6 +144,28 @@ const useStyles = makeStyles((theme) => ({
       flex: 0,
       padding: theme.spacing(1),
     },
+  },
+  hidden: {
+    display: 'none',
+  },
+  badgeSpan: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    width: 16,
+    height: 16,
+    transform: 'translate(-2px, 2px)',
+    backgroundColor: 'white',
+    borderRadius: '50%',
+    '& > *': {
+      transform: 'translate(-2px, -2px)',
+    },
+  },
+  colorPrimary: {
+    color: theme.palette.primary.main,
+  },
+  colorSuccess: {
+    color: theme.palette.success.main,
   },
 }));
 
@@ -311,18 +334,37 @@ const Movie = (props) => {
             <Typography variant="h6">{collectionData.name}</Typography>
             <div className={classes.collectionDiv}>
               {collectionData.parts.map((item) => (
-                <div key={item.id}>
-                  <Badge
-                    color={movieData.id === item.id ? 'secondary' : 'primary'}
-                    variant="dot"
-                    invisible={!item.exist}
+                <div key={item.id} style={{ position: 'relative' }}>
+                  <MovieCard
+                    classes={classes}
+                    movie={item}
+                    onClick={() => handleClickMovieCard(item)}
+                  />
+                  <span
+                    className={clsx(classes.badgeSpan, {
+                      [classes.hidden]: !item.exist,
+                    })}
                   >
-                    <MovieCard
-                      classes={classes}
-                      movie={item}
-                      onClick={() => handleClickMovieCard(item)}
-                    />
-                  </Badge>
+                    <Tooltip
+                      title={
+                        item.exist
+                          ? movieData.id === item.id
+                            ? '当前电影'
+                            : '已收录'
+                          : ''
+                      }
+                    >
+                      <CheckCircleIcon
+                        fontSize="small"
+                        className={clsx({
+                          [classes.colorPrimary]:
+                            item.exist && movieData.id !== item.id,
+                          [classes.colorSuccess]:
+                            item.exist && movieData.id === item.id,
+                        })}
+                      />
+                    </Tooltip>
+                  </span>
                 </div>
               ))}
             </div>
