@@ -205,7 +205,7 @@ const Movies = () => {
   const [openFilter, setOpenFilter] = useState(false);
   const [filter, setFilter] = useState({
     sort: true,
-    filter: true,
+    genres: true,
   });
 
   const [orderIndex, setOrderIndex] = useState(0);
@@ -433,14 +433,14 @@ const Movies = () => {
                     onClick={() =>
                       setFilter((prev) => ({
                         ...prev,
-                        filter: !prev.filter,
+                        genres: !prev.genres,
                       }))
                     }
                   >
-                    <ListItemText primary="筛选"></ListItemText>
-                    {filter.filter ? <ExpandLess /> : <ExpandMore />}
+                    <ListItemText primary="分类"></ListItemText>
+                    {filter.genres ? <ExpandLess /> : <ExpandMore />}
                   </ListItem>
-                  <Collapse in={filter.filter}>
+                  <Collapse in={filter.genres}>
                     <div className={classes.genresDiv}>
                       {genres.map((item) => (
                         <Chip
