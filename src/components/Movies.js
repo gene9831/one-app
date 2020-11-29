@@ -299,6 +299,7 @@ const Movies = () => {
             { title: { $regex: value, $options: 'i' } },
             { original_title: { $regex: value, $options: 'i' } },
             { overview: { $regex: value, $options: 'i' } },
+            { 'production_companies.name': { $regex: value, $options: 'i' } },
           ],
         });
       } else {
