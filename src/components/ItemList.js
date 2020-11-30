@@ -37,6 +37,7 @@ import MyContainer from './MyContainer';
 import DialogWithFIle from './DialogWithFIle';
 import TopButtons from './TopButtons';
 import RefreshIcon from '@material-ui/icons/Refresh';
+import Markdown from './Markdown';
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -75,6 +76,25 @@ const useStyles = makeStyles((theme) => ({
     width: '100%',
     height: '60px',
   },
+  tableBody: {
+    '& > tr:last-child': {
+      '& > td': {
+        borderBottom: 'none',
+      },
+    },
+  },
+  markdownHead: {
+    padding: theme.spacing(0, 2, 2, 2),
+    [theme.breakpoints.down('xs')]: {
+      padding: theme.spacing(0, 1, 1, 1),
+    },
+  },
+  markdownRead: {
+    padding: theme.spacing(2, 2, 0, 2),
+    [theme.breakpoints.down('xs')]: {
+      padding: theme.spacing(1, 1, 0, 1),
+    },
+  },
 }));
 
 const removeEndSlash = (s) => {
@@ -106,6 +126,11 @@ const ItemList = () => {
   const [rowData, setRowData] = useState({
     count: 0,
     list: [],
+  });
+
+  const [markdown, setMarkdown] = useState({
+    head: null,
+    readme: null,
   });
 
   const downSm = useMediaQuery((theme) => theme.breakpoints.down('sm'));
@@ -230,7 +255,18 @@ const ItemList = () => {
         });
         setRowData(res.data.result);
       };
-      fetchData().catch(() => {});
+      setMarkdown({});
+      const fetchData2 = async () => {
+        let res = await apiRequest('Onedrive.getMdByPath', {
+          params: {
+            drive_id: state.driveIds[state.idIndex],
+            path: removeEndSlash(state.path),
+          },
+        });
+        setMarkdown(res.data.result);
+      };
+      fetchData();
+      fetchData2();
     }
   }, [order, state]);
 
@@ -348,6 +384,14 @@ const ItemList = () => {
         ]}
       />
       <MyContainer onScrollToBottom={handleScrollToBottom}>
+        {markdown.head ? (
+          <Markdown
+            classes={{
+              root: classes.markdownHead,
+            }}
+            text={markdown.head}
+          />
+        ) : null}
         <Paper className={classes.paperContent}>
           <Breadcrumbs
             separator={<NavigateNextIcon fontSize="small" />}
@@ -395,7 +439,7 @@ const ItemList = () => {
                   ))}
                 </TableRow>
               </TableHead>
-              <TableBody>
+              <TableBody className={classes.tableBody}>
                 {computeRows.map((row, index) => (
                   <TableRow
                     key={index}
@@ -446,6 +490,14 @@ const ItemList = () => {
             ) : null}
           </TableContainer>
         </Paper>
+        {markdown.readme ? (
+          <Markdown
+            classes={{
+              root: classes.markdownRead,
+            }}
+            text={markdown.readme}
+          />
+        ) : null}
         <DialogWithFIle
           open={dialogState.openDialog}
           onClose={() =>
