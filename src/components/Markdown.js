@@ -1,15 +1,36 @@
 import React from 'react';
 import ReactMarkdown from 'react-markdown';
 import gfm from 'remark-gfm';
-import {
-  materialLight,
-  materialOceanic,
-} from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { makeStyles } from '@material-ui/core';
 import { connect } from 'react-redux';
 import { PALETTET_YPES } from '../actions';
 import PropTypes from 'prop-types';
-import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+import { PrismLight as SyntaxHighlighter } from 'react-syntax-highlighter';
+import {
+  javascript,
+  nginx,
+  bash,
+  python,
+  powershell,
+  ini,
+  json,
+  http,
+  markdown
+} from 'react-syntax-highlighter/dist/esm/languages/prism';
+import {
+  materialLight,
+  materialOceanic,
+} from 'react-syntax-highlighter/dist/esm/styles/prism';
+
+SyntaxHighlighter.registerLanguage('js', javascript);
+SyntaxHighlighter.registerLanguage('nginx', nginx);
+SyntaxHighlighter.registerLanguage('bash', bash);
+SyntaxHighlighter.registerLanguage('python', python);
+SyntaxHighlighter.registerLanguage('powershell', powershell);
+SyntaxHighlighter.registerLanguage('ini', ini);
+SyntaxHighlighter.registerLanguage('json', json);
+SyntaxHighlighter.registerLanguage('http', http);
+SyntaxHighlighter.registerLanguage('markdown', markdown);
 
 let CodeRenderer = ({ language, value, paletteType }) => {
   return (
