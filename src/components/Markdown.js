@@ -1,7 +1,6 @@
-import React from 'react';
+import React, { lazy } from 'react';
 import ReactMarkdown from 'react-markdown';
 import gfm from 'remark-gfm';
-import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import {
   materialLight,
   materialOceanic,
@@ -10,6 +9,10 @@ import { makeStyles } from '@material-ui/core';
 import { connect } from 'react-redux';
 import { PALETTET_YPES } from '../actions';
 import PropTypes from 'prop-types';
+
+const SyntaxHighlighter = lazy(() =>
+  import('react-syntax-highlighter/dist/esm/prism')
+);
 
 let CodeRenderer = ({ language, value, paletteType }) => {
   return (
