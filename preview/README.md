@@ -1,12 +1,16 @@
 # 图片预览
 
-- 文件列表
+- 文件列表（支持插入 markdown）
 
 ![item-list](./item-list.png)
 
-- TMDB 电影信息（有待完善）
+- 电影
 
-![item-movie_info](./movie_info.png)
+![item-list](./movies.png)
+
+- 电影信息
+
+![item-movie_info](./movie-info.png)
 
 - 上传管理
 

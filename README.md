@@ -2,7 +2,7 @@
 
 网站示例 [https://oneapp.top](https://oneapp.top)
 
-[图片预览](./preview/preview.md)
+[图片预览](./preview/README.md)
 
 ## before
 
@@ -16,7 +16,7 @@ const DO_MAIN = 'https://your.domain';
 
 ```bash
 npm install
-num run build
+npm run build
 ```
 
 下面是我的 `nginx` 配置，需配合[另一个项目](https://github.com/gene9831/one-app-api)使用
@@ -60,5 +60,12 @@ server {
         proxy_pass              http://127.0.0.1:5000/$sub_url;
     }
 
+    gzip on;
+    gzip_static on; # 响应静态gz文件（如果存在的话）
+    gzip_min_length 1k;
+    gzip_buffers 32 4k;
+    gzip_comp_level 4;
+    gzip_types text/css application/javascript application/json;
+    gzip_vary on;
 }
 ```
