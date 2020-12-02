@@ -6,7 +6,7 @@ module.exports = {
     "extends": [
         "eslint:recommended",
         "plugin:react/recommended",
-        "plugin:react-hooks/recommended",
+        // "plugin:react-hooks/recommended",
         "plugin:prettier/recommended"
     ],
     "globals": {
@@ -21,9 +21,12 @@ module.exports = {
         "sourceType": "module"
     },
     "plugins": [
-        "react"
+        "react",
+        "react-hooks"
     ],
     "rules": {
+        "react-hooks/rules-of-hooks": "error",
+        "react-hooks/exhaustive-deps": "warn"
     },
     "settings": {
         "react": {                  
