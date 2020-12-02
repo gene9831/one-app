@@ -168,7 +168,7 @@ const useStyles = makeStyles((theme) => ({
     transition: theme.transitions.create('width'),
     width: '100%',
     [theme.breakpoints.up('sm')]: {
-      width: '12ch',
+      width: '15ch',
       '&:focus': {
         width: '20ch',
       },
@@ -298,8 +298,9 @@ const Movies = () => {
           $or: [
             { title: { $regex: value, $options: 'i' } },
             { original_title: { $regex: value, $options: 'i' } },
-            { overview: { $regex: value, $options: 'i' } },
             { 'production_companies.name': { $regex: value, $options: 'i' } },
+            { 'directors.name': { $regex: value, $options: 'i' } },
+            { 'directors.name_zh': { $regex: value } },
           ],
         });
       } else {
@@ -339,7 +340,7 @@ const Movies = () => {
               <SearchIcon />
             </div>
             <InputBase
-              placeholder="搜索"
+              placeholder="电影、导演..."
               value={keyword}
               onChange={handleChangeKeyword}
               classes={{
