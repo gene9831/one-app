@@ -23,6 +23,9 @@ import FilterListIcon from '@material-ui/icons/FilterList';
 import clsx from 'clsx';
 import TopRightButtons from './TopRightButtons';
 import MovieFilter from './MovieFilter';
+import { connect } from 'react-redux';
+import PropTypes from 'prop-types';
+import { PALETTET_YPES } from '../actions';
 
 const useStyles = makeStyles((theme) => ({
   actionArea: {
@@ -133,7 +136,7 @@ const orderList = [
   { text: '评分升序', order: { order: 'asc', orderBy: 'vote_average' } },
 ];
 
-const Movies = () => {
+let Movies = ({ paletteType }) => {
   const match = useRouteMatch();
   const history = useHistory();
 
@@ -280,10 +283,14 @@ const Movies = () => {
             className={classes.displayWhenMatchIsExact}
           >
             <IconButton
-              color={openFilter ? 'primary' : 'inherit'}
+              color={
+                openFilter && paletteType === PALETTET_YPES.DARK
+                  ? 'primary'
+                  : 'inherit'
+              }
               onClick={() => setOpenFilter((prev) => !prev)}
             >
-              <FilterListIcon color="inherit" />
+              <FilterListIcon />
             </IconButton>
           </Tooltip>,
           <TopRightButtons key="rightButtons" />,
@@ -352,6 +359,14 @@ const Movies = () => {
       </MyContainer>
     </>
   );
+};
+
+Movies = connect((state) => ({
+  paletteType: state.palette.type,
+}))(Movies);
+
+Movies.propTypes = {
+  paletteType: PropTypes.string,
 };
 
 export default Movies;

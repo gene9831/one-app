@@ -36,8 +36,8 @@ const TopRightButtons = ({ classes, ...others }) => {
     <div className={clsx(styles.root, classes.root)} {...others}>
       {downXs ? (
         <>
-          <IconButton onClick={handleClick}>
-            <MoreVertIcon color="inherit" />
+          <IconButton color="inherit" onClick={handleClick}>
+            <MoreVertIcon />
           </IconButton>
           <Menu
             anchorEl={anchorEl}

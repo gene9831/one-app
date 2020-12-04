@@ -15,7 +15,7 @@ import {
   ini,
   json,
   http,
-  markdown
+  markdown,
 } from 'react-syntax-highlighter/dist/esm/languages/prism';
 import {
   materialLight,
