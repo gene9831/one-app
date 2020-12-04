@@ -37,7 +37,7 @@ const TopRightButtons = ({ classes, ...others }) => {
       {downXs ? (
         <>
           <IconButton onClick={handleClick}>
-            <MoreVertIcon />
+            <MoreVertIcon color="inherit" />
           </IconButton>
           <Menu
             anchorEl={anchorEl}

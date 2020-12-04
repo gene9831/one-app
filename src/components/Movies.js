@@ -283,7 +283,7 @@ const Movies = () => {
               color={openFilter ? 'primary' : 'inherit'}
               onClick={() => setOpenFilter((prev) => !prev)}
             >
-              <FilterListIcon />
+              <FilterListIcon color="inherit" />
             </IconButton>
           </Tooltip>,
           <TopRightButtons key="rightButtons" />,

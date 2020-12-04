@@ -65,7 +65,7 @@ const TopLeftButtons = () => {
       {downXs ? (
         <>
           <IconButton onClick={() => setOpenDrawer(true)}>
-            <MenuIcon />
+            <MenuIcon color="inherit" />
           </IconButton>
           <Drawer
             open={openDrawer}
