@@ -5,6 +5,7 @@ import Toolbar from '@material-ui/core/Toolbar';
 import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
 import ForkMe from './ForkMe';
+import { useMediaQuery } from '@material-ui/core';
 
 const useStyles = makeStyles(() => ({
   div: {
@@ -15,6 +16,7 @@ const useStyles = makeStyles(() => ({
 let MyAppBar = (props) => {
   const { startComponents, endComponents, color, classes } = props;
   const styles = useStyles();
+  const downXs = useMediaQuery((theme) => theme.breakpoints.down('xs'));
 
   return (
     <AppBar position="fixed" className={classes.appBar} color={color}>
@@ -22,8 +24,12 @@ let MyAppBar = (props) => {
         {startComponents}
         <div className={styles.div}></div>
         {endComponents}
-        <div key="marginRight" style={{ marginRight: 32 }}></div>
-        <ForkMe url="https://github.com/gene9831/one-app" />
+        {downXs ? null : (
+          <>
+            <div key="marginRight" style={{ marginRight: 32 }}></div>
+            <ForkMe url="https://github.com/gene9831/one-app" />
+          </>
+        )}
       </Toolbar>
     </AppBar>
   );

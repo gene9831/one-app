@@ -12,6 +12,7 @@ import {
   Tooltip,
   Typography,
   useMediaQuery,
+  useTheme,
 } from '@material-ui/core';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useHistory, useParams } from 'react-router-dom';
@@ -38,7 +39,6 @@ const useStyles = makeStyles((theme) => ({
     background: ({ backdropsUrl }) =>
       `linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.3)), url('${backdropsUrl}') 0% 0% / cover no-repeat`,
     overflowY: 'auto',
-    paddingRight: 0,
   },
   collectionPaper: {
     display: 'flex',
@@ -89,7 +89,7 @@ const useStyles = makeStyles((theme) => ({
   },
   textDiv: {
     marginLeft: theme.spacing(3),
-    paddingRight: theme.spacing(2),
+    paddingRight: theme.spacing(1),
     overflowY: 'auto',
     ...(detectMob()
       ? {}
@@ -171,10 +171,15 @@ const useStyles = makeStyles((theme) => ({
 
 // eslint-disable-next-line no-unused-vars
 let AdaptivePaper = ({ width, height, targetRef, children, ...others }) => {
+  const theme = useTheme();
   return (
     <Paper
       {...others}
-      style={{ height: width ? (width / 16) * 9 : 'auto', minHeight: 500 }}
+      style={{
+        height: width ? (width / 16) * 9 : 'auto',
+        minHeight: 500,
+        paddingRight: theme.spacing(1),
+      }}
     >
       {children}
     </Paper>

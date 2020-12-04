@@ -8,7 +8,6 @@ import {
 import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import clsx from 'clsx';
-import RefreshIcon from '@material-ui/icons/Refresh';
 
 const tmdbImageUrl = 'https://image.tmdb.org/t/p';
 
@@ -52,34 +51,4 @@ MovieCard.propTypes = {
   movie: PropTypes.object,
 };
 
-const LoadMoreCard = ({ classes, ...others }) => {
-  return (
-    <CardActionArea className={classes.loadMore} {...others}>
-      <Card className={classes.card}>
-        <CardMedia className={classes.media}>
-          <div
-            style={{
-              position: 'absolute',
-              width: '100%',
-              height: '100%',
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'center',
-              alignItems: 'center',
-            }}
-          >
-            <RefreshIcon color="disabled" />
-            <Typography color="textSecondary">加载更多</Typography>
-          </div>
-        </CardMedia>
-      </Card>
-    </CardActionArea>
-  );
-};
-
-LoadMoreCard.propTypes = {
-  classes: PropTypes.object,
-};
-
-export { LoadMoreCard };
 export default MovieCard;

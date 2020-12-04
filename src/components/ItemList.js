@@ -35,7 +35,7 @@ import SubtitlesOutlinedIcon from '@material-ui/icons/SubtitlesOutlined';
 import MovieCreationOutlinedIcon from '@material-ui/icons/MovieCreationOutlined';
 import MyContainer from './MyContainer';
 import DialogWithFIle from './DialogWithFIle';
-import TopButtons from './TopButtons';
+import TopLeftButtons from './TopLeftButtons';
 import RefreshIcon from '@material-ui/icons/Refresh';
 import Markdown from './Markdown';
 
@@ -364,7 +364,7 @@ const ItemList = () => {
   return (
     <React.Fragment>
       <MyAppBar
-        startComponents={<TopButtons />}
+        startComponents={<TopLeftButtons />}
         endComponents={[
           <Palette key="palette" />,
           <Tooltip key="supervisor" title="后台管理">

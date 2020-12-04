@@ -1,37 +1,28 @@
 import {
-  Chip,
-  Collapse,
+  Button,
   fade,
   Grid,
   IconButton,
   InputBase,
-  Link,
-  List,
-  ListItem,
-  ListItemText,
   makeStyles,
-  MenuItem,
   Paper,
-  styled,
-  TextField,
   Tooltip,
   Typography,
 } from '@material-ui/core';
-import SettingsIcon from '@material-ui/icons/Settings';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Route, Switch, useHistory, useRouteMatch } from 'react-router-dom';
 import MyContainer from './MyContainer';
-import Palette from './Palette';
 import apiRequest from '../api';
 import Movie from './Movie';
 import MyAppBar from './MyAppBar';
-import TopButtons from './TopButtons';
+import TopLeftButtons from './TopLeftButtons';
 import SearchIcon from '@material-ui/icons/Search';
 import { RobotDeadOutline } from './Icons';
-import MovieCard, { LoadMoreCard } from './MovieCard';
+import MovieCard from './MovieCard';
 import FilterListIcon from '@material-ui/icons/FilterList';
-import { ExpandLess, ExpandMore } from '@material-ui/icons';
 import clsx from 'clsx';
+import TopRightButtons from './TopRightButtons';
+import MovieFilter from './MovieFilter';
 
 const useStyles = makeStyles((theme) => ({
   actionArea: {
@@ -80,56 +71,13 @@ const useStyles = makeStyles((theme) => ({
   paper: {
     padding: theme.spacing(2),
     display: 'flex',
-    '& > *': {
-      paddingRight: theme.spacing(2),
+    [theme.breakpoints.down('xs')]: {
+      flexDirection: 'column',
     },
-    '& > *:last-child': {
-      paddingRight: theme.spacing(0),
-    },
-  },
-  filterOpen: {
-    width: ({ filterWidth }) => filterWidth,
-    flexShrink: 0,
-    transition: theme.transitions.create('width', {
-      easing: theme.transitions.easing.sharp,
-      duration: theme.transitions.duration.enteringScreen,
-    }),
-  },
-  filterClose: {
-    width: 0,
-    transition: theme.transitions.create('width', {
-      easing: theme.transitions.easing.sharp,
-      duration: theme.transitions.duration.leavingScreen,
-    }),
-    overflowX: 'hidden',
-    paddingRight: theme.spacing(0),
   },
   gridContainer: {
     justifyContent: 'center',
     flexGrow: 1,
-  },
-  list: {
-    '&> *': {
-      borderRadius: theme.shape.borderRadius,
-      whiteSpace: 'nowrap',
-    },
-  },
-  sortSlector: {
-    padding: theme.spacing(1, 2),
-    whiteSpace: 'nowrap',
-  },
-  sortSlectorInput: {
-    paddingTop: theme.spacing(1),
-    paddingBottom: theme.spacing(1),
-  },
-  genresDiv: {
-    width: ({ filterWidth }) => filterWidth - theme.spacing(1),
-    display: 'flex',
-    flexWrap: 'wrap',
-    justifyContent: 'center',
-  },
-  genresChip: {
-    margin: theme.spacing(0.5),
   },
   displayWhenMatchIsExact: {
     display: ({ matchIsExact }) => (matchIsExact ? null : 'none'),
@@ -141,11 +89,9 @@ const useStyles = makeStyles((theme) => ({
     '&:hover': {
       backgroundColor: fade(theme.palette.common.white, 0.25),
     },
-    marginLeft: 0,
-    marginRight: theme.spacing(2),
+    margin: theme.spacing(0, 2),
     width: '100%',
     [theme.breakpoints.up('sm')]: {
-      marginLeft: theme.spacing(1),
       width: 'auto',
     },
   },
@@ -176,7 +122,7 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-const numLimit = 25;
+const numLimit = 28;
 
 const orderList = [
   { text: '热门降序', order: { order: 'desc', orderBy: 'popularity' } },
@@ -203,10 +149,6 @@ const Movies = () => {
   });
 
   const [openFilter, setOpenFilter] = useState(false);
-  const [filter, setFilter] = useState({
-    sort: true,
-    genres: true,
-  });
 
   const [orderIndex, setOrderIndex] = useState(0);
   const order = useMemo(() => orderList[orderIndex].order, [orderIndex]);
@@ -309,28 +251,10 @@ const Movies = () => {
     }, 300);
   };
 
-  const findSelectedGenre = (id) => {
-    return selectedGenres.find((item) => item === id);
-  };
-
-  const handleClickGenre = (id) => {
-    let newSelectedGenres = [];
-    if (findSelectedGenre(id)) {
-      newSelectedGenres = selectedGenres.filter((item) => item !== id);
-    } else {
-      newSelectedGenres = selectedGenres.concat(id);
-    }
-    setSelectedGenres(newSelectedGenres);
-  };
-
-  const clearSelectedGenres = () => {
-    setSelectedGenres([]);
-  };
-
   return (
     <>
       <MyAppBar
-        startComponents={<TopButtons />}
+        startComponents={<TopLeftButtons />}
         endComponents={[
           <div
             className={clsx(classes.search, classes.displayWhenMatchIsExact)}
@@ -362,15 +286,7 @@ const Movies = () => {
               <FilterListIcon />
             </IconButton>
           </Tooltip>,
-          <Palette key="palette" />,
-          <Tooltip key="supervisor" title="后台管理">
-            <IconButton
-              component={styled(Link)(() => ({ color: 'inherit' }))}
-              href="/admin"
-            >
-              <SettingsIcon />
-            </IconButton>
-          </Tooltip>,
+          <TopRightButtons key="rightButtons" />,
         ]}
       />
       <MyContainer onScrollToBottom={handleScrollToBottom}>
@@ -380,111 +296,17 @@ const Movies = () => {
           </Route>
           <Route path={match.path}>
             <Paper className={classes.paper}>
-              <div
-                className={clsx(classes.filter, {
-                  [classes.filterOpen]: openFilter,
-                  [classes.filterClose]: !openFilter,
-                })}
-              >
-                <List className={classes.list}>
-                  <ListItem
-                    button
-                    onClick={() =>
-                      setFilter((prev) => ({
-                        ...prev,
-                        sort: !prev.sort,
-                      }))
-                    }
-                  >
-                    <ListItemText primary="排序"></ListItemText>
-                    {filter.sort ? <ExpandLess /> : <ExpandMore />}
-                  </ListItem>
-                  <Collapse in={filter.sort} timeout="auto" unmountOnExit>
-                    <TextField
-                      fullWidth
-                      variant="outlined"
-                      value={orderList[orderIndex].text}
-                      className={classes.sortSlector}
-                      select
-                      SelectProps={{
-                        MenuProps: {
-                          anchorOrigin: {
-                            vertical: 'bottom',
-                            horizontal: 'left',
-                          },
-                          getContentAnchorEl: null,
-                        },
-                        classes: {
-                          root: classes.sortSlectorInput,
-                        },
-                      }}
-                    >
-                      {orderList.map((item, index) => (
-                        <MenuItem
-                          key={index}
-                          value={item.text}
-                          onClick={() => setOrderIndex(index)}
-                        >
-                          {item.text}
-                        </MenuItem>
-                      ))}
-                    </TextField>
-                  </Collapse>
-                  <ListItem
-                    button
-                    onClick={() =>
-                      setFilter((prev) => ({
-                        ...prev,
-                        genres: !prev.genres,
-                      }))
-                    }
-                  >
-                    <ListItemText primary="分类"></ListItemText>
-                    {filter.genres ? <ExpandLess /> : <ExpandMore />}
-                  </ListItem>
-                  <Collapse in={filter.genres}>
-                    <div className={classes.genresDiv}>
-                      {genres.map((item) => (
-                        <Chip
-                          label={item.name}
-                          key={item.id}
-                          variant="outlined"
-                          color={
-                            findSelectedGenre(item.id) ? 'primary' : 'default'
-                          }
-                          className={classes.genresChip}
-                          onClick={() => handleClickGenre(item.id)}
-                        />
-                      ))}
-                      <Chip
-                        label="重置"
-                        variant="outlined"
-                        color="secondary"
-                        className={classes.genresChip}
-                        onClick={clearSelectedGenres}
-                      />
-                      <Chip
-                        label="$or"
-                        variant="outlined"
-                        color={
-                          genresLogical === '$or' ? 'primary' : 'secondary'
-                        }
-                        className={classes.genresChip}
-                        onClick={() => setGenresLogical('$or')}
-                      />
-                      <Chip
-                        label="$and"
-                        variant="outlined"
-                        color={
-                          genresLogical === '$and' ? 'primary' : 'secondary'
-                        }
-                        className={classes.genresChip}
-                        onClick={() => setGenresLogical('$and')}
-                      />
-                    </div>
-                  </Collapse>
-                </List>
-              </div>
+              <MovieFilter
+                open={openFilter}
+                orderList={orderList}
+                orderIndex={orderIndex}
+                setOrderIndex={setOrderIndex}
+                genres={genres}
+                selectedGenres={selectedGenres}
+                setSelectedGenres={setSelectedGenres}
+                genresLogical={genresLogical}
+                setGenresLogical={setGenresLogical}
+              />
               <Grid container spacing={2} className={classes.gridContainer}>
                 {movieData.list.map((movie) => (
                   <Grid item key={movie.id}>
@@ -496,11 +318,15 @@ const Movies = () => {
                   </Grid>
                 ))}
                 {movieData.list.length < movieData.count ? (
-                  <Grid item>
-                    <LoadMoreCard
-                      classes={classes}
+                  <Grid item xs={12} style={{ textAlign: 'center' }}>
+                    <Button
                       onClick={handleScrollToBottom}
-                    />
+                      variant="outlined"
+                      color="primary"
+                      style={{ width: 300 }}
+                    >
+                      加载更多
+                    </Button>
                   </Grid>
                 ) : null}
                 {movieData.count === 0 ? (
