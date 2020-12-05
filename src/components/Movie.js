@@ -40,6 +40,9 @@ const useStyles = makeStyles((theme) => ({
       `linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.3)), url('${backdropsUrl}') 0% 0% / cover no-repeat`,
     overflowY: 'auto',
   },
+  paper2: {
+    flexDirection: 'column',
+  },
   collectionPaper: {
     display: 'flex',
     flexDirection: 'column',
@@ -59,6 +62,15 @@ const useStyles = makeStyles((theme) => ({
       opacity: 0.9,
       borderRadius: theme.spacing(1),
     },
+  },
+  poster2: {
+    textAlign: 'center',
+    borderRadius: theme.spacing(1),
+    '& > img': {
+      opacity: 0.9,
+      borderRadius: theme.spacing(1),
+    },
+    paddingBottom: theme.spacing(0.5),
   },
   textPrimary: {
     color: '#fff',
@@ -88,8 +100,6 @@ const useStyles = makeStyles((theme) => ({
     textOverflow: 'ellipsis',
   },
   textDiv: {
-    marginLeft: theme.spacing(3),
-    paddingRight: theme.spacing(1),
     overflowY: 'auto',
     ...(detectMob()
       ? {}
@@ -102,6 +112,13 @@ const useStyles = makeStyles((theme) => ({
             backgroundColor: 'rgba(255, 255, 255, 0.2)',
           },
         }),
+  },
+  textDivEdge: {
+    marginLeft: theme.spacing(2),
+    paddingRight: theme.spacing(1),
+  },
+  textDivMaxHeight: {
+    maxHeight: 400,
   },
   movieTitle: {
     display: 'flex',
@@ -281,56 +298,117 @@ const Movie = (props) => {
 
   return (
     <Grid container spacing={downXs ? 1 : downSm ? 2 : 3}>
-      <Grid item xs={12}>
-        <AdaptivePaper className={clsx(classes.paper, classes.paperPadding)}>
-          <div className={classes.poster}>
+      {downXs ? (
+        <Grid item xs={12}>
+          <Paper
+            className={clsx(
+              classes.paper,
+              classes.paper2,
+              classes.paperPadding
+            )}
+          >
+            <div className={classes.poster2}>
+              {movieData ? (
+                <img
+                  src={`${tmdbImageUrl}/w500${movieData.images.posters[0].file_path}`}
+                  width={300}
+                  height={450}
+                  alt="poster"
+                />
+              ) : null}
+            </div>
             {movieData ? (
-              <img
-                src={`${tmdbImageUrl}/w500${movieData.images.posters[0].file_path}`}
-                alt="poster"
-              />
-            ) : null}
-          </div>
-          {movieData ? (
-            <div className={classes.textDiv}>
-              <div className={classes.movieTitle}>
-                <Typography variant="h4" className={classes.textPrimary}>
-                  {movieData.title}
-                </Typography>
-                <Typography
-                  className={clsx(classes.textSecondary, classes.releaseDate)}
-                >
-                  ({movieData.release_date.slice(0, 4)})
-                </Typography>
-              </div>
-              {movieData.genres.map((item) => (
+              <div className={clsx(classes.textDiv, classes.textDivMaxHeight)}>
+                <div className={classes.movieTitle}>
+                  <Typography variant="h4" className={classes.textPrimary}>
+                    {movieData.title}
+                  </Typography>
+                  <Typography
+                    className={clsx(classes.textSecondary, classes.releaseDate)}
+                  >
+                    ({movieData.release_date.slice(0, 4)})
+                  </Typography>
+                </div>
+                {movieData.genres.map((item) => (
+                  <Chip
+                    key={item.name}
+                    variant="outlined"
+                    size="small"
+                    label={item.name}
+                    className={clsx(classes.textSecondary, classes.chipBorder)}
+                  />
+                ))}
                 <Chip
-                  key={item.name}
                   variant="outlined"
                   size="small"
-                  label={item.name}
+                  label={`${movieData.runtime}分钟`}
                   className={clsx(classes.textSecondary, classes.chipBorder)}
                 />
-              ))}
-              <Chip
-                variant="outlined"
-                size="small"
-                label={`${movieData.runtime}分钟`}
-                className={clsx(classes.textSecondary, classes.chipBorder)}
-              />
-              <Typography
-                variant="h6"
-                className={clsx(classes.textPrimary, classes.overview)}
-              >
-                剧情简介
-              </Typography>
-              <Typography variant="body1" className={classes.textPrimary}>
-                {movieData.overview}
-              </Typography>
+                <Typography
+                  variant="h6"
+                  className={clsx(classes.textPrimary, classes.overview)}
+                >
+                  剧情简介
+                </Typography>
+                <Typography variant="body1" className={classes.textPrimary}>
+                  {movieData.overview}
+                </Typography>
+              </div>
+            ) : null}
+          </Paper>
+        </Grid>
+      ) : (
+        <Grid item xs={12}>
+          <AdaptivePaper className={clsx(classes.paper, classes.paperPadding)}>
+            <div className={classes.poster}>
+              {movieData ? (
+                <img
+                  src={`${tmdbImageUrl}/w500${movieData.images.posters[0].file_path}`}
+                  alt="poster"
+                />
+              ) : null}
             </div>
-          ) : null}
-        </AdaptivePaper>
-      </Grid>
+            {movieData ? (
+              <div className={clsx(classes.textDiv, classes.textDivEdge)}>
+                <div className={classes.movieTitle}>
+                  <Typography variant="h4" className={classes.textPrimary}>
+                    {movieData.title}
+                  </Typography>
+                  <Typography
+                    className={clsx(classes.textSecondary, classes.releaseDate)}
+                  >
+                    ({movieData.release_date.slice(0, 4)})
+                  </Typography>
+                </div>
+                {movieData.genres.map((item) => (
+                  <Chip
+                    key={item.name}
+                    variant="outlined"
+                    size="small"
+                    label={item.name}
+                    className={clsx(classes.textSecondary, classes.chipBorder)}
+                  />
+                ))}
+                <Chip
+                  variant="outlined"
+                  size="small"
+                  label={`${movieData.runtime}分钟`}
+                  className={clsx(classes.textSecondary, classes.chipBorder)}
+                />
+                <Typography
+                  variant="h6"
+                  className={clsx(classes.textPrimary, classes.overview)}
+                >
+                  剧情简介
+                </Typography>
+                <Typography variant="body1" className={classes.textPrimary}>
+                  {movieData.overview}
+                </Typography>
+              </div>
+            ) : null}
+          </AdaptivePaper>
+        </Grid>
+      )}
       {collectionData ? (
         <Grid item xs={12}>
           <Paper

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import clsx from 'clsx';
 import {
+  Badge,
   Chip,
   Collapse,
   Grid,
@@ -74,7 +75,11 @@ const useStyles = makeStyles((theme) => ({
   },
   genresDiv2: {
     display: 'flex',
+    flexDirection: 'column',
     overflowX: 'auto',
+  },
+  genresRow: {
+    display: 'flex',
   },
   container: {
     alignItems: 'center',
@@ -82,6 +87,12 @@ const useStyles = makeStyles((theme) => ({
   twoChip: {
     display: 'flex',
     flexDirection: 'column',
+  },
+  badge: {
+    height: theme.spacing(2),
+    minWidth: theme.spacing(2),
+    borderRadius: theme.spacing(1),
+    padding: theme.spacing(0, 0.5),
   },
 }));
 
@@ -164,46 +175,60 @@ const MovieFilter = ({
           </TextField>
         </Grid>
         <Grid item xs={2}>
-          <Typography>分类</Typography>
+          <Badge
+            badgeContent={selectedGenres.length}
+            color="secondary"
+            classes={{ badge: classes.badge }}
+          >
+            <Typography>分类</Typography>
+          </Badge>
         </Grid>
         <Grid item xs={10}>
           <div className={classes.genresDiv2}>
-            {[...new Array(Math.ceil(genres.length / 2)).keys()].map(
-              (index) => (
-                <div key={index} classes={classes.twoChip}>
-                  {(() => {
-                    const item1 = genres[index * 2];
-                    const item2 = genres[index * 2 + 1];
-                    return (
-                      <>
+            <div className={classes.genresRow}>
+              {[...new Array(Math.ceil(genres.length / 2)).keys()].map(
+                (index) => (
+                  <div key={index} classes={classes.twoChip}>
+                    {(() => {
+                      const item = genres[index * 2];
+                      return (
                         <Chip
-                          label={item1.name}
+                          label={item.name}
                           variant="outlined"
                           color={
-                            findSelectedGenre(item1.id) ? 'primary' : 'default'
+                            findSelectedGenre(item.id) ? 'primary' : 'default'
                           }
                           className={classes.genresChip}
-                          onClick={() => handleClickGenre(item1.id)}
+                          onClick={() => handleClickGenre(item.id)}
                         />
-                        {item2 ? (
-                          <Chip
-                            label={item2.name}
-                            variant="outlined"
-                            color={
-                              findSelectedGenre(item2.id)
-                                ? 'primary'
-                                : 'default'
-                            }
-                            className={classes.genresChip}
-                            onClick={() => handleClickGenre(item2.id)}
-                          />
-                        ) : null}
-                      </>
-                    );
-                  })()}
-                </div>
-              )
-            )}
+                      );
+                    })()}
+                  </div>
+                )
+              )}
+            </div>
+            <div className={classes.genresRow}>
+              {[...new Array(Math.ceil(genres.length / 2)).keys()].map(
+                (index) => (
+                  <div key={index} classes={classes.twoChip}>
+                    {(() => {
+                      const item = genres[index * 2 + 1];
+                      return item ? (
+                        <Chip
+                          label={item.name}
+                          variant="outlined"
+                          color={
+                            findSelectedGenre(item.id) ? 'primary' : 'default'
+                          }
+                          className={classes.genresChip}
+                          onClick={() => handleClickGenre(item.id)}
+                        />
+                      ) : null;
+                    })()}
+                  </div>
+                )
+              )}
+            </div>
           </div>
           <Chip
             label="重置"
