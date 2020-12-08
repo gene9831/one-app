@@ -344,7 +344,7 @@ let Accounts = (props) => {
   };
 
   const handleUpdateMovies = () => {
-    handleOperate('TMDb.updateMovies', { drive_ids: selected });
+    handleOperate('TMDb.updateMovieData', { drive_ids: selected });
   };
 
   const iconButtons = [
@@ -361,7 +361,7 @@ let Accounts = (props) => {
       Icon: CloudDownloadIcon,
     },
     {
-      name: 'updateMovies',
+      name: 'updateMovieData',
       text: '更新电影数据',
       onClick: handleUpdateMovies,
       Icon: MoviePlus,
