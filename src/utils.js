@@ -31,6 +31,8 @@ const detectMob = () => {
   });
 };
 
+const isMobile = detectMob();
+
 const descendingComparator = (a, b, orderBy) => {
   let aa = a[orderBy];
   let bb = b[orderBy];
@@ -38,12 +40,8 @@ const descendingComparator = (a, b, orderBy) => {
     aa = aa.toUpperCase();
     bb = bb.toUpperCase();
   }
-  if (bb < aa) {
-    return -1;
-  }
-  if (bb > aa) {
-    return 1;
-  }
+  if (bb < aa) return -1;
+  if (bb > aa) return 1;
   return 0;
 };
 
@@ -63,4 +61,4 @@ const stableSort = (array, comparator) => {
   return stabilizedThis.map((el) => el[0]);
 };
 
-export { bTokmg, random, detectMob, getComparator, stableSort };
+export { bTokmg, random, detectMob, isMobile, getComparator, stableSort };
