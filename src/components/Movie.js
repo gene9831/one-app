@@ -20,7 +20,7 @@ import apiRequest from '../api';
 import PropTypes from 'prop-types';
 import clsx from 'clsx';
 import { withResizeDetector } from 'react-resize-detector';
-import { bTokmg, detectMob, getComparator, random, stableSort } from '../utils';
+import { bTokmg, getComparator, isMobile, random, stableSort } from '../utils';
 import FolderOpenIcon from '@material-ui/icons/FolderOpen';
 import InsertDriveFileOutlinedIcon from '@material-ui/icons/InsertDriveFileOutlined';
 import { PlayBoxOutline } from './Icons';
@@ -33,11 +33,17 @@ import CheckCircleIcon from '@material-ui/icons/CheckCircle';
 
 const tmdbImageUrl = 'https://image.tmdb.org/t/p';
 
+const extendBackDropurl = (url) => `${tmdbImageUrl}/w1280${url}`;
+
 const useStyles = makeStyles((theme) => ({
   paper: {
     display: 'flex',
-    background: ({ backdropsUrl }) =>
-      `linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.3)), url('${backdropsUrl}') 0% 0% / cover no-repeat`,
+    background: ({ randomBackdropIndex, backdropUrls }) =>
+      randomBackdropIndex >= 0
+        ? `linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.3)), url('${extendBackDropurl(
+            backdropUrls[randomBackdropIndex].file_path
+          )}') 50% 50% / cover no-repeat`
+        : '',
     overflowY: 'auto',
   },
   paper2: {
@@ -46,6 +52,15 @@ const useStyles = makeStyles((theme) => ({
   collectionPaper: {
     display: 'flex',
     flexDirection: 'column',
+    background: ({ collectionBackdropUrl, backdropUrls }) =>
+      `linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.3)), url('${
+        collectionBackdropUrl
+          ? collectionBackdropUrl
+          : backdropUrls.length > 0
+          ? extendBackDropurl(backdropUrls[0].file_path)
+          : ''
+      }') 50% 50% / cover no-repeat`,
+    overflowY: 'auto',
   },
   paperPadding: {
     padding: theme.spacing(2),
@@ -101,7 +116,7 @@ const useStyles = makeStyles((theme) => ({
   },
   textDiv: {
     overflowY: 'auto',
-    ...(detectMob()
+    ...(isMobile
       ? {}
       : {
           '&::-webkit-scrollbar': {
@@ -138,17 +153,14 @@ const useStyles = makeStyles((theme) => ({
     width: '100%',
     height: 0,
     paddingBottom: '150%',
-    backgroundColor: 'rgba(0, 0, 0, 0.08)',
+    backgroundColor: 'rgba(0, 0, 0, 0.3)',
     position: 'relative',
   },
   content: {
-    width: '100%',
-    position: 'absolute',
-    bottom: 0,
-    borderRadius: theme.spacing(0, 0, 0.5, 0.5),
-    backgroundColor: 'rgba(0, 0, 0, 0.6)',
-    padding: theme.spacing(0.5, 1),
-    transition: theme.transitions.create('transform'),
+    transform: 'translate(0, -100%)',
+  },
+  movieCardTitle: {
+    marginTop: theme.spacing(0.5),
   },
   title: {
     color: '#fff',
@@ -161,6 +173,17 @@ const useStyles = makeStyles((theme) => ({
       flex: 0,
       padding: theme.spacing(1),
     },
+    ...(isMobile
+      ? {}
+      : {
+          '&::-webkit-scrollbar': {
+            height: theme.spacing(1),
+          },
+          '&::-webkit-scrollbar-thumb': {
+            borderRadius: theme.spacing(0.5),
+            backgroundColor: 'rgba(255, 255, 255, 0.2)',
+          },
+        }),
   },
   hidden: {
     display: 'none',
@@ -231,36 +254,45 @@ const Movie = (props) => {
   const [movieData, setMovieData] = useState(props.movie);
   const [resourceItems, setResourceItems] = useState([]);
   const [selectedFile, setSelectedFile] = useState(null);
-  const [collectionData, setCollectionData] = useState(null);
   const history = useHistory();
 
-  const collectionId = useMemo(() => {
-    if (movieData && movieData.belongs_to_collection) {
-      return movieData.belongs_to_collection.id;
-    }
-    return null;
-  }, [movieData]);
+  const collectionData = useMemo(
+    () => (movieData || {}).belongs_to_collection,
+    [movieData]
+  );
 
   const downXs = useMediaQuery((theme) => theme.breakpoints.down('xs'));
   const downSm = useMediaQuery((theme) => theme.breakpoints.down('sm'));
 
-  const backdropsUrl = React.useMemo(() => {
-    if (!movieData) return '';
-    const backdrops = movieData.images.backdrops;
-    return `${tmdbImageUrl}/w1280${
-      backdrops[random(backdrops.length)].file_path
-    }`;
+  const backdropUrls = useMemo(() => {
+    if (!movieData) return [];
+    return movieData.images.backdrops;
   }, [movieData]);
 
+  const randomBackdropIndex = useMemo(() => {
+    if (backdropUrls.length == 0) return -1;
+    return random(backdropUrls.length);
+  }, [backdropUrls]);
+
+  const collectionBackdropUrl = useMemo(() => {
+    if (!collectionData || !collectionData.backdrop_path) return '';
+    return extendBackDropurl(collectionData.backdrop_path);
+  }, [collectionData]);
+
   const classes = useStyles({
-    backdropsUrl: backdropsUrl,
+    backdropUrls: backdropUrls,
+    randomBackdropIndex: randomBackdropIndex,
+    collectionBackdropUrl: collectionBackdropUrl,
     cardWidth: 150,
   });
 
   useEffect(() => {
     const fetchData = async () => {
       let res = await apiRequest('TMDb.getMovie', {
-        params: [parseInt(movieId)],
+        params: {
+          movie_id: parseInt(movieId),
+          append_collection: true,
+        },
       });
       setMovieData(res.data.result);
     };
@@ -277,20 +309,8 @@ const Movie = (props) => {
     fetchData();
   }, [movieId]);
 
-  useEffect(() => {
-    if (typeof collectionId === 'number') {
-      const fetchData = async () => {
-        let res = await apiRequest('TMDb.getCollection', {
-          params: [collectionId],
-        });
-        setCollectionData(res.data.result);
-      };
-      fetchData();
-    }
-  }, [collectionId]);
-
   const handleClickMovieCard = (movie) => {
-    if (!movie.exist || movieData.id === movie.id) {
+    if (!movie.included || movieData.id === movie.id) {
       return;
     }
     history.push(`./${movie.id}`);
@@ -414,23 +434,41 @@ const Movie = (props) => {
           <Paper
             className={clsx(classes.collectionPaper, classes.paperPadding)}
           >
-            <Typography variant="h6">{collectionData.name}</Typography>
+            <Typography variant="h6" className={classes.textPrimary}>
+              {collectionData.name}
+            </Typography>
+            <Typography className={classes.textPrimary}>
+              {collectionData.overview}
+            </Typography>
             <div className={classes.collectionDiv}>
-              {collectionData.parts.map((item) => (
+              {stableSort(
+                collectionData.parts,
+                getComparator('asc', 'release_date')
+              ).map((item) => (
                 <div key={item.id} style={{ position: 'relative' }}>
                   <MovieCard
                     classes={classes}
                     movie={item}
                     onClick={() => handleClickMovieCard(item)}
                   />
+                  <Typography
+                    className={clsx(
+                      classes.movieCardTitle,
+                      classes.textPrimary
+                    )}
+                  >
+                    {`${item.title} (${
+                      item.release_date ? item.release_date.slice(0, 4) : '待定'
+                    })`}
+                  </Typography>
                   <span
                     className={clsx(classes.badgeSpan, {
-                      [classes.hidden]: !item.exist,
+                      [classes.hidden]: !item.included,
                     })}
                   >
                     <Tooltip
                       title={
-                        item.exist
+                        item.included
                           ? movieData.id === item.id
                             ? '当前电影'
                             : '已收录'
@@ -441,9 +479,9 @@ const Movie = (props) => {
                         fontSize="small"
                         className={clsx({
                           [classes.colorPrimary]:
-                            item.exist && movieData.id !== item.id,
+                            item.included && movieData.id !== item.id,
                           [classes.colorSuccess]:
-                            item.exist && movieData.id === item.id,
+                            item.included && movieData.id === item.id,
                         })}
                       />
                     </Tooltip>
@@ -456,7 +494,7 @@ const Movie = (props) => {
       ) : null}
       {resourceItems.length > 0 ? (
         <Grid item xs={12}>
-          <Paper className={classes.paperPadding}>
+          <Paper className={clsx(classes.paperPadding)}>
             <Typography variant="h6">资源</Typography>
             <TableContainer>
               <Table

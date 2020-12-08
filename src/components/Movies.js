@@ -26,6 +26,7 @@ import MovieFilter from './MovieFilter';
 import { connect } from 'react-redux';
 import PropTypes from 'prop-types';
 import { PALETTET_YPES } from '../actions';
+import { isMobile } from '../utils';
 
 const useStyles = makeStyles((theme) => ({
   actionArea: {
@@ -37,6 +38,11 @@ const useStyles = makeStyles((theme) => ({
   },
   loadMore: {
     borderRadius: theme.shape.borderRadius,
+  },
+  movieItem: { width: ({ cardWidth }) => cardWidth },
+  movieTitle: {
+    marginTop: theme.spacing(0.5),
+    textAlign: 'center',
   },
   card: ({ cardWidth }) => ({
     width: cardWidth,
@@ -128,12 +134,8 @@ const useStyles = makeStyles((theme) => ({
 const numLimit = 28;
 
 const orderList = [
-  { text: '热门降序', order: { order: 'desc', orderBy: 'popularity' } },
-  { text: '热门升序', order: { order: 'asc', orderBy: 'popularity' } },
   { text: '日期降序', order: { order: 'desc', orderBy: 'release_date' } },
   { text: '日期升序', order: { order: 'asc', orderBy: 'release_date' } },
-  { text: '评分降序', order: { order: 'desc', orderBy: 'vote_average' } },
-  { text: '评分升序', order: { order: 'asc', orderBy: 'vote_average' } },
 ];
 
 let Movies = ({ paletteType }) => {
@@ -211,6 +213,18 @@ let Movies = ({ paletteType }) => {
       const fetchData = async () => {
         let res = await apiRequest('TMDb.getMovies', {
           params: {
+            match: {
+              $and: [
+                search,
+                selectedGenres.length > 0
+                  ? {
+                      [genresLogical]: selectedGenres.map((id) => ({
+                        'genres.id': id,
+                      })),
+                    }
+                  : {},
+              ],
+            },
             skip: movieData.list.length,
             limit: numLimit,
             order: order.order,
@@ -245,7 +259,7 @@ let Movies = ({ paletteType }) => {
             { original_title: { $regex: value, $options: 'i' } },
             { 'production_companies.name': { $regex: value, $options: 'i' } },
             { 'directors.name': { $regex: value, $options: 'i' } },
-            { 'directors.name_zh': { $regex: value } },
+            { 'directors.also_known_as': { $regex: value, $options: 'i' } },
           ],
         });
       } else {
@@ -317,11 +331,20 @@ let Movies = ({ paletteType }) => {
               <Grid container spacing={2} className={classes.gridContainer}>
                 {movieData.list.map((movie) => (
                   <Grid item key={movie.id}>
-                    <MovieCard
-                      classes={classes}
-                      movie={movie}
-                      onClick={() => history.push(`${match.path}/${movie.id}`)}
-                    />
+                    <div className={classes.movieItem}>
+                      <MovieCard
+                        classes={classes}
+                        movie={movie}
+                        onClick={() =>
+                          history.push(`${match.path}/${movie.id}`)
+                        }
+                      />
+                      {isMobile ? (
+                        <Typography className={classes.movieTitle}>
+                          {`${movie.title} `}
+                        </Typography>
+                      ) : null}
+                    </div>
                   </Grid>
                 ))}
                 {movieData.list.length < movieData.count ? (
