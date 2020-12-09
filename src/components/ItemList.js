@@ -32,7 +32,6 @@ import ComponentShell from './ComponentShell';
 import { PlayBoxOutline } from './Icons';
 import DescriptionOutlinedIcon from '@material-ui/icons/DescriptionOutlined';
 import SubtitlesOutlinedIcon from '@material-ui/icons/SubtitlesOutlined';
-import MovieCreationOutlinedIcon from '@material-ui/icons/MovieCreationOutlined';
 import MyContainer from './MyContainer';
 import DialogWithFIle from './DialogWithFIle';
 import TopLeftButtons from './TopLeftButtons';
@@ -106,7 +105,6 @@ const removeEndSlash = (s) => {
 };
 
 const getItemIcon = (item) => {
-  if (item.tmdb_movies) return MovieCreationOutlinedIcon;
   if (item.folder) return FolderOpenIcon;
   const mimeType = item.file.mimeType;
   if (mimeType.startsWith('video')) return PlayBoxOutline;
@@ -126,11 +124,6 @@ const ItemList = () => {
   const [rowData, setRowData] = useState({
     count: 0,
     list: [],
-  });
-
-  const [markdown, setMarkdown] = useState({
-    head: null,
-    readme: null,
   });
 
   const downSm = useMediaQuery((theme) => theme.breakpoints.down('sm'));
@@ -175,7 +168,6 @@ const ItemList = () => {
         }
       ),
       type: (() => {
-        if (row.tmdb_movies) return '电影';
         if (row.folder) return '文件夹';
         const idx = row.name.lastIndexOf('.');
         if (idx < 0) return '.file';
@@ -251,22 +243,12 @@ const ItemList = () => {
             path: removeEndSlash(state.path),
             order: order.order,
             order_by: order.orderBy,
+            append_md_files: true,
           },
         });
         setRowData(res.data.result);
       };
-      setMarkdown({});
-      const fetchData2 = async () => {
-        let res = await apiRequest('Onedrive.getMdByPath', {
-          params: {
-            drive_id: state.driveIds[state.idIndex],
-            path: removeEndSlash(state.path),
-          },
-        });
-        setMarkdown(res.data.result);
-      };
       fetchData();
-      fetchData2();
     }
   }, [order, state]);
 
@@ -321,11 +303,6 @@ const ItemList = () => {
   };
 
   const handleClickItem = (row) => {
-    if (row.tmdb_movies) {
-      history.push(`/movies/${row.movie_id}`);
-      return;
-    }
-
     if (row.folder) {
       handleAddPathChild(row.pathName);
     } else {
@@ -384,12 +361,12 @@ const ItemList = () => {
         ]}
       />
       <MyContainer onScrollToBottom={handleScrollToBottom}>
-        {markdown.head ? (
+        {rowData.head ? (
           <Markdown
             classes={{
               root: classes.markdownHead,
             }}
-            text={markdown.head}
+            text={rowData.head}
           />
         ) : null}
         <Paper className={classes.paperContent}>
@@ -490,12 +467,12 @@ const ItemList = () => {
             ) : null}
           </TableContainer>
         </Paper>
-        {markdown.readme ? (
+        {rowData.readme ? (
           <Markdown
             classes={{
               root: classes.markdownRead,
             }}
-            text={markdown.readme}
+            text={rowData.readme}
           />
         ) : null}
         <DialogWithFIle
