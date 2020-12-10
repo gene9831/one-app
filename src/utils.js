@@ -36,10 +36,6 @@ const isMobile = detectMob();
 const descendingComparator = (a, b, orderBy) => {
   let aa = a[orderBy];
   let bb = b[orderBy];
-  if (typeof aa === 'string') {
-    aa = aa.toUpperCase();
-    bb = bb.toUpperCase();
-  }
   if (bb < aa) return -1;
   if (bb > aa) return 1;
   return 0;

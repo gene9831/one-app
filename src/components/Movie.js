@@ -314,6 +314,7 @@ const Movie = (props) => {
       return;
     }
     history.push(`./${movie.id}`);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   return (
@@ -333,7 +334,7 @@ const Movie = (props) => {
                   src={`${tmdbImageUrl}/w500${movieData.images.posters[0].file_path}`}
                   width={300}
                   height={450}
-                  alt="poster"
+                  alt={movieData.title}
                 />
               ) : null}
             </div>
@@ -384,7 +385,7 @@ const Movie = (props) => {
               {movieData ? (
                 <img
                   src={`${tmdbImageUrl}/w500${movieData.images.posters[0].file_path}`}
-                  alt="poster"
+                  alt={movieData.title}
                 />
               ) : null}
             </div>
@@ -450,6 +451,12 @@ const Movie = (props) => {
                     classes={classes}
                     movie={item}
                     onClick={() => handleClickMovieCard(item)}
+                    href={
+                      !item.included
+                        ? `https://www.themoviedb.org/movie/${item.id}`
+                        : ''
+                    }
+                    target="_blank"
                   />
                   <Typography
                     className={clsx(
